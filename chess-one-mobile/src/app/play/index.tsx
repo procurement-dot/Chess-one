@@ -7,6 +7,7 @@ import {
   ScrollView,
   StatusBar,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -18,6 +19,8 @@ import { GameInvitation } from '../../types/game.types';
 import { IncomingChallengeModal } from '../../components/game/IncomingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
 import { AppFooter } from '../../components/navigation/AppFooter';
+
+const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
   const router = useRouter();
@@ -155,38 +158,40 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
-      {/* Top Header */}
+      {/* Top Header with Official Logo */}
       <View style={styles.header}>
-        <View style={styles.userProfileRow}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarLetter}>
-              {(user?.name || user?.email || 'U')[0].toUpperCase()}
-            </Text>
-          </View>
-          <View style={styles.titleCol}>
-            <View style={styles.nameAndIdRow}>
-              <Text style={styles.playerName} numberOfLines={1}>
-                {user?.name || user?.email || 'Chess Player'}
-              </Text>
-              {user?.id && (
-                <View style={styles.idChip}>
-                  <Text style={styles.idChipText}>ID: #{user.id}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.subtitle}>Select a game mode to begin playing</Text>
-          </View>
-        </View>
+        <Image
+          source={logoBanner}
+          style={styles.headerLogo}
+          resizeMode="contain"
+        />
 
-        <TouchableOpacity
-          style={styles.switchAccountButton}
-          activeOpacity={0.7}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.switchAccountText}>Sign Out</Text>
-        </TouchableOpacity>
+        <View style={styles.headerRight}>
+          <TouchableOpacity
+            style={styles.headerUserChip}
+            activeOpacity={0.8}
+            onPress={() => router.push('/login' as any)}
+          >
+            <View style={styles.avatarCircleSmall}>
+              <Text style={styles.avatarLetterSmall}>
+                {(user?.name || user?.email || 'U')[0].toUpperCase()}
+              </Text>
+            </View>
+            <Text style={styles.userChipName} numberOfLines={1}>
+              {user?.name ? user.name.split(' ')[0] : 'Profile'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.switchAccountButton}
+            activeOpacity={0.7}
+            onPress={handleSignOut}
+          >
+            <Text style={styles.switchAccountText}>Sign Out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView
@@ -198,11 +203,35 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
             <RefreshControl
               refreshing={isLoadingInvites}
               onRefresh={refreshInvites}
-              tintColor="#3B82F6"
+              tintColor="#194E40"
             />
           ) : undefined
         }
       >
+        {/* Welcome Player Greeting Card */}
+        <View style={styles.welcomeCard}>
+          <View style={styles.userProfileRow}>
+            <View style={styles.avatarCircle}>
+              <Text style={styles.avatarLetter}>
+                {(user?.name || user?.email || 'U')[0].toUpperCase()}
+              </Text>
+            </View>
+            <View style={styles.titleCol}>
+              <View style={styles.nameAndIdRow}>
+                <Text style={styles.playerName} numberOfLines={1}>
+                  {user?.name || user?.email || 'Chess Player'}
+                </Text>
+                {user?.id && (
+                  <View style={styles.idChip}>
+                    <Text style={styles.idChipText}>ID: #{user.id}</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.subtitle}>Welcome back! Choose a match mode to begin</Text>
+            </View>
+          </View>
+        </View>
+
         {/* Section Heading: Game Modes */}
         <Text style={styles.sectionTitle}>Game Modes</Text>
 
@@ -286,17 +315,64 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
-    backgroundColor: '#12161D',
+    borderBottomColor: '#E4E9E1',
+    backgroundColor: '#FFFFFF',
+  },
+  headerLogo: {
+    width: 120,
+    height: 42,
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerUserChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#EEF3E8',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 16,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#D5DFC8',
+  },
+  avatarCircleSmall: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#194E40',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarLetterSmall: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  userChipName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#194E40',
+    maxWidth: 80,
+  },
+  welcomeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E4E9E1',
   },
   userProfileRow: {
     flexDirection: 'row',
@@ -308,7 +384,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -328,38 +404,38 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     maxWidth: 160,
   },
   idChip: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   idChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#60A5FA',
+    color: '#194E40',
   },
   subtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 2,
   },
   switchAccountButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E4E9E1',
   },
   switchAccountText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#C53030',
     fontWeight: '600',
   },
   content: {
@@ -372,7 +448,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 14,
     letterSpacing: 0.2,
   },
@@ -381,24 +457,29 @@ const styles = StyleSheet.create({
   },
   actionCard: {
     borderRadius: 16,
-    padding: 16,
+    padding: 18,
     borderWidth: 1,
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 5,
+    elevation: 2,
   },
   aiCard: {
-    backgroundColor: '#151D2A',
-    borderColor: '#1E2D44',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9E1',
   },
   pvpCard: {
-    backgroundColor: '#181A26',
-    borderColor: '#262A42',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9E1',
   },
   joinCard: {
-    backgroundColor: '#161E1C',
-    borderColor: '#1D332D',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9E1',
   },
   historyCard: {
-    backgroundColor: '#1B1822',
-    borderColor: '#2D243B',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#E4E9E1',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -410,31 +491,34 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   badge: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: '#EEF3E8',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
+    borderWidth: 0.5,
+    borderColor: '#D5DFC8',
   },
   pvpBadge: {
-    backgroundColor: '#3730A3',
+    backgroundColor: '#E5EDDA',
+    borderColor: '#C8D9BE',
   },
   joinBadge: {
-    backgroundColor: '#064E3B',
+    backgroundColor: '#EEF3E8',
   },
   badgeText: {
-    color: '#93C5FD',
+    color: '#194E40',
     fontSize: 11,
     fontWeight: '700',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 4,
   },
   cardDesc: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
     lineHeight: 18,
   },
 });

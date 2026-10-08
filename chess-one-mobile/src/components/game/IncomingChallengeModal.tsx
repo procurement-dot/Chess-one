@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Pressable,
+  Image,
 } from 'react-native';
 import { GameInvitation } from '../../types/game.types';
+
+const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface IncomingChallengeModalProps {
   visible: boolean;
@@ -41,6 +44,13 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
     >
       <Pressable style={styles.backdrop} onPress={onDismiss}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
+          {/* Official Brand Logo */}
+          <Image
+            source={logoBanner}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
+
           {/* Header Icon */}
           <View style={styles.iconCircle}>
             <Text style={styles.iconText}>⚔️</Text>
@@ -97,7 +107,7 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(32, 45, 41, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -105,27 +115,33 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#161B22',
+    backgroundColor: '#FFFFFF',
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#30363D',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
+    borderColor: '#E4E9E1',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  brandLogo: {
+    width: 110,
+    height: 38,
+    marginBottom: 10,
+    alignSelf: 'center',
   },
   iconCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#312E81',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#6366F1',
+    borderColor: '#D5DFC8',
     marginBottom: 16,
   },
   iconText: {
@@ -134,33 +150,33 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
     marginBottom: 20,
     textAlign: 'center',
   },
   challengerBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
     padding: 14,
     borderRadius: 14,
     width: '100%',
     marginBottom: 22,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: '#E4E9E1',
     gap: 12,
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#194E40',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -175,25 +191,25 @@ const styles = StyleSheet.create({
   challengerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F1F5F9',
+    color: '#202D29',
     marginBottom: 3,
   },
   challengerDetails: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
   },
   buttonCol: {
     width: '100%',
     gap: 10,
   },
   acceptBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: '#194E40',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#059669',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
+    shadowColor: '#194E40',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
     shadowRadius: 6,
     elevation: 3,
   },
@@ -203,15 +219,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   declineBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#E4E9E1',
   },
   declineBtnText: {
-    color: '#EF4444',
+    color: '#C53030',
     fontSize: 14,
     fontWeight: '600',
   },

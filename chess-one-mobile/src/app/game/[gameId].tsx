@@ -8,7 +8,10 @@ import {
   Alert,
   StatusBar,
   ScrollView,
+  Image,
 } from 'react-native';
+
+const logoIcon = require('../../../assets/images/chessone-icon.png');
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useGame } from '../../hooks/useGame';
@@ -94,12 +97,12 @@ export default function LiveGameScreen() {
   };
 
   // 1. Initial 10-second first-move auto-abort countdown
+  // Runs ONLY when match is ACTIVE and NO moves have been played yet (moves.length === 0)
   useEffect(() => {
-    // Only active during match start before any moves are played
+    // If match is not active OR players start playing within 10 seconds (moves.length > 0),
+    // immediately stop and clear the countdown timer! The match proceeds smoothly.
     if (status !== 'ACTIVE' || moves.length > 0) {
-      if (abortReason === 'FIRST_MOVE_TIMEOUT') {
-        setAbortCountdown(null);
-      }
+      setAbortCountdown(null);
       return;
     }
 
@@ -111,6 +114,7 @@ export default function LiveGameScreen() {
         if (prev === null) return null;
         if (prev <= 1) {
           clearInterval(interval);
+          // Neither player played within 10 seconds -> automatically stop match
           handleAutoAbort('FIRST_MOVE_TIMEOUT');
           return 0;
         }
@@ -120,33 +124,6 @@ export default function LiveGameScreen() {
 
     return () => clearInterval(interval);
   }, [status, moves.length, gameId]);
-
-  // 2. Disconnect / Internet lost 10-second auto-abort countdown
-  useEffect(() => {
-    if (status !== 'ACTIVE') return;
-
-    if (connectionStatus === 'disconnected') {
-      setAbortCountdown(10);
-      setAbortReason('DISCONNECTED');
-
-      const interval = setInterval(() => {
-        setAbortCountdown((prev) => {
-          if (prev === null) return null;
-          if (prev <= 1) {
-            clearInterval(interval);
-            handleAutoAbort('DISCONNECTED');
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(interval);
-    } else if (abortReason === 'DISCONNECTED') {
-      // Reconnected!
-      setAbortCountdown(null);
-    }
-  }, [connectionStatus, status]);
 
   // 3. Real-time socket listener for game:aborted event
   useEffect(() => {
@@ -281,7 +258,7 @@ export default function LiveGameScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header Bar */}
       <View style={styles.header}>
@@ -291,6 +268,11 @@ export default function LiveGameScreen() {
           onPress={handleBackPress}
         >
           <Text style={styles.backIcon}>‹</Text>
+          <Image
+            source={logoIcon}
+            style={styles.headerLogoIcon}
+            resizeMode="contain"
+          />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
@@ -306,7 +288,7 @@ export default function LiveGameScreen() {
         <View
           style={[
             styles.connBadge,
-            connectionStatus === 'connected'
+            topPlayerIsAI || connectionStatus === 'connected'
               ? styles.connBadgeOnline
               : connectionStatus === 'connecting'
               ? styles.connBadgeConnecting
@@ -316,7 +298,7 @@ export default function LiveGameScreen() {
           <View
             style={[
               styles.connDot,
-              connectionStatus === 'connected'
+              topPlayerIsAI || connectionStatus === 'connected'
                 ? styles.dotOnline
                 : connectionStatus === 'connecting'
                 ? styles.dotConnecting
@@ -324,7 +306,9 @@ export default function LiveGameScreen() {
             ]}
           />
           <Text style={styles.connText}>
-            {connectionStatus === 'connected'
+            {topPlayerIsAI
+              ? 'Ready'
+              : connectionStatus === 'connected'
               ? 'Live'
               : connectionStatus === 'connecting'
               ? 'Connecting'
@@ -391,8 +375,8 @@ export default function LiveGameScreen() {
           </View>
         )}
 
-        {/* Small Circle Abort Countdown Timer */}
-        {abortCountdown !== null && abortCountdown > 0 && status === 'ACTIVE' && (
+        {/* Small Circle Abort Countdown Timer & Abort Button (ONLY before any moves are played) */}
+        {abortCountdown !== null && abortCountdown > 0 && status === 'ACTIVE' && moves.length === 0 && (
           <View style={styles.abortTimerContainer}>
             <View
               style={[
@@ -411,14 +395,19 @@ export default function LiveGameScreen() {
             </View>
             <View style={styles.abortTextCol}>
               <Text style={styles.abortTimerTitle}>
-                {abortReason === 'DISCONNECTED' ? '📡 Connection Lost' : '⏱️ Auto-Abort Countdown'}
+                ⏱️ Inactivity Timer ({abortCountdown}s)
               </Text>
               <Text style={styles.abortTimerSub}>
-                {abortReason === 'DISCONNECTED'
-                  ? `Reconnecting... Game aborts in ${abortCountdown}s`
-                  : `First move required in ${abortCountdown}s or match aborts`}
+                Play first move within {abortCountdown}s or match automatically aborts
               </Text>
             </View>
+            <TouchableOpacity
+              style={styles.abortInlineBtn}
+              activeOpacity={0.8}
+              onPress={() => handleAutoAbort('FIRST_MOVE_TIMEOUT')}
+            >
+              <Text style={styles.abortInlineBtnText}>🛑 Abort Match</Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -489,6 +478,9 @@ export default function LiveGameScreen() {
             <GameActions
               onOfferDraw={handleOfferDraw}
               onResign={() => setResignModalVisible(true)}
+              onAbort={() => handleAutoAbort('FIRST_MOVE_TIMEOUT')}
+              canAbort={status === 'ACTIVE' && moves.length === 0}
+              abortCountdown={abortCountdown}
               onFlipBoard={() => setInvertedOrientation((prev) => !prev)}
               disabled={status !== 'ACTIVE'}
             />
@@ -595,7 +587,7 @@ export default function LiveGameScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
   },
   header: {
     flexDirection: 'row',
@@ -604,32 +596,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: '#E4E9E1',
+    backgroundColor: '#FFFFFF',
   },
   iconBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: '#1E232A',
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: 8,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#EEF3E8',
+    gap: 3,
   },
   backIcon: {
-    fontSize: 26,
-    color: '#FFFFFF',
-    lineHeight: 28,
+    fontSize: 24,
+    color: '#194E40',
+    lineHeight: 26,
+  },
+  headerLogoIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 5,
   },
   headerCenter: {
     alignItems: 'center',
   },
   headerGameType: {
     fontSize: 15,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#202D29',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 1,
   },
   connBadge: {
@@ -642,16 +641,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   connBadgeOnline: {
-    backgroundColor: '#064E3B',
-    borderColor: '#059669',
+    backgroundColor: '#EEF3E8',
+    borderColor: '#D5DFC8',
   },
   connBadgeConnecting: {
-    backgroundColor: '#78350F',
-    borderColor: '#D97706',
+    backgroundColor: '#FCEDDF',
+    borderColor: '#F7A18C',
   },
   connBadgeOffline: {
-    backgroundColor: '#451A03',
-    borderColor: '#DC2626',
+    backgroundColor: '#FCEDDF',
+    borderColor: '#F7A18C',
   },
   connDot: {
     width: 7,
@@ -659,16 +658,16 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
   },
   dotOnline: {
-    backgroundColor: '#34D399',
+    backgroundColor: '#4F8A5B',
   },
   dotConnecting: {
-    backgroundColor: '#FBBF24',
+    backgroundColor: '#F59E0B',
   },
   dotOffline: {
-    backgroundColor: '#F87171',
+    backgroundColor: '#C53030',
   },
   connText: {
-    color: '#FFFFFF',
+    color: '#202D29',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -706,7 +705,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 14,
   },
   errorIcon: {
@@ -716,18 +715,18 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 8,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     paddingHorizontal: 24,
     height: 48,
     borderRadius: 12,
@@ -745,17 +744,15 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   aiReviewActionBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#194E40',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#818CF8',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#194E40',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   aiReviewActionBtnText: {
     color: '#FFFFFF',
@@ -763,31 +760,33 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   viewResultBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#E4E9E1',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   viewResultBtnText: {
-    color: '#FFFFFF',
+    color: '#194E40',
     fontSize: 15,
     fontWeight: '700',
   },
   reopenModalBtn: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     paddingVertical: 11,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   reopenModalBtnText: {
-    color: '#94A3B8',
+    color: '#194E40',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -802,14 +801,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   turnStatusMyTurn: {
-    backgroundColor: 'rgba(34, 197, 94, 0.15)',
+    backgroundColor: '#EEF3E8',
     borderWidth: 1,
-    borderColor: '#22C55E',
+    borderColor: '#194E40',
   },
   turnStatusOpponentTurn: {
-    backgroundColor: 'rgba(55, 65, 81, 0.5)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#4B5563',
+    borderColor: '#E4E9E1',
   },
   turnStatusDot: {
     width: 8,
@@ -818,25 +817,25 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   turnDotMyTurn: {
-    backgroundColor: '#22C55E',
+    backgroundColor: '#194E40',
   },
   turnDotOpponentTurn: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: '#74817A',
   },
   turnStatusText: {
     fontSize: 13,
     fontWeight: '700',
   },
   turnTextMyTurn: {
-    color: '#4ADE80',
+    color: '#194E40',
   },
   turnTextOpponentTurn: {
-    color: '#D1D5DB',
+    color: '#74817A',
   },
   drawFeedbackBanner: {
-    backgroundColor: 'rgba(59, 130, 246, 0.2)',
+    backgroundColor: '#EEF3E8',
     borderWidth: 1,
-    borderColor: '#3B82F6',
+    borderColor: '#194E40',
     paddingVertical: 7,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -844,7 +843,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   drawFeedbackText: {
-    color: '#93C5FD',
+    color: '#194E40',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
@@ -852,9 +851,9 @@ const styles = StyleSheet.create({
   abortTimerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1C150B',
+    backgroundColor: '#FCEDDF',
     borderWidth: 1.5,
-    borderColor: '#D97706',
+    borderColor: '#F7A18C',
     borderRadius: 16,
     paddingVertical: 8,
     paddingHorizontal: 14,
@@ -862,34 +861,34 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: '92%',
     gap: 12,
-    shadowColor: '#D97706',
+    shadowColor: '#202D29',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   abortCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: 'rgba(245, 158, 11, 0.18)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 2.5,
-    borderColor: '#F59E0B',
+    borderColor: '#F7A18C',
     justifyContent: 'center',
     alignItems: 'center',
   },
   abortCircleUrgent: {
-    backgroundColor: 'rgba(239, 68, 68, 0.25)',
-    borderColor: '#EF4444',
+    backgroundColor: '#FFFFFF',
+    borderColor: '#C53030',
   },
   abortCircleText: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#FDE047',
+    color: '#C53030',
     textAlign: 'center',
   },
   abortCircleTextUrgent: {
-    color: '#F87171',
+    color: '#C53030',
   },
   abortTextCol: {
     flex: 1,
@@ -897,12 +896,26 @@ const styles = StyleSheet.create({
   abortTimerTitle: {
     fontSize: 12.5,
     fontWeight: '800',
-    color: '#F59E0B',
+    color: '#C53030',
     marginBottom: 2,
   },
   abortTimerSub: {
     fontSize: 11,
-    color: '#FEF08A',
+    color: '#202D29',
     lineHeight: 15,
+  },
+  abortInlineBtn: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#F7A18C',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 8,
+    alignSelf: 'center',
+  },
+  abortInlineBtnText: {
+    color: '#C53030',
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

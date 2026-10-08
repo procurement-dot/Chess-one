@@ -9,19 +9,57 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: '#202d29',
+    background: '#f5f7f2',
+    backgroundElement: '#ffffff',
+    backgroundSelected: '#e5edda',
+    textSecondary: '#74817a',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#202d29',
+    background: '#f5f7f2',
+    backgroundElement: '#ffffff',
+    backgroundSelected: '#e5edda',
+    textSecondary: '#74817a',
   },
+} as const;
+
+/**
+ * ChessOne School Design System Tokens
+ * Verified from reference: https://chessone-school.nikhilladdha.chatgpt.site/style.css
+ */
+export const SchoolColors = {
+  green: '#194e40',       // Primary Forest Green
+  lime: '#d6ef9e',        // Playful Lime Accent
+  ink: '#202d29',         // Deep Ink (Primary Text)
+  muted: '#74817a',       // Muted Sage / Secondary Text
+  paper: '#f5f7f2',       // Soft Paper (Page Background)
+  line: '#e4e9e1',        // Subtle Border / Divider
+  coral: '#f7a18c',       // Warm Coral Accent
+
+  // Surfaces
+  cardBg: '#ffffff',
+  cardSoftGreen: '#eef3e8',
+  cardSoftLime: '#e5edda',
+  cardSoftCoral: '#fceddf',
+  cardSoftMuted: '#edf2e7',
+
+  // Chessboard Tokens
+  boardBorder: '#d5dfc8',
+  squareLight: '#eef0e0',
+  squareDark: '#8ea780',
+  squareSelected: '#e9cb67',
+  moveIndicator: '#194e4070',
+  whitePieceText: '#fffef3',
+  blackPieceText: '#172b26',
+  clockBg: '#e6ecdf',
+  clockText: '#172b26',
+
+  // Status & Alerts
+  success: '#4F8A5B',
+  warning: '#C99539',
+  error: '#C75D57',
+  info: '#5D82A6',
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;

@@ -78,10 +78,10 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({ movePairs }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1E232A',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: '#E4E9E1',
     overflow: 'hidden',
     height: 120,
     width: '100%',
@@ -90,13 +90,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#2F3642',
-    backgroundColor: '#171B20',
+    borderBottomColor: '#E4E9E1',
+    backgroundColor: '#EEF3E8',
   },
   headerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: '#194E40',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -107,10 +107,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   emptyContainer: {
-    backgroundColor: '#1E232A',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: '#E4E9E1',
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   emptyText: {
-    color: '#6B7280',
+    color: '#74817A',
     fontSize: 13,
     fontStyle: 'italic',
   },
@@ -129,14 +129,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   alternateRow: {
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: '#F5F7F2',
   },
   highlightRow: {
-    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+    backgroundColor: 'rgba(214, 239, 158, 0.4)',
   },
   moveNumberText: {
     width: 38,
-    color: '#6B7280',
+    color: '#74817A',
     fontSize: 13,
     fontFamily: 'monospace',
     fontWeight: '600',
@@ -146,13 +146,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   moveText: {
-    color: '#E5E7EB',
+    color: '#202D29',
     fontSize: 13,
     fontWeight: '500',
     fontFamily: 'monospace',
   },
   activeMoveText: {
-    color: '#60A5FA',
+    color: '#194E40',
     fontWeight: '700',
   },
 });

@@ -47,7 +47,7 @@ export default function JoinMatchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <AppHeader
@@ -74,7 +74,7 @@ export default function JoinMatchScreen() {
             <TextInput
               style={styles.codeInput}
               placeholder="e.g. ABC123"
-              placeholderTextColor="#475569"
+              placeholderTextColor="#74817A"
               value={code}
               onChangeText={(text) => setCode(text.toUpperCase())}
               autoCapitalize="characters"
@@ -92,7 +92,9 @@ export default function JoinMatchScreen() {
             {isJoining ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={styles.joinButtonText}>Join Match</Text>
+              <Text style={[styles.joinButtonText, !code.trim() && styles.joinButtonTextDisabled]}>
+                Join Match
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -107,7 +109,7 @@ export default function JoinMatchScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
   },
   header: {
     flexDirection: 'row',
@@ -116,25 +118,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: '#E4E9E1',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E232A',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: '#202D29',
     lineHeight: 28,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
   },
   spacer: {
     width: 40,
@@ -152,12 +154,12 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   iconText: {
     fontSize: 34,
@@ -165,13 +167,13 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 8,
     textAlign: 'center',
   },
   subheading: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 32,
@@ -182,12 +184,12 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   codeInput: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: '#374151',
+    borderColor: '#E4E9E1',
     borderRadius: 16,
     height: 64,
-    color: '#FFFFFF',
+    color: '#202D29',
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: 4,
@@ -195,24 +197,27 @@ const styles = StyleSheet.create({
   },
   joinButton: {
     width: '100%',
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: '#194E40',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 8,
     elevation: 4,
   },
   joinButtonDisabled: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#E4E9E1',
     shadowOpacity: 0,
   },
   joinButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+  },
+  joinButtonTextDisabled: {
+    color: '#74817A',
   },
 });

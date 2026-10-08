@@ -86,17 +86,17 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 4,
+    borderColor: '#E4E9E1',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   topRow: {
     flexDirection: 'row',
@@ -107,17 +107,17 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#262D38',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#D5DFC8',
   },
   avatarText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#3B82F6',
+    color: '#194E40',
   },
   infoCol: {
     flex: 1,
@@ -125,16 +125,16 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 2,
   },
   subtext: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
   },
   codeBadge: {
     fontSize: 12,
-    color: '#60A5FA',
+    color: '#194E40',
     fontWeight: '600',
     marginTop: 2,
   },
@@ -150,17 +150,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   declineButton: {
-    backgroundColor: '#262D38',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#E4E9E1',
   },
   declineText: {
-    color: '#CBD5E1',
+    color: '#74817A',
     fontSize: 14,
     fontWeight: '600',
   },
   acceptButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#194E40',
   },
   acceptText: {
     color: '#FFFFFF',

@@ -91,7 +91,7 @@ export default function GameResultScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <AppHeader
@@ -209,7 +209,7 @@ export default function GameResultScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
   },
   header: {
     flexDirection: 'row',
@@ -218,25 +218,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: '#E4E9E1',
+    backgroundColor: '#FFFFFF',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E232A',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: '#194E40',
     lineHeight: 28,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#202D29',
   },
   spacer: {
     width: 40,
@@ -254,18 +255,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   outcomeWin: {
-    backgroundColor: '#064E3B',
-    borderColor: '#059669',
+    backgroundColor: '#E5EDDA',
+    borderColor: '#C8D9BE',
   },
   outcomeLoss: {
-    backgroundColor: '#451A03',
-    borderColor: '#DC2626',
+    backgroundColor: '#FCEDDF',
+    borderColor: '#F7A18C',
   },
   outcomeDraw: {
-    backgroundColor: '#1E293B',
-    borderColor: '#475569',
+    backgroundColor: '#EEF3E8',
+    borderColor: '#D5DFC8',
   },
   outcomeIcon: {
     fontSize: 44,
@@ -274,21 +280,26 @@ const styles = StyleSheet.create({
   outcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 4,
   },
   outcomeReason: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: '#74817A',
     fontWeight: '600',
   },
   playersCard: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: '#E4E9E1',
     marginBottom: 20,
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   playerRow: {
     flexDirection: 'row',
@@ -298,22 +309,24 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#EEF0E0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#D5DFC8',
   },
   blackIconBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#194E40',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#194E40',
   },
   pieceSym: {
     fontSize: 22,
-    color: '#0F172A',
+    color: '#202D29',
   },
   blackPieceSym: {
-    color: '#F8FAFC',
+    color: '#FFFFFF',
   },
   playerInfo: {
     flex: 1,
@@ -321,45 +334,43 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 2,
   },
   playerSub: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
   },
   playerScore: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#262D38',
+    backgroundColor: '#EEF3E8',
     borderRadius: 8,
   },
   scoreText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#194E40',
   },
   divider: {
     height: 1,
-    backgroundColor: '#262D38',
+    backgroundColor: '#E4E9E1',
     marginVertical: 14,
   },
   actionsCol: {
     gap: 12,
   },
   aiReviewBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#194E40',
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#818CF8',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#194E40',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   aiReviewBtnText: {
     color: '#FFFFFF',
@@ -367,28 +378,30 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#2563EB',
-    height: 52,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  primaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  secondaryBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: '#EEF3E8',
     height: 52,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#D5DFC8',
+  },
+  primaryBtnText: {
+    color: '#194E40',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  secondaryBtn: {
+    backgroundColor: '#FFFFFF',
+    height: 52,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E4E9E1',
   },
   secondaryBtnText: {
-    color: '#CBD5E1',
+    color: '#74817A',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -400,7 +413,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 14,
   },
 });

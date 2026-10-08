@@ -50,28 +50,28 @@ const styles = StyleSheet.create({
   clockContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#E6ECDF',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#D5DFC8',
     gap: 6,
     minWidth: 84,
     justifyContent: 'center',
   },
   activeClockContainer: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#3B82F6',
-    shadowColor: '#2563EB',
+    backgroundColor: '#E5EDDA',
+    borderColor: '#194E40',
+    shadowColor: '#194E40',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
   lowTimeClockContainer: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#EF4444',
+    backgroundColor: '#FCEDDF',
+    borderColor: '#F7A18C',
   },
   statusDot: {
     width: 6,
@@ -79,25 +79,25 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   inactiveDot: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: '#74817A',
   },
   activeDot: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
   },
   lowTimeDot: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#C53030',
   },
   clockText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#475569',
+    color: '#172B26',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
   activeClockText: {
-    color: '#1E3A8A',
+    color: '#194E40',
   },
   lowTimeClockText: {
-    color: '#DC2626',
+    color: '#C53030',
   },
 });

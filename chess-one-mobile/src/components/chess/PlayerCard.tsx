@@ -38,10 +38,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <View
           style={[
             styles.avatarCircle,
-            { backgroundColor: isWhite ? '#FFFFFF' : '#1E232A' },
+            { backgroundColor: isWhite ? '#FFFFFF' : '#202D29' },
           ]}
         >
-          <Text style={[styles.avatarText, { color: isWhite ? '#111827' : '#FFFFFF' }]}>
+          <Text style={[styles.avatarText, { color: isWhite ? '#194E40' : '#D6EF9E' }]}>
             {isWhite ? '♔' : '♚'}
           </Text>
         </View>
@@ -89,26 +89,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1E232A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#2F3642',
+    borderColor: '#E4E9E1',
     width: '100%',
   },
   activeContainer: {
-    borderColor: '#3B82F6',
-    backgroundColor: '#1E293B',
-    shadowColor: '#3B82F6',
+    borderColor: '#194E40',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#194E40',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.12,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: 3,
   },
   checkContainer: {
-    borderColor: '#EF4444',
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderColor: '#C53030',
+    backgroundColor: '#FCEDDF',
   },
   leftInfo: {
     flexDirection: 'row',
@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#4B5563',
+    borderColor: '#D5DFC8',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -140,33 +140,33 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E5E7EB',
+    color: '#202D29',
   },
   activePlayerName: {
-    color: '#FFFFFF',
+    color: '#194E40',
   },
   turnIndicatorBadge: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   turnIndicatorText: {
-    color: '#FFFFFF',
+    color: '#D6EF9E',
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   checkBadge: {
-    backgroundColor: 'rgba(239, 68, 68, 0.25)',
-    borderColor: '#EF4444',
+    backgroundColor: '#FCEDDF',
+    borderColor: '#F7A18C',
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   checkText: {
-    color: '#F87171',
+    color: '#C53030',
     fontSize: 11,
     fontWeight: '700',
   },

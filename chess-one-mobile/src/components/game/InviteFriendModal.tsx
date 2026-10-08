@@ -68,7 +68,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
           <View style={styles.body}>
             {isLoading && onlineUsers.length === 0 ? (
               <View style={styles.centerBox}>
-                <ActivityIndicator size="large" color="#4F46E5" />
+                <ActivityIndicator size="large" color="#194E40" />
                 <Text style={styles.loadingText}>Checking online players...</Text>
               </View>
             ) : onlineUsers.length === 0 ? (
@@ -157,17 +157,22 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(32, 45, 41, 0.45)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#161B22',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '75%',
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: '#E4E9E1',
     paddingBottom: 32,
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 8,
   },
   header: {
     flexDirection: 'row',
@@ -177,7 +182,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
+    borderBottomColor: '#E4E9E1',
   },
   titleRow: {
     flexDirection: 'row',
@@ -190,23 +195,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
   },
   subtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 2,
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#21262D',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -221,7 +226,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 14,
   },
   emptyBox: {
@@ -236,18 +241,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E2E8F0',
+    color: '#202D29',
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     marginBottom: 12,
   },
   emptyHint: {
     fontSize: 12,
-    color: '#64748B',
+    color: '#74817A',
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -256,13 +261,13 @@ const styles = StyleSheet.create({
   refreshBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#21262D',
+    backgroundColor: '#EEF3E8',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: '#D5DFC8',
   },
   refreshBtnText: {
-    color: '#E2E8F0',
+    color: '#194E40',
     fontSize: 13,
     fontWeight: '700',
   },
@@ -279,21 +284,21 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#10B981',
+    backgroundColor: '#4F8A5B',
   },
   onlineCountText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#34D399',
+    color: '#194E40',
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#21262D',
+    borderColor: '#E4E9E1',
     marginBottom: 10,
     gap: 12,
   },
@@ -306,7 +311,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#194E40',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -322,9 +327,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: '#4F8A5B',
     borderWidth: 2,
-    borderColor: '#0F1318',
+    borderColor: '#FFFFFF',
   },
   infoCol: {
     flex: 1,
@@ -338,11 +343,11 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#202D29',
     maxWidth: 140,
   },
   idChip: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -350,21 +355,21 @@ const styles = StyleSheet.create({
   idChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#74817A',
   },
   onlineStatusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#34D399',
+    color: '#4F8A5B',
   },
   inviteBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#194E40',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    shadowColor: '#4F46E5',
+    shadowColor: '#194E40',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 3,
   },

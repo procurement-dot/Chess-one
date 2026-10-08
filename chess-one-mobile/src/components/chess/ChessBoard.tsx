@@ -101,16 +101,16 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const isLastMoveTo = lastMove?.to === square;
               const isInCheck = inCheckSquare === square;
 
-              // Refined, professional tile coloring (standard Chess.com / Lichess palette)
-              let tileBg = isLight ? '#EBECD0' : '#779556';
+              // ChessOne School Board tokens (from style.css)
+              let tileBg = isLight ? '#EEF0E0' : '#8EA780';
               if (isInCheck) {
-                tileBg = '#EF4444';
+                tileBg = '#F7A18C';
               } else if (isSelected) {
-                tileBg = '#F7F769';
+                tileBg = '#E9CB67';
               } else if (isLastMoveTo) {
-                tileBg = isLight ? '#F5F682' : '#BACA44';
+                tileBg = isLight ? '#D6EF9E' : '#A2BE93';
               } else if (isLastMoveFrom) {
-                tileBg = isLight ? '#EAEB9B' : '#9CAE48';
+                tileBg = isLight ? '#E5EDDA' : '#97AE89';
               }
 
               // Rank coordinate shown on left edge; File coordinate shown on bottom edge
@@ -136,7 +136,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       pointerEvents="none"
                       style={[
                         styles.coordRankText,
-                        { color: isLight ? '#779556' : '#EBECD0' },
+                        { color: isLight ? '#8EA780' : '#EEF0E0' },
                       ]}
                     >
                       {RANKS[rIdx]}
@@ -149,7 +149,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       pointerEvents="none"
                       style={[
                         styles.coordFileText,
-                        { color: isLight ? '#779556' : '#EBECD0' },
+                        { color: isLight ? '#8EA780' : '#EEF0E0' },
                       ]}
                     >
                       {FILES[cIdx]}
@@ -206,15 +206,15 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
 const styles = StyleSheet.create({
   boardContainer: {
-    borderRadius: 8,
+    borderRadius: 10,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#374151',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    borderWidth: 2.5,
+    borderColor: '#D5DFC8',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
     shadowRadius: 8,
-    elevation: 6,
+    elevation: 4,
     userSelect: 'none' as any,
   },
   boardRow: {
@@ -228,13 +228,13 @@ const styles = StyleSheet.create({
     userSelect: 'none' as any,
   },
   selectedTile: {
-    backgroundColor: '#F6F669',
+    backgroundColor: '#E9CB67',
   },
   lastMoveTile: {
-    backgroundColor: '#D2E054',
+    backgroundColor: '#D6EF9E',
   },
   inCheckTile: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#F7A18C',
   },
   coordRankText: {
     position: 'absolute',
@@ -252,11 +252,11 @@ const styles = StyleSheet.create({
   },
   moveDot: {
     position: 'absolute',
-    backgroundColor: 'rgba(20, 20, 20, 0.25)',
+    backgroundColor: 'rgba(25, 78, 64, 0.4)',
   },
   captureRing: {
     position: 'absolute',
     borderWidth: 4,
-    borderColor: 'rgba(20, 20, 20, 0.25)',
+    borderColor: 'rgba(25, 78, 64, 0.4)',
   },
 });

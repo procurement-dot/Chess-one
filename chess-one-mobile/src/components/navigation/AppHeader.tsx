@@ -5,9 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
+
+const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
+const logoIcon = require('../../../assets/images/chessone-icon.png');
 
 interface AppHeaderProps {
   title?: string;
@@ -53,7 +57,21 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               onPress={handleBack}
             >
               <Text style={styles.backIcon}>‹</Text>
-              <Text style={styles.backText}>Back</Text>
+              <Image
+                source={logoIcon}
+                style={styles.backLogoIcon}
+                resizeMode="contain"
+              />
+              <View style={styles.backTitleCol}>
+                <Text style={styles.backText}>
+                  {title !== 'ChessOne' ? title : 'Back'}
+                </Text>
+                {subtitle ? (
+                  <Text style={styles.backSubtitle} numberOfLines={1}>
+                    {subtitle}
+                  </Text>
+                ) : null}
+              </View>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -61,17 +79,29 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.8}
               onPress={() => router.replace('/' as any)}
             >
-              <View style={styles.brandIconBox}>
-                <Text style={styles.brandIcon}>♟️</Text>
-              </View>
-              <View>
-                <Text style={styles.brandTitle}>{title}</Text>
-                {subtitle ? (
-                  <Text style={styles.brandSubtitle}>{subtitle}</Text>
-                ) : (
-                  <Text style={styles.brandSubtitle}>Live Match Arena</Text>
-                )}
-              </View>
+              {title === 'ChessOne' ? (
+                <Image
+                  source={logoBanner}
+                  style={styles.brandLogoImage}
+                  resizeMode="contain"
+                />
+              ) : (
+                <>
+                  <Image
+                    source={logoIcon}
+                    style={styles.brandIconSquare}
+                    resizeMode="contain"
+                  />
+                  <View>
+                    <Text style={styles.brandTitle}>{title}</Text>
+                    {subtitle ? (
+                      <Text style={styles.brandSubtitle}>{subtitle}</Text>
+                    ) : (
+                      <Text style={styles.brandSubtitle}>Live Match Arena</Text>
+                    )}
+                  </View>
+                </>
+              )}
             </TouchableOpacity>
           )}
         </View>
@@ -118,20 +148,20 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#12161C',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#1F2633',
+    borderBottomColor: '#E4E9E1',
     paddingHorizontal: 16,
     paddingVertical: 10,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: '#202D29',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.05,
         shadowRadius: 4,
       },
       android: {
-        elevation: 4,
+        elevation: 3,
       },
       web: {
         position: 'sticky' as any,
@@ -159,42 +189,52 @@ const styles = StyleSheet.create({
   },
   backIcon: {
     fontSize: 26,
-    color: '#38BDF8',
+    color: '#194E40',
     lineHeight: 26,
     marginRight: 4,
   },
+  backLogoIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  backTitleCol: {
+    justifyContent: 'center',
+  },
   backText: {
     fontSize: 15,
-    fontWeight: '600',
-    color: '#38BDF8',
+    fontWeight: '700',
+    color: '#194E40',
+  },
+  backSubtitle: {
+    fontSize: 11,
+    color: '#74817A',
+    fontWeight: '500',
   },
   brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
   },
-  brandIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#1E293B',
-    borderWidth: 1,
-    borderColor: '#38BDF8',
-    justifyContent: 'center',
-    alignItems: 'center',
+  brandLogoImage: {
+    width: 118,
+    height: 42,
   },
-  brandIcon: {
-    fontSize: 20,
+  brandIconSquare: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
   },
   brandTitle: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
     letterSpacing: 0.3,
   },
   brandSubtitle: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#74817A',
     fontWeight: '500',
   },
   rightSection: {
@@ -204,19 +244,19 @@ const styles = StyleSheet.create({
   userChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A212D',
+    backgroundColor: '#EEF3E8',
     borderRadius: 20,
     paddingVertical: 4,
     paddingHorizontal: 8,
     borderWidth: 1,
-    borderColor: '#2D3748',
+    borderColor: '#E4E9E1',
     gap: 8,
   },
   userAvatar: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -230,12 +270,12 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#10B981',
+    backgroundColor: '#4F8A5B',
     position: 'absolute',
     bottom: -1,
     right: -1,
     borderWidth: 1,
-    borderColor: '#12161C',
+    borderColor: '#FFFFFF',
   },
   userMeta: {
     flexDirection: 'row',
@@ -245,26 +285,26 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     maxWidth: 90,
   },
   idBadge: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 0.5,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   idBadgeText: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#60A5FA',
+    color: '#194E40',
   },
   signInBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 10,
   },
   signInBtnText: {

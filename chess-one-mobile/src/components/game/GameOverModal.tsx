@@ -6,8 +6,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
+  Image,
 } from 'react-native';
 import { Game, GameResult, PlayerColor } from '../../types/game.types';
+
+const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface GameOverModalProps {
   visible: boolean;
@@ -117,21 +120,21 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
   // Outcome banner
   let outcomeText = 'MATCH FINISHED';
-  let outcomeBg = '#374151';
-  let outcomeColor = '#9CA3AF';
+  let outcomeBg = '#EEF3E8';
+  let outcomeColor = '#74817A';
 
   if (isWinner) {
     outcomeText = '🏆 VICTORY';
-    outcomeBg = '#065F46';
-    outcomeColor = '#34D399';
+    outcomeBg = '#E5EDDA';
+    outcomeColor = '#194E40';
   } else if (isLoser) {
     outcomeText = '💔 DEFEAT';
-    outcomeBg = '#7F1D1D';
-    outcomeColor = '#F87171';
+    outcomeBg = '#FCEDDF';
+    outcomeColor = '#C53030';
   } else if (isDraw) {
     outcomeText = '🤝 DRAW';
-    outcomeBg = '#78350F';
-    outcomeColor = '#FBBF24';
+    outcomeBg = '#EEF3E8';
+    outcomeColor = '#194E40';
   }
 
   return (
@@ -147,6 +150,13 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
           <TouchableOpacity style={styles.closeBtn} onPress={onClose} activeOpacity={0.7}>
             <Text style={styles.closeBtnText}>✕</Text>
           </TouchableOpacity>
+
+          {/* Official Brand Logo */}
+          <Image
+            source={logoBanner}
+            style={styles.modalBrandLogo}
+            resizeMode="contain"
+          />
 
           {/* Big Icon */}
           <View style={styles.iconCircle}>
@@ -224,7 +234,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(32, 45, 41, 0.6)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -232,17 +242,17 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
+    borderColor: '#E4E9E1',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
     position: 'relative',
   },
   closeBtn: {
@@ -252,26 +262,31 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#334155',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 10,
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 14,
     fontWeight: '700',
+  },
+  modalBrandLogo: {
+    width: 110,
+    height: 38,
+    marginBottom: 8,
   },
   iconCircle: {
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#0F172A',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
     borderWidth: 2,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   bigIcon: {
     fontSize: 38,
@@ -290,13 +305,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 6,
     textAlign: 'center',
   },
   reason: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     marginBottom: 18,
     lineHeight: 20,
@@ -304,12 +319,12 @@ const styles = StyleSheet.create({
   },
   playersSummary: {
     width: '100%',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#F5F7F2',
     borderRadius: 12,
     padding: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: '#E4E9E1',
   },
   playerRow: {
     flexDirection: 'row',
@@ -317,15 +332,15 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   playerRole: {
-    color: '#64748B',
+    color: '#74817A',
     fontSize: 13,
     fontWeight: '600',
     width: 55,
   },
   playerName: {
-    color: '#E2E8F0',
+    color: '#202D29',
     fontSize: 13,
-    fontWeight: '600',
+    fontWeight: '700',
     flex: 1,
   },
   buttonGroup: {
@@ -333,17 +348,15 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   aiReviewBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#194E40',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#4F46E5',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
-    borderWidth: 1,
-    borderColor: '#818CF8',
+    shadowColor: '#194E40',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   aiReviewContent: {
     flexDirection: 'row',
@@ -360,29 +373,28 @@ const styles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   primaryBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#EEF3E8',
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#D5DFC8',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: '#194E40',
     fontSize: 15,
     fontWeight: '700',
   },
   secondaryBtn: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E4E9E1',
   },
   secondaryBtnText: {
-    color: '#FFFFFF',
+    color: '#202D29',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -393,7 +405,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ghostBtnText: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 13,
     fontWeight: '600',
   },

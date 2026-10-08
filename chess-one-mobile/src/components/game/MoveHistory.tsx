@@ -424,19 +424,24 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
 const styles = StyleSheet.create({
   container: {
     height: 215,
-    backgroundColor: '#212121', // Dark charcoal matching Image 1
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#303030',
+    borderColor: '#E4E9E1',
     overflow: 'hidden',
     width: '100%',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   tabBar: {
     flexDirection: 'row',
     height: 40,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#EEF3E8',
     borderBottomWidth: 1,
-    borderBottomColor: '#303030',
+    borderBottomColor: '#E4E9E1',
   },
   tabButton: {
     flex: 1,
@@ -448,10 +453,10 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: '#74817A',
   },
   tabLabelActive: {
-    color: '#FFFFFF',
+    color: '#194E40',
     fontWeight: '700',
   },
   activeTabIndicator: {
@@ -460,7 +465,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2.5,
-    backgroundColor: '#D1D5DB', // Bright underline matching screenshot
+    backgroundColor: '#194E40',
   },
   chatTabHeaderRow: {
     flexDirection: 'row',
@@ -468,7 +473,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   unreadBadge: {
-    backgroundColor: '#EF4444',
+    backgroundColor: '#F7A18C',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 9,
@@ -483,6 +488,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flex: 1,
+    backgroundColor: '#FFFFFF',
   },
 
   /* Moves Tab Styles */
@@ -491,12 +497,13 @@ const styles = StyleSheet.create({
     paddingTop: 9,
     paddingBottom: 7,
     borderBottomWidth: 1,
-    borderBottomColor: '#282828',
+    borderBottomColor: '#E4E9E1',
+    backgroundColor: '#FFFFFF',
   },
   openingText: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#D4D4D8',
+    fontWeight: '700',
+    color: '#202D29',
     letterSpacing: 0.2,
   },
   emptyMovesContainer: {
@@ -509,12 +516,12 @@ const styles = StyleSheet.create({
   emptyMovesNumber: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: '#74817A',
     width: 28,
   },
   emptyMovesText: {
     fontSize: 13,
-    color: '#71717A',
+    color: '#74817A',
     fontStyle: 'italic',
   },
   movesScrollView: {
@@ -534,7 +541,7 @@ const styles = StyleSheet.create({
     width: 32,
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: '#74817A',
   },
   moveCol: {
     flex: 1,
@@ -544,11 +551,11 @@ const styles = StyleSheet.create({
   normalMoveText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: '#202D29',
     paddingLeft: 4,
   },
   latestMoveBadge: {
-    backgroundColor: '#3E3E42', // Gray highlight badge matching [d3] in Image 1
+    backgroundColor: '#D6EF9E',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -557,7 +564,7 @@ const styles = StyleSheet.create({
   latestMoveBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#194E40',
   },
 
   /* Chat Tab Styles */
@@ -581,7 +588,7 @@ const styles = StyleSheet.create({
   },
   emptyChatText: {
     fontSize: 12,
-    color: '#71717A',
+    color: '#74817A',
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -600,7 +607,7 @@ const styles = StyleSheet.create({
   chatSenderName: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#93C5FD',
+    color: '#194E40',
     marginBottom: 2,
     paddingLeft: 2,
   },
@@ -610,11 +617,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   chatBubbleMe: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     borderBottomRightRadius: 2,
   },
   chatBubbleOpponent: {
-    backgroundColor: '#2D2D30',
+    backgroundColor: '#EEF3E8',
     borderBottomLeftRadius: 2,
   },
   chatBubbleText: {
@@ -624,7 +631,7 @@ const styles = StyleSheet.create({
   },
   chatTimestamp: {
     fontSize: 9,
-    color: '#71717A',
+    color: '#74817A',
     marginTop: 2,
     paddingHorizontal: 2,
   },
@@ -635,10 +642,10 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   quickChatBar: {
-    height: 32,
-    backgroundColor: '#1A1A1A',
+    height: 34,
+    backgroundColor: '#EEF3E8',
     borderTopWidth: 1,
-    borderTopColor: '#282828',
+    borderTopColor: '#E4E9E1',
   },
   quickChatContent: {
     alignItems: 'center',
@@ -646,15 +653,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   quickChip: {
-    backgroundColor: '#2A2A2D',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#3A3A3D',
+    borderColor: '#D5DFC8',
   },
   quickChipText: {
-    color: '#E4E4E7',
+    color: '#194E40',
     fontSize: 11,
     fontWeight: '600',
   },
@@ -663,24 +670,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#2C2C2E',
+    borderTopColor: '#E4E9E1',
     gap: 6,
   },
   chatInput: {
     flex: 1,
     height: 34,
-    backgroundColor: '#29292C',
+    backgroundColor: '#F5F7F2',
     borderRadius: 17,
     paddingHorizontal: 12,
     fontSize: 12.5,
-    color: '#FFFFFF',
+    color: '#202D29',
     borderWidth: 1,
-    borderColor: '#3A3A3E',
+    borderColor: '#E4E9E1',
   },
   sendButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     paddingHorizontal: 12,
     height: 34,
     borderRadius: 17,
@@ -688,7 +695,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#374151',
+    backgroundColor: '#E4E9E1',
     opacity: 0.6,
   },
   sendButtonText: {

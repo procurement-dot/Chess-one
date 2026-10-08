@@ -8,9 +8,12 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
+  Image,
 } from 'react-native';
 import { gameService } from '../../services/game.service';
 import { AiReviewResponse } from '../../types/game.types';
+
+const logoIcon = require('../../../assets/images/chessone-icon.png');
 
 interface AiReviewModalProps {
   visible: boolean;
@@ -74,12 +77,14 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
           {/* Header Bar */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <View style={styles.aiBadge}>
-                <Text style={styles.aiBadgeIcon}>🤖</Text>
-              </View>
+              <Image
+                source={logoIcon}
+                style={styles.aiLogoIcon}
+                resizeMode="contain"
+              />
               <View>
                 <Text style={styles.headerTitle}>AI Game Review</Text>
-                <Text style={styles.headerSubtitle}>Powered by Gemini & Stockfish</Text>
+                <Text style={styles.headerSubtitle}>ChessOne AI • Gemini & Stockfish</Text>
               </View>
             </View>
 
@@ -91,7 +96,7 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
           {/* Loading State */}
           {isLoading && (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#3B82F6" />
+              <ActivityIndicator size="large" color="#194E40" />
               <Text style={styles.loadingTitle}>Analyzing Every Move...</Text>
               <Text style={styles.loadingSubtitle}>
                 Stockfish & Gemini AI are evaluating accuracy, tactical opportunities, and blunders.
@@ -141,14 +146,14 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
                 <View style={styles.accuracyGrid}>
                   <View style={styles.accuracyBox}>
                     <Text style={styles.accuracyLabel}>White Accuracy</Text>
-                    <Text style={[styles.accuracyValue, { color: '#60A5FA' }]}>
+                    <Text style={[styles.accuracyValue, { color: '#194E40' }]}>
                       {review.accuracyWhite}%
                     </Text>
                   </View>
                   <View style={styles.accuracyDivider} />
                   <View style={styles.accuracyBox}>
                     <Text style={styles.accuracyLabel}>Black Accuracy</Text>
-                    <Text style={[styles.accuracyValue, { color: '#34D399' }]}>
+                    <Text style={[styles.accuracyValue, { color: '#202D29' }]}>
                       {review.accuracyBlack}%
                     </Text>
                   </View>
@@ -263,21 +268,21 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(32, 45, 41, 0.45)',
     justifyContent: 'flex-end',
   },
   sheetCard: {
     width: '100%',
     maxHeight: '90%',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 18,
     borderWidth: 1,
-    borderColor: '#1E293B',
-    shadowColor: '#000',
+    borderColor: '#E4E9E1',
+    shadowColor: '#202D29',
     shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.1,
     shadowRadius: 16,
     elevation: 20,
   },
@@ -288,46 +293,39 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: '#E4E9E1',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  aiBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#1E293B',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#3B82F6',
-  },
-  aiBadgeIcon: {
-    fontSize: 20,
+  aiLogoIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 8,
+    marginRight: 8,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: '#202D29',
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
     fontWeight: '500',
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -340,12 +338,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     fontSize: 17,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#202D29',
   },
   loadingSubtitle: {
     marginTop: 8,
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: 280,
@@ -357,17 +355,17 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#EF4444',
+    color: '#C53030',
   },
   errorSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     marginBottom: 18,
   },
   retryBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#194E40',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
@@ -386,11 +384,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   verdictCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   verdictHeader: {
     flexDirection: 'row',
@@ -401,40 +399,42 @@ const styles = StyleSheet.create({
   verdictTag: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#60A5FA',
+    color: '#194E40',
     letterSpacing: 1,
   },
   coachRatingPill: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   coachRatingText: {
-    color: '#F59E0B',
+    color: '#194E40',
     fontSize: 11,
     fontWeight: '700',
   },
   verdictTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 8,
   },
   summaryText: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: '#202D29',
     lineHeight: 20,
     marginBottom: 16,
   },
   accuracyGrid: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E4E9E1',
   },
   accuracyBox: {
     flex: 1,
@@ -443,11 +443,11 @@ const styles = StyleSheet.create({
   accuracyDivider: {
     width: 1,
     height: 30,
-    backgroundColor: '#334155',
+    backgroundColor: '#E4E9E1',
   },
   accuracyLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#74817A',
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -469,21 +469,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#202D29',
   },
   bestMoveCard: {
-    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+    backgroundColor: 'rgba(214, 239, 158, 0.35)',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.3)',
+    borderColor: '#D5DFC8',
   },
   worstMoveCard: {
-    backgroundColor: 'rgba(239, 68, 68, 0.08)',
+    backgroundColor: 'rgba(252, 237, 223, 0.7)',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: 'rgba(239, 68, 68, 0.3)',
+    borderColor: '#F7A18C',
   },
   moveHeaderRow: {
     flexDirection: 'row',
@@ -493,36 +493,36 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   moveBadgeGreen: {
-    backgroundColor: '#065F46',
+    backgroundColor: '#194E40',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   moveBadgeGreenText: {
-    color: '#34D399',
+    color: '#D6EF9E',
     fontSize: 11,
     fontWeight: '800',
   },
   moveBadgeAmber: {
-    backgroundColor: '#7F1D1D',
+    backgroundColor: '#C53030',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   moveBadgeAmberText: {
-    color: '#F87171',
+    color: '#FCEDDF',
     fontSize: 11,
     fontWeight: '800',
   },
   moveTitleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: '#202D29',
     flex: 1,
   },
   moveExplanationText: {
     fontSize: 13,
-    color: '#CBD5E1',
+    color: '#202D29',
     lineHeight: 18,
   },
   betterMoveBox: {
@@ -531,36 +531,36 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(239, 68, 68, 0.2)',
+    borderTopColor: '#F7A18C',
   },
   betterMoveLabel: {
     fontSize: 12,
-    color: '#FBBF24',
+    color: '#C53030',
     fontWeight: '700',
   },
   betterMoveValue: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: '#202D29',
     fontWeight: '700',
   },
   turningPointCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#F5F7F2',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E4E9E1',
   },
   turningPointText: {
     fontSize: 13,
-    color: '#CBD5E1',
+    color: '#202D29',
     lineHeight: 19,
   },
   tipCard: {
-    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    backgroundColor: '#EEF3E8',
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: 'rgba(59, 130, 246, 0.35)',
+    borderColor: '#D5DFC8',
   },
   tipHeaderRow: {
     flexDirection: 'row',
@@ -574,11 +574,11 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#60A5FA',
+    color: '#194E40',
   },
   tipText: {
     fontSize: 13,
-    color: '#E2E8F0',
+    color: '#202D29',
     lineHeight: 19,
   },
   bottomButtonGroup: {
@@ -586,7 +586,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   fullResultsBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: '#194E40',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -597,15 +597,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   closeDoneBtn: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#E4E9E1',
   },
   closeDoneBtnText: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 14,
     fontWeight: '600',
   },

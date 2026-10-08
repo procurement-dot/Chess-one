@@ -5,10 +5,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useInvitations } from '../../hooks/useInvitations';
+
+const homeLogoIcon = require('../../../assets/images/chessone-icon.png');
 
 export type FooterTab = 'home' | 'create' | 'community' | 'history' | 'account' | 'join';
 
@@ -72,9 +75,20 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
               onPress={() => handleTabPress(tab.route)}
             >
               <View style={styles.iconWrapper}>
-                <Text style={[styles.tabIcon, isActive && styles.activeTabIcon]}>
-                  {tab.icon}
-                </Text>
+                {tab.id === 'home' ? (
+                  <Image
+                    source={homeLogoIcon}
+                    style={[
+                      styles.homeTabIcon,
+                      isActive && styles.activeHomeTabIcon,
+                    ]}
+                    resizeMode="contain"
+                  />
+                ) : (
+                  <Text style={[styles.tabIcon, isActive && styles.activeTabIcon]}>
+                    {tab.icon}
+                  </Text>
+                )}
                 {Boolean(tab.badgeCount && tab.badgeCount > 0) && (
                   <View style={styles.badgePill}>
                     <Text style={styles.badgeText}>
@@ -99,21 +113,21 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
 
 const styles = StyleSheet.create({
   footerContainer: {
-    backgroundColor: '#12161C',
+    backgroundColor: '#FFFFFF',
     borderTopWidth: 1,
-    borderTopColor: '#1F2633',
+    borderTopColor: '#E4E9E1',
     paddingBottom: Platform.OS === 'ios' ? 24 : 10,
     paddingTop: 8,
     paddingHorizontal: 8,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
+        shadowColor: '#202D29',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 8,
+        elevation: 6,
       },
       web: {
         position: 'sticky' as any,
@@ -139,7 +153,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   activeTabButton: {
-    backgroundColor: '#161D2A',
+    backgroundColor: '#EEF3E8',
   },
   iconWrapper: {
     position: 'relative',
@@ -154,14 +168,24 @@ const styles = StyleSheet.create({
     opacity: 1,
     transform: [{ scale: 1.1 }],
   },
+  homeTabIcon: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    opacity: 0.85,
+  },
+  activeHomeTabIcon: {
+    opacity: 1,
+    transform: [{ scale: 1.1 }],
+  },
   tabLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
+    color: '#74817A',
     marginTop: 3,
   },
   activeTabLabel: {
-    color: '#38BDF8',
+    color: '#194E40',
     fontWeight: '700',
   },
   activeIndicator: {
@@ -170,13 +194,13 @@ const styles = StyleSheet.create({
     width: 18,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: '#38BDF8',
+    backgroundColor: '#194E40',
   },
   badgePill: {
     position: 'absolute',
     top: -4,
     right: -10,
-    backgroundColor: '#EF4444',
+    backgroundColor: '#F7A18C',
     minWidth: 16,
     height: 16,
     borderRadius: 8,

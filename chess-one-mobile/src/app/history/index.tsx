@@ -69,7 +69,7 @@ export default function MatchHistoryScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <AppHeader
@@ -86,13 +86,13 @@ export default function MatchHistoryScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={fetchGames}
-            tintColor="#3B82F6"
+            tintColor="#194E40"
           />
         }
       >
         {isLoading && games.length === 0 ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#3B82F6" />
+            <ActivityIndicator size="large" color="#194E40" />
             <Text style={styles.loadingText}>Loading match history...</Text>
           </View>
         ) : games.length === 0 ? (
@@ -225,7 +225,7 @@ export default function MatchHistoryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: '#F5F7F2',
   },
   header: {
     flexDirection: 'row',
@@ -234,25 +234,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: '#E4E9E1',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E232A',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: '#202D29',
     lineHeight: 28,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
   },
   spacer: {
     width: 40,
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: '#74817A',
   },
   emptyContainer: {
     paddingTop: 80,
@@ -285,18 +285,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#E2E8F0',
+    color: '#202D29',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#64748B',
+    color: '#74817A',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
   },
   startBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
     paddingHorizontal: 24,
     height: 46,
     borderRadius: 12,
@@ -309,19 +309,24 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   matchCard: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 14,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: '#E4E9E1',
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
   },
   matchCardWinner: {
-    borderColor: '#EAB308',
-    backgroundColor: '#181E27',
+    borderColor: '#D5DFC8',
+    backgroundColor: '#FFFFFF',
   },
   matchCardLoser: {
-    borderColor: '#374151',
+    borderColor: '#E4E9E1',
   },
   matchCardHeader: {
     flexDirection: 'row',
@@ -338,7 +343,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#262D38',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -352,12 +357,12 @@ const styles = StyleSheet.create({
   opponentName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 2,
   },
   matchDetails: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
   },
   matchRight: {
     flexDirection: 'row',
@@ -370,16 +375,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   pillWin: {
-    backgroundColor: '#064E3B',
+    backgroundColor: '#194E40',
   },
   pillLoss: {
-    backgroundColor: '#451A03',
+    backgroundColor: '#C53030',
   },
   pillDraw: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#74817A',
   },
   pillActive: {
-    backgroundColor: '#1E3A8A',
+    backgroundColor: '#D6EF9E',
   },
   outcomePillText: {
     fontSize: 12,
@@ -388,14 +393,14 @@ const styles = StyleSheet.create({
   },
   chevron: {
     fontSize: 20,
-    color: '#64748B',
+    color: '#74817A',
   },
   trophyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(234, 179, 8, 0.12)',
+    backgroundColor: '#EEF3E8',
     borderWidth: 1,
-    borderColor: 'rgba(234, 179, 8, 0.35)',
+    borderColor: '#D5DFC8',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -411,18 +416,18 @@ const styles = StyleSheet.create({
   trophyTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#FDE047',
+    color: '#194E40',
     marginBottom: 2,
   },
   trophySub: {
     fontSize: 11,
-    color: '#FEF08A',
+    color: '#74817A',
     lineHeight: 15,
   },
   aiSuggestionBox: {
-    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    backgroundColor: '#EEF3E8',
     borderWidth: 1,
-    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderColor: '#D5DFC8',
     borderRadius: 12,
     padding: 10,
     marginTop: 10,
@@ -439,11 +444,11 @@ const styles = StyleSheet.create({
   aiSuggestionTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#38BDF8',
+    color: '#194E40',
   },
   aiSuggestionText: {
     fontSize: 12,
-    color: '#BAE6FD',
+    color: '#202D29',
     lineHeight: 17,
   },
 });

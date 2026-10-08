@@ -82,17 +82,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: '#E4E9E1',
     width: '100%',
-    shadowColor: '#000000',
+    shadowColor: '#202D29',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.03,
     shadowRadius: 3,
     elevation: 1,
   },
   activeContainer: {
-    borderColor: '#93C5FD',
-    backgroundColor: '#FAFCFF',
+    borderColor: '#194E40',
+    backgroundColor: '#EEF3E8',
   },
   leftSection: {
     flexDirection: 'row',
@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#CBD5E1',
+    borderColor: '#D5DFC8',
   },
   avatarPlaceholder: {
     width: 40,
@@ -117,19 +117,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   whiteBadge: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#CBD5E1',
+    backgroundColor: '#EEF0E0',
+    borderColor: '#D5DFC8',
   },
   blackBadge: {
-    backgroundColor: '#1E293B',
-    borderColor: '#0F172A',
+    backgroundColor: '#194E40',
+    borderColor: '#194E40',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
   },
   whiteBadgeText: {
-    color: '#0F172A',
+    color: '#202D29',
   },
   blackBadgeText: {
     color: '#FFFFFF',
@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: '#202D29',
     maxWidth: 140,
   },
   colorChip: {
@@ -155,31 +155,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   whiteChip: {
-    backgroundColor: '#F8FAFC',
-    borderColor: '#E2E8F0',
+    backgroundColor: '#EEF0E0',
+    borderColor: '#D5DFC8',
   },
   blackChip: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: '#194E40',
+    borderColor: '#194E40',
   },
   colorChipText: {
     fontSize: 10,
     fontWeight: '600',
   },
   whiteChipText: {
-    color: '#475569',
+    color: '#202D29',
   },
   blackChipText: {
-    color: '#F8FAFC',
+    color: '#FFFFFF',
   },
   turnLabel: {
     fontSize: 11,
-    color: '#2563EB',
+    color: '#194E40',
     fontWeight: '600',
     marginTop: 2,
   },
   checkBadge: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: '#FCEDDF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -187,13 +187,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkText: {
-    color: '#DC2626',
+    color: '#C53030',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   timeoutBadge: {
-    backgroundColor: '#7F1D1D',
+    backgroundColor: '#FCEDDF',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timeoutText: {
-    color: '#F87171',
+    color: '#C53030',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,

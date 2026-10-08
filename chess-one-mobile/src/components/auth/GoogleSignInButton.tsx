@@ -92,19 +92,19 @@ export function GoogleSignInButton({
 const styles = StyleSheet.create({
   button: {
     width: '100%',
-    backgroundColor: '#1E232A',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#374151',
-    borderRadius: 12,
+    borderColor: '#E4E9E1',
+    borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000000',
+    shadowColor: '#202D29',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 2,
   },
   buttonDisabled: {
     opacity: 0.55,
@@ -125,9 +125,9 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   buttonText: {
-    color: '#F9FAFB',
+    color: '#202D29',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
     letterSpacing: 0.2,
   },
 });
