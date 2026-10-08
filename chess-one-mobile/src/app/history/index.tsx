@@ -1,0 +1,449 @@
+import React, { useEffect, useState, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
+  StatusBar,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import { gameService } from '../../services/game.service';
+import { useAuthStore } from '../../store/authStore';
+import { Game } from '../../types/game.types';
+import { AppHeader } from '../../components/navigation/AppHeader';
+import { AppFooter } from '../../components/navigation/AppFooter';
+
+// AI Coach contextual advice for losses
+const getAiCoachSuggestion = (game: Game, isUserWhite: boolean): string => {
+  if (game.result === 'TIMEOUT') {
+    return '⏱️ Clock Awareness: Pace your moves steadily in the opening so you keep ample time for complex tactics.';
+  }
+  if (game.result === 'RESIGNATION') {
+    return '🛡️ Resilience: Even in difficult positions, look for defensive counter-punches or stalemate tricks before resigning.';
+  }
+  if (game.result === 'CHECKMATE') {
+    return isUserWhite
+      ? '👑 King Safety: Remember to castle early and avoid leaving your f2/g2 pawns vulnerable to quick attacks.'
+      : '👑 King Safety: Watch out for back-rank threats and coordinate your rooks to maintain king defense.';
+  }
+  if (game.result === 'DRAW' || game.result === 'STALEMATE') {
+    return '🤝 Solid Defense: Great tenacity fighting back to secure a draw in an equal endgame!';
+  }
+  return '🧠 Tactical Vision: Scan the board for undefended pieces before every move to prevent unexpected tactics.';
+};
+
+export default function MatchHistoryScreen() {
+  const router = useRouter();
+  const { user } = useAuthStore();
+  const currentUserId = user?.id ? parseInt(user.id, 10) : null;
+
+  const [games, setGames] = useState<Game[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchGames = useCallback(async () => {
+    try {
+      const list = await gameService.getMyGames();
+      setGames(list.games || []);
+    } catch (err) {
+      console.warn('Failed to load games:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchGames();
+  }, [fetchGames]);
+
+  const handleGamePress = (game: Game) => {
+    if (game.status === 'COMPLETED') {
+      router.push(`/game/result/${game.id}` as any);
+    } else {
+      router.push(`/game/${game.id}` as any);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <StatusBar barStyle="light-content" />
+
+      {/* Header */}
+      <AppHeader
+        title="Match History"
+        subtitle="Your completed & active games"
+        showBack={true}
+      />
+
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={fetchGames}
+            tintColor="#3B82F6"
+          />
+        }
+      >
+        {isLoading && games.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <ActivityIndicator size="large" color="#3B82F6" />
+            <Text style={styles.loadingText}>Loading match history...</Text>
+          </View>
+        ) : games.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyIcon}>♟️</Text>
+            <Text style={styles.emptyTitle}>No games played yet</Text>
+            <Text style={styles.emptySubtitle}>
+              Start a game against the computer or challenge a friend to see your match history here.
+            </Text>
+            <TouchableOpacity
+              style={styles.startBtn}
+              activeOpacity={0.85}
+              onPress={() => router.push('/play/create' as any)}
+            >
+              <Text style={styles.startBtnText}>Start a Match</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          games.map((g) => {
+            const isUserWhite = currentUserId ? g.whitePlayerId === currentUserId : true;
+            const opponent = isUserWhite ? g.blackPlayer : g.whitePlayer;
+            const opponentName =
+              g.gameType === 'PLAYER_VS_AI'
+                ? `Stockfish AI (${g.aiDifficulty || 'Medium'})`
+                : opponent?.name || 'Opponent';
+
+            const isWinner = Boolean(g.winnerId && currentUserId && g.winnerId === currentUserId);
+            const isLoser = Boolean(g.winnerId && currentUserId && g.winnerId !== currentUserId);
+            const isDraw = g.result === 'DRAW';
+            const isActive = g.status === 'ACTIVE';
+
+            const outcomeText = isActive
+              ? 'In Progress'
+              : isWinner
+              ? 'Win'
+              : isLoser
+              ? 'Loss'
+              : isDraw
+              ? 'Draw'
+              : 'Completed';
+
+            const outcomeStyle = isActive
+              ? styles.pillActive
+              : isWinner
+              ? styles.pillWin
+              : isLoser
+              ? styles.pillLoss
+              : styles.pillDraw;
+
+            const dateStr = new Date(g.createdAt).toLocaleDateString([], {
+              month: 'short',
+              day: 'numeric',
+            });
+
+            const aiSuggestion = isLoser ? getAiCoachSuggestion(g, isUserWhite) : null;
+
+            return (
+              <TouchableOpacity
+                key={g.id}
+                style={[
+                  styles.matchCard,
+                  isWinner && styles.matchCardWinner,
+                  isLoser && styles.matchCardLoser,
+                ]}
+                activeOpacity={0.8}
+                onPress={() => handleGamePress(g)}
+              >
+                <View style={styles.matchCardHeader}>
+                  <View style={styles.matchLeft}>
+                    <View style={styles.avatarMini}>
+                      <Text style={styles.avatarSym}>
+                        {g.gameType === 'PLAYER_VS_AI' ? '🤖' : '⚔️'}
+                      </Text>
+                    </View>
+                    <View style={styles.matchMeta}>
+                      <Text style={styles.opponentName} numberOfLines={1}>
+                        vs. {opponentName}
+                      </Text>
+                      <Text style={styles.matchDetails}>
+                        Match #{g.id} • {g.timeControl} • {isUserWhite ? 'White' : 'Black'} • {dateStr}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={styles.matchRight}>
+                    <View style={[styles.outcomePill, outcomeStyle]}>
+                      <Text style={styles.outcomePillText}>
+                        {isWinner ? '🏆 Win' : outcomeText}
+                      </Text>
+                    </View>
+                    <Text style={styles.chevron}>›</Text>
+                  </View>
+                </View>
+
+                {/* WINNER: TROPHY & VICTORY BANNER */}
+                {isWinner && (
+                  <View style={styles.trophyBanner}>
+                    <Text style={styles.trophyEmoji}>🏆</Text>
+                    <View style={styles.trophyTextBox}>
+                      <Text style={styles.trophyTitle}>Match #{g.id} Winner!</Text>
+                      <Text style={styles.trophySub}>
+                        Victory by {g.result ? g.result.toLowerCase() : 'checkmate'}. Outstanding tactical play!
+                      </Text>
+                    </View>
+                  </View>
+                )}
+
+                {/* LOSER: AI COACH SUGGESTION */}
+                {isLoser && aiSuggestion && (
+                  <View style={styles.aiSuggestionBox}>
+                    <View style={styles.aiSuggestionHeader}>
+                      <Text style={styles.aiSuggestionIcon}>💡 🤖</Text>
+                      <Text style={styles.aiSuggestionTitle}>AI Coach Suggestion:</Text>
+                    </View>
+                    <Text style={styles.aiSuggestionText}>{aiSuggestion}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })
+        )}
+      </ScrollView>
+
+      {/* Persistent Bottom Footer */}
+      <AppFooter activeTab="account" />
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#0F1318',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#1A1F26',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#1E232A',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backText: {
+    fontSize: 26,
+    color: '#FFFFFF',
+    lineHeight: 28,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  spacer: {
+    width: 40,
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 40,
+  },
+  centerContainer: {
+    paddingTop: 80,
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: '#94A3B8',
+  },
+  emptyContainer: {
+    paddingTop: 80,
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#E2E8F0',
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  startBtn: {
+    backgroundColor: '#2563EB',
+    paddingHorizontal: 24,
+    height: 46,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  startBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  matchCard: {
+    backgroundColor: '#1A1F26',
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#2F3642',
+  },
+  matchCardWinner: {
+    borderColor: '#EAB308',
+    backgroundColor: '#181E27',
+  },
+  matchCardLoser: {
+    borderColor: '#374151',
+  },
+  matchCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  matchLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 10,
+  },
+  avatarMini: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#262D38',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarSym: {
+    fontSize: 18,
+  },
+  matchMeta: {
+    flex: 1,
+  },
+  opponentName: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    marginBottom: 2,
+  },
+  matchDetails: {
+    fontSize: 12,
+    color: '#94A3B8',
+  },
+  matchRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  outcomePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  pillWin: {
+    backgroundColor: '#064E3B',
+  },
+  pillLoss: {
+    backgroundColor: '#451A03',
+  },
+  pillDraw: {
+    backgroundColor: '#1E293B',
+  },
+  pillActive: {
+    backgroundColor: '#1E3A8A',
+  },
+  outcomePillText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  chevron: {
+    fontSize: 20,
+    color: '#64748B',
+  },
+  trophyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(234, 179, 8, 0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(234, 179, 8, 0.35)',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 10,
+    gap: 10,
+  },
+  trophyEmoji: {
+    fontSize: 26,
+  },
+  trophyTextBox: {
+    flex: 1,
+  },
+  trophyTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FDE047',
+    marginBottom: 2,
+  },
+  trophySub: {
+    fontSize: 11,
+    color: '#FEF08A',
+    lineHeight: 15,
+  },
+  aiSuggestionBox: {
+    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(56, 189, 248, 0.25)',
+    borderRadius: 12,
+    padding: 10,
+    marginTop: 10,
+  },
+  aiSuggestionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+    gap: 6,
+  },
+  aiSuggestionIcon: {
+    fontSize: 14,
+  },
+  aiSuggestionTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#38BDF8',
+  },
+  aiSuggestionText: {
+    fontSize: 12,
+    color: '#BAE6FD',
+    lineHeight: 17,
+  },
+});

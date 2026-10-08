@@ -1,0 +1,153 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum GameType {
+  PLAYER_VS_PLAYER
+  PLAYER_VS_AI
+}
+
+enum GameStatus {
+  WAITING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum GameResult {
+  CHECKMATE
+  RESIGNATION
+  DRAW
+  STALEMATE
+  TIMEOUT
+}
+
+enum PlayerColor {
+  WHITE
+  BLACK
+}
+
+enum AIDifficulty {
+  EASY
+  MEDIUM
+  HARD
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  googleId  String?  @unique
+  avatarUrl String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdGames  Game[]           @relation("CreatedBy")
+  whiteGames    Game[]           @relation("WhitePlayer")
+  blackGames    Game[]           @relation("BlackPlayer")
+  wonGames      Game[]           @relation("GameWinner")
+  sentInvites   GameInvitation[] @relation("SentInvitations")
+  recvInvites   GameInvitation[] @relation("ReceivedInvitations")
+  moves         GameMove[]
+}
+
+model Game {
+  id            Int          @id @default(autoincrement())
+  gameCode      String       @unique
+  gameType      GameType     @default(PLAYER_VS_PLAYER)
+  status        GameStatus   @default(WAITING)
+
+  createdBy     Int
+  creator       User         @relation("CreatedBy", fields: [createdBy], references: [id])
+
+  whitePlayerId Int?
+  whitePlayer   User?        @relation("WhitePlayer", fields: [whitePlayerId], references: [id])
+
+  blackPlayerId Int?
+  blackPlayer   User?        @relation("BlackPlayer", fields: [blackPlayerId], references: [id])
+
+  aiDifficulty  AIDifficulty?
+
+  timeControl   String
+
+  whiteTimeMs   Int?
+  blackTimeMs   Int?
+
+  fen           String
+  pgn           String       @default("")
+  currentTurn   PlayerColor  @default(WHITE)
+
+  result        GameResult?
+  winnerId      Int?
+  winner        User?        @relation("GameWinner", fields: [winnerId], references: [id])
+
+  drawOfferFrom PlayerColor?
+
+  lastMoveAt    DateTime?
+
+  createdAt     DateTime     @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+
+  invitations   GameInvitation[]
+  moves         GameMove[]
+
+  @@index([gameCode])
+  @@index([status])
+  @@index([createdBy])
+  @@index([whitePlayerId])
+  @@index([blackPlayerId])
+}
+
+model GameInvitation {
+  id          Int              @id @default(autoincrement())
+  gameId      Int
+  senderId    Int
+  receiverId  Int
+  status      InvitationStatus @default(PENDING)
+  createdAt   DateTime         @default(now())
+  expiresAt   DateTime
+  respondedAt DateTime?
+
+  game        Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  sender      User             @relation("SentInvitations", fields: [senderId], references: [id])
+  receiver    User             @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+
+  @@index([gameId])
+  @@index([receiverId, status])
+  @@index([senderId])
+}
+
+model GameMove {
+  id         Int         @id @default(autoincrement())
+  gameId     Int
+  moveNumber Int
+  playerId   Int?
+  color      PlayerColor
+
+  from       String
+  to         String
+  promotion  String?
+  san        String
+
+  fenAfter   String
+
+  createdAt  DateTime    @default(now())
+
+  game       Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player     User?       @relation(fields: [playerId], references: [id])
+
+  @@index([gameId, moveNumber])
+}
