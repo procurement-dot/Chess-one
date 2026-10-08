@@ -6,6 +6,9 @@ const { emitToGame } = require("../config/socket");
 const { AppError } = require("../middleware/error.middleware");
 const aiService = require("./ai.service");
 
+// In-memory registry of pending AI moves to prevent race conditions and duplicate executions
+const activeAiTimers = new Map();
+
 class MoveService {
   /**
    * Authoritative move execution
@@ -222,23 +225,44 @@ class MoveService {
    * Internal scheduler for AI counter-move
    */
   async _scheduleAIMove(gameId, aiDifficulty) {
-    setTimeout(async () => {
+    if (!activeAiTimers) {
+      activeAiTimers = new Map();
+    }
+
+    // Cancel any prior pending timer for this game to prevent duplicate moves or race conditions
+    if (activeAiTimers.has(gameId)) {
+      clearTimeout(activeAiTimers.get(gameId));
+      activeAiTimers.delete(gameId);
+    }
+
+    const timer = setTimeout(async () => {
+      activeAiTimers.delete(gameId);
       try {
         const game = await prisma.game.findUnique({
           where: { id: gameId },
           include: { moves: { orderBy: { id: "desc" }, take: 1 } },
         });
 
-        if (!game || game.status !== "ACTIVE") return;
+        if (!game || game.status !== "ACTIVE" || game.gameType !== "PLAYER_VS_AI") return;
+
+        // Strictly verify which color is controlled by the AI (slot without a human user ID)
+        const isAiWhite = !game.whitePlayerId;
+        const isAiBlack = !game.blackPlayerId;
+        const expectedAiColor = isAiWhite ? "WHITE" : (isAiBlack ? "BLACK" : null);
+
+        // Never play if it is not genuinely the AI's turn
+        if (!expectedAiColor || game.currentTurn !== expectedAiColor) {
+          return;
+        }
 
         const aiMove = await aiService.getBestMove({
           fen: game.fen,
-          difficulty: aiDifficulty,
+          difficulty: aiDifficulty || game.aiDifficulty,
         });
 
         if (!aiMove) return;
 
-        const aiColor = game.currentTurn;
+        const aiColor = expectedAiColor;
         const moveValidation = validateAndApplyMove(game.fen, aiMove, game.pgn);
         if (!moveValidation.success) return;
 
@@ -344,6 +368,8 @@ class MoveService {
         console.error("AI counter-move error:", err);
       }
     }, 400); // Small natural delay for AI thought
+
+    activeAiTimers.set(gameId, timer);
   }
 }
 

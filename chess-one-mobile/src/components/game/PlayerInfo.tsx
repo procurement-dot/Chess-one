@@ -11,6 +11,7 @@ interface PlayerInfoProps {
   isTurn: boolean;
   isCheck?: boolean;
   isAI?: boolean;
+  isCurrentUser?: boolean;
 }
 
 export const PlayerInfo: React.FC<PlayerInfoProps> = ({
@@ -21,6 +22,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isTurn,
   isCheck = false,
   isAI = false,
+  isCurrentUser = false,
 }) => {
   const displayName = isAI ? 'AI' : (player?.name || nameFallback);
   const initial = displayName[0]?.toUpperCase() || 'P';
@@ -61,7 +63,13 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
               <Text style={styles.timeoutText}>TIME EXPIRED</Text>
             </View>
           ) : isTurn ? (
-            <Text style={styles.turnLabel}>Thinking...</Text>
+            isCurrentUser ? (
+              <View style={styles.yourTurnBadge}>
+                <Text style={styles.yourTurnText}>Your Turn</Text>
+              </View>
+            ) : (
+              <Text style={styles.turnLabel}>{isAI ? 'Thinking...' : "Opponent's Turn"}</Text>
+            )
           ) : null}
         </View>
       </View>
@@ -205,5 +213,19 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
+  },
+  yourTurnBadge: {
+    backgroundColor: '#E6F4EA',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+    marginTop: 2,
+  },
+  yourTurnText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#137333',
+    letterSpacing: 0.3,
   },
 });

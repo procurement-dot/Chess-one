@@ -33,8 +33,9 @@ import { PieceSymbol } from 'chess.js';
 
 export default function LiveGameScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ gameId: string }>();
+  const params = useLocalSearchParams<{ gameId: string; mode?: string }>();
   const gameId = params.gameId ? parseInt(params.gameId, 10) : 0;
+  const isAIGame = params.mode === 'ai' || false;
   const { user } = useAuthStore();
 
   const {
@@ -238,6 +239,21 @@ export default function LiveGameScreen() {
     );
   }
 
+  const effectiveIsAI = isAIGame || game?.gameType === 'PLAYER_VS_AI';
+
+  if (isLoading && !game) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.centerBox}>
+          <ActivityIndicator size="large" color="#194E40" />
+          <Text style={styles.loadingText}>
+            {effectiveIsAI ? 'Starting game vs AI...' : 'Connecting to match...'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Determine which player is top vs bottom based on user's color orientation
   const isUserWhite = userColor === 'WHITE';
   const effectiveOrientation: 'w' | 'b' = invertedOrientation
@@ -251,7 +267,7 @@ export default function LiveGameScreen() {
   const topPlayerColor = isUserWhite ? 'BLACK' : 'WHITE';
   const topPlayerTime = isUserWhite ? blackTimeMs : whiteTimeMs;
   const topPlayerIsTurn = currentTurn === topPlayerColor;
-  const topPlayerIsAI = game?.gameType === 'PLAYER_VS_AI' && !isUserWhite ? false : game?.gameType === 'PLAYER_VS_AI';
+  const topPlayerIsAI = effectiveIsAI && !isUserWhite ? false : effectiveIsAI;
   const topPlayerFallback = topPlayerIsAI
     ? 'AI'
     : isUserWhite
@@ -288,7 +304,7 @@ export default function LiveGameScreen() {
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerGameType}>
-            {game?.gameType === 'PLAYER_VS_AI' ? '🤖 Play vs AI' : 'Live Match'}
+            {effectiveIsAI ? '🤖 Play vs AI' : 'Live Match'}
           </Text>
           <Text style={styles.headerSubtitle}>
             {game?.timeControl} • {game?.gameCode ? `#${game.gameCode}` : `Match #${gameId}`}
@@ -343,6 +359,7 @@ export default function LiveGameScreen() {
             isTurn={topPlayerIsTurn && status === 'ACTIVE'}
             isCheck={isCheckForTop}
             isAI={topPlayerIsAI}
+            isCurrentUser={false}
           />
         </View>
 
@@ -439,6 +456,7 @@ export default function LiveGameScreen() {
             isTurn={bottomPlayerIsTurn && status === 'ACTIVE'}
             isCheck={isCheckForBottom}
             isAI={false}
+            isCurrentUser={true}
           />
         </View>
 

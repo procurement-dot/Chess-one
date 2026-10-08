@@ -105,6 +105,30 @@ class GameStore {
   }
 
   updateGameState(state: Partial<GameState>) {
+    let whiteTimeMs = this.state.whiteTimeMs;
+    let blackTimeMs = this.state.blackTimeMs;
+
+    if (state.whiteTimeMs !== undefined && state.whiteTimeMs !== null) {
+      if (this.state.currentTurn === 'WHITE' && this.state.gameStatus === 'ACTIVE' && whiteTimeMs !== null) {
+        // Prevent clock from bouncing backwards/upwards due to polling latency
+        if (state.whiteTimeMs <= whiteTimeMs || Math.abs(state.whiteTimeMs - whiteTimeMs) > 3000) {
+          whiteTimeMs = state.whiteTimeMs;
+        }
+      } else {
+        whiteTimeMs = state.whiteTimeMs;
+      }
+    }
+
+    if (state.blackTimeMs !== undefined && state.blackTimeMs !== null) {
+      if (this.state.currentTurn === 'BLACK' && this.state.gameStatus === 'ACTIVE' && blackTimeMs !== null) {
+        if (state.blackTimeMs <= blackTimeMs || Math.abs(state.blackTimeMs - blackTimeMs) > 3000) {
+          blackTimeMs = state.blackTimeMs;
+        }
+      } else {
+        blackTimeMs = state.blackTimeMs;
+      }
+    }
+
     this.state = {
       ...this.state,
       gameState: { ...(this.state.gameState as any), ...state },
@@ -112,8 +136,8 @@ class GameStore {
         ? state.fen
         : (this.state.fen || DEFAULT_FEN),
       currentTurn: state.currentTurn ?? this.state.currentTurn,
-      whiteTimeMs: state.whiteTimeMs !== undefined ? state.whiteTimeMs : this.state.whiteTimeMs,
-      blackTimeMs: state.blackTimeMs !== undefined ? state.blackTimeMs : this.state.blackTimeMs,
+      whiteTimeMs,
+      blackTimeMs,
       gameStatus: state.status ?? this.state.gameStatus,
       result: state.result !== undefined ? state.result : this.state.result,
       winnerId: state.winnerId !== undefined ? state.winnerId : this.state.winnerId,
@@ -126,8 +150,8 @@ class GameStore {
             ...(state.fen ? { fen: state.fen } : {}),
             ...(state.result !== undefined ? { result: state.result } : {}),
             ...(state.winnerId !== undefined ? { winnerId: state.winnerId } : {}),
-            ...(state.whiteTimeMs !== undefined ? { whiteTimeMs: state.whiteTimeMs } : {}),
-            ...(state.blackTimeMs !== undefined ? { blackTimeMs: state.blackTimeMs } : {}),
+            ...(whiteTimeMs !== undefined ? { whiteTimeMs } : {}),
+            ...(blackTimeMs !== undefined ? { blackTimeMs } : {}),
             ...(state.drawOfferFrom !== undefined ? { drawOfferFrom: state.drawOfferFrom } : {}),
           }
         : null,
@@ -235,6 +259,9 @@ class GameStore {
 
   tickActiveClock(decrementMs: number = 1000) {
     if (this.state.gameStatus !== 'ACTIVE') return;
+
+    // Do not tick down clock until the first move has been played
+    if (this.state.moves.length === 0 && !this.state.lastMove) return;
 
     if (this.state.currentTurn === 'WHITE' && this.state.whiteTimeMs !== null) {
       const nextTime = Math.max(0, this.state.whiteTimeMs - decrementMs);

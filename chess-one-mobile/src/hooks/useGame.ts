@@ -27,7 +27,7 @@ export function useGame(gameId: number | string) {
     movesCountRef.current = store.moves.length;
   }, [store.moves.length]);
 
-  // Sync chess.js instance whenever FEN updates in the store
+  // Sync chess.js instance whenever FEN updates in the store, and clear ghost selections
   useEffect(() => {
     try {
       if (store.fen) {
@@ -36,6 +36,10 @@ export function useGame(gameId: number | string) {
     } catch (err) {
       console.warn('[useGame] Failed to load FEN into chess.js:', err);
     }
+    // Clear any previous selection / dots whenever board position updates
+    setSelectedSquare(null);
+    setPossibleMoves([]);
+    setPendingPromotion(null);
   }, [store.fen]);
 
   // Initial load of game metadata, initial state, and moves
@@ -399,14 +403,15 @@ export function useGame(gameId: number | string) {
         }
       }
 
-      // If playing vs AI, automatically poll for the AI's counter-move (scheduled in 400ms on server)
+      // If playing vs AI, single safe fallback poll for the AI's counter-move (scheduled in 400ms on server)
       if (store.currentGame?.gameType === 'PLAYER_VS_AI') {
         const fetchAiMove = async () => {
           const live = gameStore.getState();
           if (live.gameStatus === 'ACTIVE' && live.currentTurn !== userColor) {
             try {
               const state = await gameService.getGameState(gameId);
-              if (state && state.fen !== live.fen) {
+              const currentLive = gameStore.getState();
+              if (state && state.fen !== currentLive.fen && currentLive.currentTurn !== userColor) {
                 const moves = await gameService.getMoves(gameId).catch(() => []);
                 gameStore.updateGameState(state);
                 if (moves && moves.length > 0) {
@@ -416,8 +421,7 @@ export function useGame(gameId: number | string) {
             } catch {}
           }
         };
-        setTimeout(fetchAiMove, 650);
-        setTimeout(fetchAiMove, 1500);
+        setTimeout(fetchAiMove, 800);
       }
     } catch (err: any) {
       console.warn('[useGame] Move rejected by server, rolling back:', err);

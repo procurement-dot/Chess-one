@@ -79,7 +79,7 @@ class GameService {
           pgn: "",
           currentTurn: "WHITE",
           startedAt: new Date(),
-          lastMoveAt: new Date(),
+          lastMoveAt: !whitePlayerId ? new Date() : null,
         },
       });
 

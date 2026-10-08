@@ -209,7 +209,10 @@ export default function CreateMatchScreen() {
       }
 
       if (gameType === 'PLAYER_VS_AI' || response.status === 'ACTIVE') {
-        router.replace(`/game/${gameId}` as any);
+        router.replace({
+          pathname: `/game/${gameId}`,
+          params: { mode: gameType === 'PLAYER_VS_AI' ? 'ai' : 'pvp' },
+        } as any);
       } else {
         router.replace(`/play/waiting/${gameId}` as any);
       }
