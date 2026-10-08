@@ -116,7 +116,7 @@ export default function MatchHistoryScreen() {
             const opponent = isUserWhite ? g.blackPlayer : g.whitePlayer;
             const opponentName =
               g.gameType === 'PLAYER_VS_AI'
-                ? `Stockfish AI (${g.aiDifficulty || 'Medium'})`
+                ? 'AI'
                 : opponent?.name || 'Opponent';
 
             const isWinner = Boolean(g.winnerId && currentUserId && g.winnerId === currentUserId);

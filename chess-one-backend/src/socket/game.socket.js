@@ -61,6 +61,30 @@ function registerGameHandlers(io, socket) {
   });
 
   /**
+   * Real-time game move via socket
+   * Payload: { gameId, from, to, promotion }
+   */
+  socket.on("game:move", async (payload = {}) => {
+    try {
+      const { gameId, from, to, promotion } = payload;
+      if (!gameId || !from || !to) return;
+      const moveService = require("../services/move.service");
+      const userId = socket.data?.user?.id || socket.userId;
+      if (!userId) return;
+      await moveService.makeMove({
+        gameId,
+        userId,
+        from,
+        to,
+        promotion,
+      });
+    } catch (err) {
+      console.warn("Socket game:move error:", err.message);
+      socket.emit("game:move-error", { message: err.message });
+    }
+  });
+
+  /**
    * Real-time game abort (first move timeout or disconnect)
    * Payload: { gameId, reason }
    */

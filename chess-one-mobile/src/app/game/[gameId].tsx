@@ -84,6 +84,17 @@ export default function LiveGameScreen() {
 
   // Trigger auto-abort on server/socket and open modal
   const handleAutoAbort = async (reason: 'FIRST_MOVE_TIMEOUT' | 'DISCONNECTED') => {
+    // Safety check: before aborting, verify if any move was played on server
+    try {
+      const serverMoves = await gameService.getMoves(gameId);
+      if (serverMoves && serverMoves.length > 0) {
+        console.log('[LiveGameScreen] Server has moves, skipping abort and syncing');
+        gameStore.setMoves(serverMoves);
+        setAbortCountdown(null);
+        return;
+      }
+    } catch {}
+
     try {
       gameSocket.abortGameSocket(gameId, reason);
       await gameService.abortGame(gameId, reason);
@@ -97,11 +108,11 @@ export default function LiveGameScreen() {
   };
 
   // 1. Initial 10-second first-move auto-abort countdown
-  // Runs ONLY when match is ACTIVE and NO moves have been played yet (moves.length === 0)
+  // Runs ONLY when match is ACTIVE, PvP, and NO moves have been played yet (moves.length === 0)
   useEffect(() => {
-    // If match is not active OR players start playing within 10 seconds (moves.length > 0),
+    // If match is not active OR players start playing within 10 seconds (moves.length > 0) OR vs AI,
     // immediately stop and clear the countdown timer! The match proceeds smoothly.
-    if (status !== 'ACTIVE' || moves.length > 0) {
+    if (status !== 'ACTIVE' || moves.length > 0 || game?.gameType === 'PLAYER_VS_AI') {
       setAbortCountdown(null);
       return;
     }
@@ -123,7 +134,7 @@ export default function LiveGameScreen() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [status, moves.length, gameId]);
+  }, [status, moves.length, game?.gameType, gameId]);
 
   // 3. Real-time socket listener for game:aborted event
   useEffect(() => {
@@ -242,7 +253,7 @@ export default function LiveGameScreen() {
   const topPlayerIsTurn = currentTurn === topPlayerColor;
   const topPlayerIsAI = game?.gameType === 'PLAYER_VS_AI' && !isUserWhite ? false : game?.gameType === 'PLAYER_VS_AI';
   const topPlayerFallback = topPlayerIsAI
-    ? `Stockfish AI (${game?.aiDifficulty || 'Standard'})`
+    ? 'AI'
     : isUserWhite
     ? 'Opponent (Black)'
     : 'Opponent (White)';
@@ -438,7 +449,7 @@ export default function LiveGameScreen() {
             gameId={gameId}
             currentUserId={currentUserId || (user?.id ? parseInt(String(user.id), 10) : null)}
             currentUserName={user?.name || (user?.email ? user.email.split('@')[0] : 'You')}
-            opponentName={topPlayer?.name || (topPlayerIsAI ? 'Stockfish AI' : 'Opponent')}
+            opponentName={topPlayer?.name || (topPlayerIsAI ? 'AI' : 'Opponent')}
             isAI={topPlayerIsAI}
           />
         </View>

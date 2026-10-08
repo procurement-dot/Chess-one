@@ -78,18 +78,26 @@ class GameStore {
   }
 
   setGame(game: Game) {
+    const resolvedId = (game as any)?.id || (game as any)?.gameId;
+    const normalizedGame: Game = {
+      ...game,
+      id: resolvedId,
+      whitePlayerId: game.whitePlayerId ?? (game.whitePlayer?.id as any) ?? null,
+      blackPlayerId: game.blackPlayerId ?? (game.blackPlayer?.id as any) ?? null,
+    };
+
     this.state = {
       ...this.state,
-      currentGame: game,
-      gameStatus: game.status,
-      fen: game.fen || DEFAULT_FEN,
-      currentTurn: game.currentTurn || 'WHITE',
-      whiteTimeMs: game.whiteTimeMs ?? null,
-      blackTimeMs: game.blackTimeMs ?? null,
-      result: game.result ?? null,
-      winnerId: game.winnerId ?? null,
-      drawOfferFrom: game.drawOfferFrom ?? null,
-      moves: game.moves || this.state.moves,
+      currentGame: normalizedGame,
+      gameStatus: normalizedGame.status || this.state.gameStatus,
+      fen: normalizedGame.fen || this.state.fen || DEFAULT_FEN,
+      currentTurn: normalizedGame.currentTurn || this.state.currentTurn || 'WHITE',
+      whiteTimeMs: normalizedGame.whiteTimeMs ?? this.state.whiteTimeMs,
+      blackTimeMs: normalizedGame.blackTimeMs ?? this.state.blackTimeMs,
+      result: normalizedGame.result ?? this.state.result,
+      winnerId: normalizedGame.winnerId ?? this.state.winnerId,
+      drawOfferFrom: normalizedGame.drawOfferFrom ?? this.state.drawOfferFrom,
+      moves: (normalizedGame.moves && normalizedGame.moves.length > 0) ? normalizedGame.moves : this.state.moves,
       isLoading: false,
       error: null,
     };
@@ -155,6 +163,17 @@ class GameStore {
 
     const currentTurn = move.nextTurn || (this.state.currentTurn === 'WHITE' ? 'BLACK' : 'WHITE');
 
+    // If board position and turn already match (e.g. optimistic move), just sync clocks without re-rendering board
+    if (this.state.fen === fen && this.state.currentTurn === currentTurn) {
+      this.state = {
+        ...this.state,
+        whiteTimeMs: move.whiteTimeMs !== undefined && move.whiteTimeMs !== null ? move.whiteTimeMs : this.state.whiteTimeMs,
+        blackTimeMs: move.blackTimeMs !== undefined && move.blackTimeMs !== null ? move.blackTimeMs : this.state.blackTimeMs,
+      };
+      this.notify();
+      return;
+    }
+
     const from = move.from || '';
     const to = move.to || '';
     const san = move.san || '';
@@ -176,10 +195,9 @@ class GameStore {
     const existingMoves = this.state.moves;
     const isDuplicate = existingMoves.some(
       (m) =>
-        m.moveNumber === newMoveRecord.moveNumber &&
-        m.san === newMoveRecord.san &&
         m.from === newMoveRecord.from &&
-        m.to === newMoveRecord.to
+        m.to === newMoveRecord.to &&
+        (m.san === newMoveRecord.san || m.moveNumber === newMoveRecord.moveNumber)
     );
 
     const updatedMoves = isDuplicate ? existingMoves : [...existingMoves, newMoveRecord];
@@ -279,7 +297,10 @@ class GameStore {
   }
 
   reset() {
-    this.state = { ...initialState };
+    this.state = {
+      ...initialState,
+      connectionStatus: this.state.connectionStatus,
+    };
     this.notify();
   }
 }

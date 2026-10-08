@@ -22,7 +22,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isCheck = false,
   isAI = false,
 }) => {
-  const displayName = player?.name || nameFallback;
+  const displayName = isAI ? 'AI' : (player?.name || nameFallback);
   const initial = displayName[0]?.toUpperCase() || 'P';
   const isWhite = color === 'WHITE';
 

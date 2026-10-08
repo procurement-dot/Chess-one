@@ -33,6 +33,12 @@ export default function JoinMatchScreen() {
     try {
       const response = await gameService.joinGame(cleanCode);
       const gameId = response.game?.gameId || response.game?.id || (response as any).gameId;
+      const playerColor = response.game?.playerColor || (response as any).playerColor || 'BLACK';
+
+      if (gameId && typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(`chess_game_color_${gameId}`, playerColor);
+      }
+
       router.replace(`/game/${gameId}` as any);
     } catch (err: any) {
       const msg =

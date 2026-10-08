@@ -14,7 +14,13 @@ class GameSocketManager {
    * Connect to backend Socket.IO server with authentication
    */
   connect(): Socket {
-    if (this.socket && this.socket.connected) {
+    if (this.socket) {
+      if (this.socket.connected) {
+        gameStore.setConnectionStatus('connected');
+        return this.socket;
+      }
+      gameStore.setConnectionStatus('connecting');
+      this.socket.connect();
       return this.socket;
     }
 
@@ -24,11 +30,12 @@ class GameSocketManager {
     }
     const url = getSocketBaseUrl();
 
+    gameStore.setConnectionStatus('connecting');
     this.socket = io(url, {
       auth: { token: token || undefined },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
+      reconnectionAttempts: 15,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 10000,
@@ -64,6 +71,7 @@ class GameSocketManager {
 
     this.socket.on('game:joined', (payload) => {
       console.log('[Socket] Confirmed joined game room:', payload);
+      gameStore.setConnectionStatus('connected');
     });
 
     // Match activated / started
@@ -174,10 +182,13 @@ class GameSocketManager {
     const socket = this.connect();
 
     if (socket.connected) {
+      gameStore.setConnectionStatus('connected');
       socket.emit('game:join', { gameId });
       console.log('[Socket] Joined game room immediately:', gameId);
     } else {
+      gameStore.setConnectionStatus('connecting');
       socket.once('connect', () => {
+        gameStore.setConnectionStatus('connected');
         socket.emit('game:join', { gameId });
         console.log('[Socket] Joined game room upon connection:', gameId);
       });

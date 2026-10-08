@@ -84,7 +84,7 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
               />
               <View>
                 <Text style={styles.headerTitle}>AI Game Review</Text>
-                <Text style={styles.headerSubtitle}>ChessOne AI • Gemini & Stockfish</Text>
+                <Text style={styles.headerSubtitle}>ChessOne AI • Move Analysis</Text>
               </View>
             </View>
 
@@ -99,7 +99,7 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
               <ActivityIndicator size="large" color="#194E40" />
               <Text style={styles.loadingTitle}>Analyzing Every Move...</Text>
               <Text style={styles.loadingSubtitle}>
-                Stockfish & Gemini AI are evaluating accuracy, tactical opportunities, and blunders.
+                AI is evaluating accuracy, tactical opportunities, and blunders.
               </Text>
             </View>
           )}

@@ -177,13 +177,13 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             <View style={styles.playerRow}>
               <Text style={styles.playerRole}>White: </Text>
               <Text style={styles.playerName} numberOfLines={1}>
-                {game?.whitePlayer?.name || (game?.whitePlayerId ? `Player #${game.whitePlayerId}` : 'Stockfish AI')}
+                {game?.whitePlayer?.name || (game?.whitePlayerId ? `Player #${game.whitePlayerId}` : 'AI')}
               </Text>
             </View>
             <View style={styles.playerRow}>
               <Text style={styles.playerRole}>Black: </Text>
               <Text style={styles.playerName} numberOfLines={1}>
-                {game?.blackPlayer?.name || (game?.blackPlayerId ? `Player #${game.blackPlayerId}` : 'Stockfish AI')}
+                {game?.blackPlayer?.name || (game?.blackPlayerId ? `Player #${game.blackPlayerId}` : 'AI')}
               </Text>
             </View>
           </View>

@@ -202,6 +202,11 @@ export default function CreateMatchScreen() {
       });
 
       const gameId = response.gameId;
+      const playerColor = response.playerColor || (selectedColor === 'BLACK' ? 'BLACK' : 'WHITE');
+
+      if (gameId && typeof window !== 'undefined' && window.sessionStorage) {
+        window.sessionStorage.setItem(`chess_game_color_${gameId}`, playerColor);
+      }
 
       if (gameType === 'PLAYER_VS_AI' || response.status === 'ACTIVE') {
         router.replace(`/game/${gameId}` as any);

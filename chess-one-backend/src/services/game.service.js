@@ -135,10 +135,13 @@ class GameService {
     const game = await this.findGameByIdOrCode(gameId);
 
     return {
+      id: game.id,
       gameId: game.id,
       gameCode: game.gameCode,
       gameType: game.gameType,
       status: game.status,
+      whitePlayerId: game.whitePlayerId,
+      blackPlayerId: game.blackPlayerId,
       creator: game.creator,
       whitePlayer: game.whitePlayer,
       blackPlayer: game.blackPlayer,

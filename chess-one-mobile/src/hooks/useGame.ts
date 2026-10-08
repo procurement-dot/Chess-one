@@ -20,6 +20,12 @@ export function useGame(gameId: number | string) {
 
   // Authoritative local chess.js instance synced with store.fen
   const chessRef = useRef<Chess>(new Chess());
+  const isSubmittingMoveRef = useRef(false);
+  const movesCountRef = useRef(0);
+
+  useEffect(() => {
+    movesCountRef.current = store.moves.length;
+  }, [store.moves.length]);
 
   // Sync chess.js instance whenever FEN updates in the store
   useEffect(() => {
@@ -90,28 +96,38 @@ export function useGame(gameId: number | string) {
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn]);
 
-  // Authoritative polling fallback: guarantees synchronization even if WebSockets are delayed or lost
+  // Authoritative polling fallback: syncs state reliably without stale closures
   useEffect(() => {
     if (!gameId || store.gameStatus !== 'ACTIVE') return;
 
     let isPolling = false;
+
     const interval = setInterval(async () => {
-      if (isPolling) return;
+      if (isPolling || isSubmittingMoveRef.current) return;
+      const live = gameStore.getState();
+      if (live.gameStatus !== 'ACTIVE') return;
+
       isPolling = true;
       try {
         const state = await gameService.getGameState(gameId);
-        if (state) {
-          // If FEN or turn or status changed on server, synchronize store immediately!
-          if (
-            state.fen !== store.fen ||
-            state.currentTurn !== store.currentTurn ||
-            state.status !== store.gameStatus
-          ) {
-            console.log('[useGame] Polling detected state update:', state.currentTurn, state.fen);
+        if (state && !isSubmittingMoveRef.current) {
+          // If match finished/cancelled on server, immediately apply
+          if (state.status === 'COMPLETED' || state.status === 'CANCELLED') {
             gameStore.updateGameState(state);
+            return;
+          }
+
+          const current = gameStore.getState();
+          // If turn or FEN differs, verify server has at least as many moves before applying
+          if (state.fen !== current.fen || state.currentTurn !== current.currentTurn) {
             const moves = await gameService.getMoves(gameId).catch(() => []);
-            if (moves && moves.length > 0) {
-              gameStore.setMoves(moves);
+            const fresh = gameStore.getState();
+            if (!isSubmittingMoveRef.current && moves && moves.length >= fresh.moves.length) {
+              console.log('[useGame] Background sync detected authoritative update');
+              gameStore.updateGameState(state);
+              if (moves.length > 0) {
+                gameStore.setMoves(moves);
+              }
             }
           }
         }
@@ -120,10 +136,10 @@ export function useGame(gameId: number | string) {
       } finally {
         isPolling = false;
       }
-    }, 2000);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, [gameId, store.gameStatus, store.fen, store.currentTurn]);
+  }, [gameId, store.gameStatus]);
 
   // Synchronize timeout state with backend
   useEffect(() => {
@@ -210,8 +226,8 @@ export function useGame(gameId: number | string) {
 
     // In PLAYER_VS_AI, one slot is null for the AI engine
     if (game.gameType === 'PLAYER_VS_AI') {
-      if (game.whitePlayerId === null) return { userColor: 'BLACK', currentUserId: activeId };
-      if (game.blackPlayerId === null) return { userColor: 'WHITE', currentUserId: activeId };
+      if (!game.whitePlayer && !game.whitePlayerId) return { userColor: 'BLACK', currentUserId: activeId };
+      if (!game.blackPlayer && !game.blackPlayerId) return { userColor: 'WHITE', currentUserId: activeId };
     }
 
     if (game.blackPlayerId && !game.whitePlayerId) return { userColor: 'BLACK', currentUserId: activeId };
@@ -363,6 +379,7 @@ export function useGame(gameId: number | string) {
     });
 
     setIsSubmittingMove(true);
+    isSubmittingMoveRef.current = true;
 
     // 3. Send move to backend in background
     try {
@@ -381,6 +398,27 @@ export function useGame(gameId: number | string) {
           gameStore.setGameFinished(response.result!, response.winnerId ?? null);
         }
       }
+
+      // If playing vs AI, automatically poll for the AI's counter-move (scheduled in 400ms on server)
+      if (store.currentGame?.gameType === 'PLAYER_VS_AI') {
+        const fetchAiMove = async () => {
+          const live = gameStore.getState();
+          if (live.gameStatus === 'ACTIVE' && live.currentTurn !== userColor) {
+            try {
+              const state = await gameService.getGameState(gameId);
+              if (state && state.fen !== live.fen) {
+                const moves = await gameService.getMoves(gameId).catch(() => []);
+                gameStore.updateGameState(state);
+                if (moves && moves.length > 0) {
+                  gameStore.setMoves(moves);
+                }
+              }
+            } catch {}
+          }
+        };
+        setTimeout(fetchAiMove, 650);
+        setTimeout(fetchAiMove, 1500);
+      }
     } catch (err: any) {
       console.warn('[useGame] Move rejected by server, rolling back:', err);
       // Revert optimistic move on failure
@@ -392,6 +430,9 @@ export function useGame(gameId: number | string) {
       gameStore.setMoves(previousMoves);
     } finally {
       setIsSubmittingMove(false);
+      setTimeout(() => {
+        isSubmittingMoveRef.current = false;
+      }, 400);
     }
   };
 

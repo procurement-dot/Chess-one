@@ -184,7 +184,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
             id: `ai_${Date.now()}`,
             gameId,
             senderId: 999999,
-            senderName: opponentName || 'Stockfish AI',
+            senderName: opponentName || 'AI',
             text: randomReply,
             createdAt: new Date().toISOString(),
           };

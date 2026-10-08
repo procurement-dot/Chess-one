@@ -128,6 +128,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       backgroundColor: tileBg,
                     },
                   ]}
+                  unstable_pressDelay={0}
                   onPress={() => onSquarePress(square)}
                 >
                   {/* Rank notation (1-8) */}
@@ -216,6 +217,7 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
     userSelect: 'none' as any,
+    touchAction: 'manipulation' as any,
   },
   boardRow: {
     flexDirection: 'row',
@@ -226,6 +228,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     cursor: 'pointer' as any,
     userSelect: 'none' as any,
+    touchAction: 'manipulation' as any,
   },
   selectedTile: {
     backgroundColor: '#E9CB67',
