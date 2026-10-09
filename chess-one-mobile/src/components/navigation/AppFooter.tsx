@@ -9,8 +9,8 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useInvitations } from '../../hooks/useInvitations';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { HOME_THEME } from '../../constants/home-theme';
+import { Feather } from '@expo/vector-icons';
+import { COLORS } from '../../constants/chessone-theme';
 
 export type FooterTab = 'home' | 'create' | 'community' | 'history' | 'account' | 'join' | 'learn' | 'tournaments' | 'classes' | 'play';
 
@@ -27,8 +27,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
     id: FooterTab;
     highlightIds: FooterTab[];
     label: string;
-    family: 'Ionicons' | 'MaterialCommunityIcons';
-    icon: any;
+    icon: keyof typeof Feather.glyphMap;
     route: string;
     badgeCount?: number;
   }[] = [
@@ -36,8 +35,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
       id: 'home',
       highlightIds: ['home'],
       label: 'Home',
-      family: 'Ionicons',
-      icon: 'home-outline',
+      icon: 'home',
       route: '/',
       badgeCount: pendingCount,
     },
@@ -45,40 +43,35 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
       id: 'learn',
       highlightIds: ['learn'],
       label: 'Learn',
-      family: 'MaterialCommunityIcons',
-      icon: 'view-grid-outline',
+      icon: 'book-open',
       route: '/learn',
     },
     {
       id: 'play',
       highlightIds: ['play', 'create', 'join'],
       label: 'Play',
-      family: 'MaterialCommunityIcons',
-      icon: 'chess-knight',
+      icon: 'play-circle',
       route: '/play',
     },
     {
       id: 'tournaments',
       highlightIds: ['tournaments'],
       label: 'Tournaments',
-      family: 'MaterialCommunityIcons',
-      icon: 'chess-rook',
+      icon: 'award',
       route: '/tournaments',
     },
     {
       id: 'community',
       highlightIds: ['community'],
       label: 'Community',
-      family: 'Ionicons',
-      icon: 'happy-outline',
+      icon: 'users',
       route: '/community',
     },
     {
       id: 'classes',
       highlightIds: ['classes'],
       label: 'Classes',
-      family: 'MaterialCommunityIcons',
-      icon: 'view-list-outline',
+      icon: 'video',
       route: '/classes',
     },
   ];
@@ -92,8 +85,6 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
       <View style={styles.innerFooter}>
         {tabs.map((tab) => {
           const isActive = tab.highlightIds.includes(activeTab);
-          const iconColor = isActive ? HOME_THEME.colors.primary : HOME_THEME.colors.mutedText;
-
           return (
             <TouchableOpacity
               key={tab.id}
@@ -102,12 +93,11 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
               onPress={() => handleTabPress(tab.route)}
             >
               <View style={styles.iconWrapper}>
-                {tab.family === 'Ionicons' ? (
-                  <Ionicons name={tab.icon} size={20} color={iconColor} />
-                ) : (
-                  <MaterialCommunityIcons name={tab.icon} size={20} color={iconColor} />
-                )}
-                
+                <Feather 
+                  name={tab.icon} 
+                  size={22} 
+                  color={isActive ? COLORS.primary : COLORS.textBody} 
+                />
                 {Boolean(tab.badgeCount && tab.badgeCount > 0) && (
                   <View style={styles.badgePill}>
                     <Text style={styles.badgeText}>
@@ -129,17 +119,27 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
 
 const styles = StyleSheet.create({
   footerContainer: {
-    backgroundColor: HOME_THEME.colors.footerBackground,
-    borderTopWidth: 0,
-    paddingBottom: Platform.OS === 'web' ? 10 : (Platform.OS === 'ios' ? 24 : 10),
+    backgroundColor: COLORS.white,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    paddingBottom: Platform.OS === 'web' ? 18 : (Platform.OS === 'ios' ? 24 : 10),
     paddingTop: 8,
     paddingHorizontal: 8,
-    height: Platform.OS === 'web' ? 68 : (Platform.OS === 'ios' ? 92 : 68),
     ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 10,
+      },
       web: {
         position: 'sticky' as any,
         bottom: 0,
         zIndex: 2147483647,
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.06)',
       },
     }),
   },
@@ -156,12 +156,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 10,
+    minHeight: 50,
+    borderRadius: 12,
+    position: 'relative',
     cursor: 'pointer' as any,
+    touchAction: 'manipulation' as any,
   },
   activeTabButton: {
-    backgroundColor: HOME_THEME.colors.activeTabPill,
+    backgroundColor: COLORS.hero,
   },
   iconWrapper: {
     position: 'relative',
@@ -169,20 +171,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tabLabel: {
-    fontSize: 10.5,
-    fontWeight: '500',
-    color: HOME_THEME.colors.mutedText,
-    marginTop: 2,
+    fontSize: 10,
+    fontWeight: '600',
+    color: COLORS.textBody,
+    marginTop: 4,
   },
   activeTabLabel: {
-    color: HOME_THEME.colors.primary,
+    color: COLORS.primary,
     fontWeight: '700',
   },
   badgePill: {
     position: 'absolute',
     top: -6,
     right: -10,
-    backgroundColor: '#FBA586',
+    backgroundColor: COLORS.accentPeach,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
@@ -191,7 +193,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 9,
     fontWeight: '800',
   },
