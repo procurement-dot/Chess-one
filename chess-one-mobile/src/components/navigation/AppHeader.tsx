@@ -83,7 +83,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               onPress={() => router.replace('/' as any)}
             >
               <Image 
-                source={require('../../assets/images/chessone-logo.png')} 
+                source={require('../../../assets/images/chessone-logo.png')} 
                 style={{ width: 140, height: 40, resizeMode: 'contain' }}
               />
             </TouchableOpacity>
