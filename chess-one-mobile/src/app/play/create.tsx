@@ -17,6 +17,7 @@ import { gameSocket } from '../../socket/game.socket';
 import { GameType, AIDifficulty, ColorPreference, OnlineUser } from '../../types/game.types';
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
+import { CustomWheelPicker } from '../../components/ui/CustomWheelPicker';
 import { InviteFriendModal } from '../../components/game/InviteFriendModal';
 import { OutgoingChallengeModal } from '../../components/game/OutgoingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
@@ -258,38 +259,20 @@ export default function CreateMatchScreen() {
 
         {/* Time Control Section */}
         <Text style={styles.sectionTitle}>Time Control</Text>
-        
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 12 }}
-          snapToInterval={112}
-          decelerationRate="fast"
-          style={{ marginHorizontal: -16 }} // Bleed to edges
-        >
-          {TIME_CONTROLS.map((tc) => {
-            const isSelected = timeControl === tc.id;
-            return (
-              <TouchableOpacity
-                key={tc.id}
-                style={[
-                  styles.timeBtn,
-                  isSelected && styles.timeBtnActive,
-                  { width: 100 }
-                ]}
-                activeOpacity={0.8}
-                onPress={() => setTimeControl(tc.id)}
-              >
-                <Text style={[styles.timeLabel, isSelected && styles.timeLabelActive]}>
-                  {tc.label}
-                </Text>
-                <Text style={[styles.timeSub, isSelected && styles.timeSubActive]}>
-                  {tc.sub}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+        <View style={{ flexDirection: 'row', backgroundColor: COLORS.white, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 8, marginVertical: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+          <CustomWheelPicker
+            items={Array.from({length: 60}, (_, i) => ({ label: String(i + 1).padStart(2, '0'), value: String(i + 1) }))}
+            selectedValue={timeControl.split('+')[0]}
+            onValueChange={(val) => setTimeControl(val + '+' + timeControl.split('+')[1])}
+            suffix="M"
+          />
+          <CustomWheelPicker
+            items={Array.from({length: 60}, (_, i) => ({ label: String(i).padStart(2, '0'), value: String(i) }))}
+            selectedValue={timeControl.split('+')[1] || '0'}
+            onValueChange={(val) => setTimeControl(timeControl.split('+')[0] + '+' + val)}
+            suffix="S"
+          />
+        </View>
 
 
         {/* Piece Color Choice */}
