@@ -21,16 +21,21 @@ export const CustomWheelPicker: React.FC<CustomWheelPickerProps> = ({
   const activeIndex = Math.max(0, items.findIndex((i) => i.value === selectedValue));
 
   useEffect(() => {
+    // Initial scroll position
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({ y: activeIndex * itemHeight, animated: false });
     }
-  }, []);
+  }, []); // Only run once on mount
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const y = event.nativeEvent.contentOffset.y;
     const index = Math.round(y / itemHeight);
-    if (index !== activeIndex && items[index]) {
-      onValueChange(items[index].value);
+    
+    // Ensure index is valid and value has changed before firing update
+    if (index >= 0 && index < items.length) {
+      if (items[index].value !== selectedValue) {
+        onValueChange(items[index].value);
+      }
     }
   };
 
@@ -41,7 +46,8 @@ export const CustomWheelPicker: React.FC<CustomWheelPickerProps> = ({
         showsVerticalScrollIndicator={false}
         snapToInterval={itemHeight}
         decelerationRate="fast"
-        onMomentumScrollEnd={handleScroll}
+        onScroll={handleScroll}
+        scrollEventThrottle={16} // smooth updates
         contentContainerStyle={{ paddingVertical: itemHeight }}
       >
         {items.map((item, index) => {
