@@ -125,6 +125,7 @@ export default function LiveGameScreen() {
   // 2. Disconnect / Internet lost 10-second auto-abort countdown
   useEffect(() => {
     if (status !== 'ACTIVE') return;
+    if (game?.gameType === 'PLAYER_VS_AI') return;
 
     if (connectionStatus === 'disconnected') {
       setAbortCountdown(10);
@@ -147,7 +148,7 @@ export default function LiveGameScreen() {
       // Reconnected!
       setAbortCountdown(null);
     }
-  }, [connectionStatus, status]);
+  }, [connectionStatus, status, game?.gameType]);
 
   // 3. Real-time socket listener for game:aborted event
   useEffect(() => {
