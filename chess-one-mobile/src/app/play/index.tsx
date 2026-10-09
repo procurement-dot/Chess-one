@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import {
   View,
   Text,
@@ -286,7 +287,7 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -295,8 +296,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
-    backgroundColor: '#12161D',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
   },
   userProfileRow: {
     flexDirection: 'row',
@@ -308,14 +309,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.accentPeach,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarLetter: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   titleCol: {
     flex: 1,
@@ -328,38 +329,38 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     maxWidth: 160,
   },
   idChip: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.hero,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   idChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#60A5FA',
+    color: COLORS.primary,
   },
   subtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   switchAccountButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#1E293B',
-    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusButton,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   switchAccountText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   content: {
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 14,
     letterSpacing: 0.2,
   },
@@ -380,25 +381,24 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionCard: {
-    borderRadius: 18,
+    borderRadius: SIZES.radiusCard,
     padding: 16,
     borderWidth: 1,
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.border,
+    ...SHADOWS.soft,
   },
   aiCard: {
-    backgroundColor: '#151D2A',
-    borderColor: '#1E2D44',
+    backgroundColor: COLORS.white,
   },
   pvpCard: {
-    backgroundColor: '#181A26',
-    borderColor: '#262A42',
+    backgroundColor: COLORS.white,
   },
   joinCard: {
-    backgroundColor: '#161E1C',
-    borderColor: '#1D332D',
+    backgroundColor: COLORS.white,
   },
   historyCard: {
-    backgroundColor: '#1B1822',
-    borderColor: '#2D243B',
+    backgroundColor: COLORS.white,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -410,31 +410,31 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   badge: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: COLORS.hero,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   pvpBadge: {
-    backgroundColor: '#3730A3',
+    backgroundColor: COLORS.hero,
   },
   joinBadge: {
-    backgroundColor: '#064E3B',
+    backgroundColor: COLORS.hero,
   },
   badgeText: {
-    color: '#93C5FD',
+    color: COLORS.primary,
     fontSize: 11,
     fontWeight: '700',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   cardDesc: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     lineHeight: 18,
   },
 });
