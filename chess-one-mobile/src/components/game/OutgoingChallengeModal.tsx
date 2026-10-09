@@ -113,12 +113,12 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#1E1B4B',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#4F46E5',
+    borderColor: COLORS.border,
     marginBottom: 16,
   },
   iconText: {
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
     gap: 12,
   },
   avatar: {
@@ -184,12 +184,12 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F1F5F9',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   previewSub: {
     fontSize: 11,
-    color: '#64748B',
+    color: COLORS.textBody,
   },
   cancelBtn: {
     backgroundColor: COLORS.white,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   cancelBtnText: {
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },

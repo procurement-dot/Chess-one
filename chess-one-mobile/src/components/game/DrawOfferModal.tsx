@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.45,
@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -126,17 +126,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   declineButton: {
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: COLORS.border,
   },
   declineText: {
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '600',
   },
   acceptButton: {
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
   },
   acceptText: {
     color: COLORS.textHeading,

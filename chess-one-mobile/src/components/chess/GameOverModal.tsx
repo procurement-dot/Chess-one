@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#2A323D',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
   },
   descriptionText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
   },
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   reviewText: {
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
   },

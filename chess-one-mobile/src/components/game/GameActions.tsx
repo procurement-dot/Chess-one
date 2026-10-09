@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   resignButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#DC2626',
+    color: COLORS.textHeading,
   },
   disabledButton: {
     opacity: 0.5,

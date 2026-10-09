@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     width: '100%',
   },
   activeContainer: {
@@ -122,7 +122,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#4B5563',
+    borderColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E5E7EB',
+    color: COLORS.textHeading,
   },
   activePlayerName: {
     color: COLORS.textHeading,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   checkText: {
-    color: '#F87171',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },

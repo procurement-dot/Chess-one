@@ -106,12 +106,12 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
@@ -154,7 +154,7 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 22,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
     gap: 12,
   },
   avatar: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   challengerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F1F5F9',
+    color: COLORS.textHeading,
     marginBottom: 3,
   },
   challengerDetails: {
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   acceptBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: COLORS.white,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   declineBtnText: {
-    color: '#EF4444',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },

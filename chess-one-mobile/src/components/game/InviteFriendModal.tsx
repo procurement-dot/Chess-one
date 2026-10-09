@@ -162,12 +162,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '75%',
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
     paddingBottom: 32,
   },
   header: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#21262D',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -237,7 +237,7 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     marginBottom: 6,
   },
   emptySubtitle: {
@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   },
   emptyHint: {
     fontSize: 12,
-    color: '#64748B',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -257,13 +257,13 @@ const styles = StyleSheet.create({
   refreshBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#21262D',
+    backgroundColor: COLORS.white,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
   },
   refreshBtnText: {
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
   },
   onlineCountText: {
     fontSize: 12,
@@ -294,7 +294,7 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#21262D',
+    borderColor: COLORS.border,
     marginBottom: 10,
     gap: 12,
   },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
     borderColor: COLORS.background,
   },
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
     maxWidth: 140,
   },
   idChip: {

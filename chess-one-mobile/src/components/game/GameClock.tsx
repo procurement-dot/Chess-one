@@ -99,6 +99,6 @@ const styles = StyleSheet.create({
     color: '#1E3A8A',
   },
   lowTimeClockText: {
-    color: '#DC2626',
+    color: COLORS.textHeading,
   },
 });

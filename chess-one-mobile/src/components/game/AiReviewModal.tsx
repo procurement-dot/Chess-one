@@ -270,7 +270,7 @@ const styles = StyleSheet.create({
   sheetCard: {
     width: '100%',
     maxHeight: '90%',
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 18,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   headerSubtitle: {
     fontSize: 12,
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     marginTop: 18,
     fontSize: 17,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   loadingSubtitle: {
     marginTop: 8,
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#EF4444',
+    color: COLORS.textHeading,
   },
   errorSubtitle: {
     marginTop: 6,
@@ -391,7 +391,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   verdictHeader: {
     flexDirection: 'row',
@@ -406,15 +406,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   coachRatingPill: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   coachRatingText: {
-    color: '#F59E0B',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -426,13 +426,13 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     lineHeight: 20,
     marginBottom: 16,
   },
   accuracyGrid: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   bestMoveCard: {
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
@@ -494,7 +494,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   moveBadgeGreen: {
-    backgroundColor: '#065F46',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -511,19 +511,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   moveBadgeAmberText: {
-    color: '#F87171',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '800',
   },
   moveTitleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
     flex: 1,
   },
   moveExplanationText: {
     fontSize: 13,
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     lineHeight: 18,
   },
   betterMoveBox: {
@@ -536,7 +536,7 @@ const styles = StyleSheet.create({
   },
   betterMoveLabel: {
     fontSize: 12,
-    color: '#FBBF24',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   betterMoveValue: {
@@ -549,11 +549,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   turningPointText: {
     fontSize: 13,
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     lineHeight: 19,
   },
   tipCard: {
@@ -579,7 +579,7 @@ const styles = StyleSheet.create({
   },
   tipText: {
     fontSize: 13,
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     lineHeight: 19,
   },
   bottomButtonGroup: {
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   closeDoneBtnText: {
     color: COLORS.textBody,

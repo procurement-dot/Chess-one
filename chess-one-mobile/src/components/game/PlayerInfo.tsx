@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
   },
   blackBadge: {
     backgroundColor: COLORS.border,
-    borderColor: '#0F172A',
+    borderColor: COLORS.border,
   },
   avatarText: {
     fontSize: 16,
@@ -160,8 +160,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   blackChip: {
-    backgroundColor: '#0F172A',
-    borderColor: '#0F172A',
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.border,
   },
   colorChipText: {
     fontSize: 10,
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   blackChipText: {
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   turnLabel: {
     fontSize: 11,
@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkText: {
-    color: '#DC2626',
+    color: COLORS.textHeading,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timeoutText: {
-    color: '#F87171',
+    color: COLORS.textHeading,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,

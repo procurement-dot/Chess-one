@@ -425,17 +425,17 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
 const styles = StyleSheet.create({
   container: {
     height: 215,
-    backgroundColor: '#212121', // Dark charcoal matching Image 1
+    backgroundColor: COLORS.white, // Dark charcoal matching Image 1
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#303030',
+    borderColor: COLORS.border,
     overflow: 'hidden',
     width: '100%',
   },
   tabBar: {
     flexDirection: 'row',
     height: 40,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: '#303030',
   },
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   tabLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#8E8E93',
+    color: COLORS.textBody,
   },
   tabLabelActive: {
     color: COLORS.textHeading,
@@ -497,7 +497,7 @@ const styles = StyleSheet.create({
   openingText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#D4D4D8',
+    color: COLORS.textHeading,
     letterSpacing: 0.2,
   },
   emptyMovesContainer: {
@@ -510,12 +510,12 @@ const styles = StyleSheet.create({
   emptyMovesNumber: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: COLORS.textBody,
     width: 28,
   },
   emptyMovesText: {
     fontSize: 13,
-    color: '#71717A',
+    color: COLORS.textBody,
     fontStyle: 'italic',
   },
   movesScrollView: {
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     width: 32,
     fontSize: 14,
     fontWeight: '500',
-    color: '#8E8E93',
+    color: COLORS.textBody,
   },
   moveCol: {
     flex: 1,
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
   },
   emptyChatText: {
     fontSize: 12,
-    color: '#71717A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
   chatSenderName: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#93C5FD',
+    color: COLORS.textBody,
     marginBottom: 2,
     paddingLeft: 2,
   },
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 2,
   },
   chatBubbleOpponent: {
-    backgroundColor: '#2D2D30',
+    backgroundColor: COLORS.white,
     borderBottomLeftRadius: 2,
   },
   chatBubbleText: {
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
   },
   chatTimestamp: {
     fontSize: 9,
-    color: '#71717A',
+    color: COLORS.textBody,
     marginTop: 2,
     paddingHorizontal: 2,
   },
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   },
   quickChatBar: {
     height: 32,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#282828',
   },
@@ -647,15 +647,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   quickChip: {
-    backgroundColor: '#2A2A2D',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#3A3A3D',
+    borderColor: COLORS.border,
   },
   quickChipText: {
-    color: '#E4E4E7',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '600',
   },
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 8,
     paddingVertical: 6,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
     borderTopColor: '#2C2C2E',
     gap: 6,
@@ -672,13 +672,13 @@ const styles = StyleSheet.create({
   chatInput: {
     flex: 1,
     height: 34,
-    backgroundColor: '#29292C',
+    backgroundColor: COLORS.white,
     borderRadius: 17,
     paddingHorizontal: 12,
     fontSize: 12.5,
     color: COLORS.textHeading,
     borderWidth: 1,
-    borderColor: '#3A3A3E',
+    borderColor: COLORS.border,
   },
   sendButton: {
     backgroundColor: COLORS.primary,

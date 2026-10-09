@@ -88,7 +88,7 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
   pieceButton: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#272E38',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   pieceLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#D1D5DB',
+    color: COLORS.textHeading,
   },
   cancelButton: {
     width: '100%',
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelText: {
-    color: '#E5E7EB',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },

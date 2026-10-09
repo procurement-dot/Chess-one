@@ -94,7 +94,7 @@ export const GameAbortModal: React.FC<GameAbortModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.78)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -102,7 +102,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 21,
     fontWeight: '800',
-    color: '#F87171',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
     letterSpacing: 0.3,
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
   shieldText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#7DD3FC',
+    color: COLORS.textBody,
   },
   actionsColumn: {
     width: '100%',
@@ -195,10 +195,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
   },
   homeBtnText: {
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '600',
   },
