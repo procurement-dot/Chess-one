@@ -22,6 +22,11 @@ export function useGame(gameId: number | string) {
   const chessRef = useRef<Chess>(new Chess());
   const isSubmittingMoveRef = useRef(false);
   const movesCountRef = useRef(0);
+  const turnStartTimestampRef = useRef<number>(Date.now());
+
+  useEffect(() => {
+    turnStartTimestampRef.current = Date.now();
+  }, [store.currentTurn]);
 
   useEffect(() => {
     movesCountRef.current = store.moves.length;
@@ -100,7 +105,7 @@ export function useGame(gameId: number | string) {
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn]);
 
-  // Authoritative polling fallback: syncs state reliably without stale closures
+  // Authoritative polling fallback: syncs state reliably when disconnected from WebSocket
   useEffect(() => {
     if (!gameId || store.gameStatus !== 'ACTIVE') return;
 
@@ -110,6 +115,10 @@ export function useGame(gameId: number | string) {
       if (isPolling || isSubmittingMoveRef.current) return;
       const live = gameStore.getState();
       if (live.gameStatus !== 'ACTIVE') return;
+
+      // When WebSocket is connected, WebSocket delivers all moves and clocks in real-time.
+      // Do not run aggressive polling loops that can race with live WebSockets.
+      if (live.connectionStatus === 'connected') return;
 
       isPolling = true;
       try {
@@ -122,12 +131,17 @@ export function useGame(gameId: number | string) {
           }
 
           const current = gameStore.getState();
+          // Guard: ignore stale poll response if server moveCount is less than local moves
+          if (typeof state.moveCount === 'number' && state.moveCount < current.moves.length) {
+            return;
+          }
+
           // If turn or FEN differs, verify server has at least as many moves before applying
           if (state.fen !== current.fen || state.currentTurn !== current.currentTurn) {
             const moves = await gameService.getMoves(gameId).catch(() => []);
             const fresh = gameStore.getState();
             if (!isSubmittingMoveRef.current && moves && moves.length >= fresh.moves.length) {
-              console.log('[useGame] Background sync detected authoritative update');
+              console.log('[useGame] Disconnected fallback sync detected authoritative update');
               gameStore.updateGameState(state);
               if (moves.length > 0) {
                 gameStore.setMoves(moves);
@@ -140,10 +154,10 @@ export function useGame(gameId: number | string) {
       } finally {
         isPolling = false;
       }
-    }, 2500);
+    }, 3000);
 
     return () => clearInterval(interval);
-  }, [gameId, store.gameStatus]);
+  }, [gameId, store.gameStatus, store.connectionStatus]);
 
   // Synchronize timeout state with backend
   useEffect(() => {
@@ -397,12 +411,14 @@ export function useGame(gameId: number | string) {
     setIsSubmittingMove(true);
     isSubmittingMoveRef.current = true;
 
-    // 3. Send move to backend in background
+    // 3. Send move to backend in background with client turn elapsed time for network lag compensation
+    const clientTurnElapsedMs = Math.max(0, Date.now() - turnStartTimestampRef.current);
     try {
       const response = await gameService.makeMove(gameId, {
         from,
         to,
         promotion,
+        clientTurnElapsedMs,
       });
 
       // Synchronize authoritative clocks & verified status

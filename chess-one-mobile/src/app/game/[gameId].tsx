@@ -120,7 +120,7 @@ export default function LiveGameScreen() {
       return;
     }
 
-    setAbortCountdown(10);
+    setAbortCountdown(20);
     setAbortReason('FIRST_MOVE_TIMEOUT');
 
     const interval = setInterval(() => {
@@ -243,18 +243,7 @@ export default function LiveGameScreen() {
 
   const effectiveIsAI = isAIGame || game?.gameType === 'PLAYER_VS_AI';
 
-  if (isLoading && !game) {
-    return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="#194E40" />
-          <Text style={styles.loadingText}>
-            {effectiveIsAI ? 'Starting game vs AI...' : 'Connecting to match...'}
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
+
 
   // Determine which player is top vs bottom based on user's color orientation
   const isUserWhite = userColor === 'WHITE';
@@ -379,7 +368,7 @@ export default function LiveGameScreen() {
         </View>
 
         {/* Turn Status Pill */}
-        {status === 'ACTIVE' && (
+        {status === 'ACTIVE' ? (
           <View
             style={[
               styles.turnStatusBanner,
@@ -403,7 +392,14 @@ export default function LiveGameScreen() {
                 : `Opponent's Turn (${currentTurn === 'WHITE' ? 'White' : 'Black'}) — Waiting for move...`}
             </Text>
           </View>
-        )}
+        ) : (isLoading && !game) ? (
+          <View style={[styles.turnStatusBanner, styles.turnStatusOpponentTurn]}>
+            <ActivityIndicator size="small" color="#194E40" style={{ marginRight: 8 }} />
+            <Text style={[styles.turnStatusText, styles.turnTextOpponentTurn]}>
+              Connecting to live match...
+            </Text>
+          </View>
+        ) : null}
 
         {/* Small Circle Abort Countdown Timer & Abort Button (ONLY before any moves are played) */}
         {abortCountdown !== null && abortCountdown > 0 && status === 'ACTIVE' && moves.length === 0 && (
@@ -425,10 +421,12 @@ export default function LiveGameScreen() {
             </View>
             <View style={styles.abortTextCol}>
               <Text style={styles.abortTimerTitle}>
-                ⏱️ Inactivity Timer ({abortCountdown}s)
+                {isMyTurn ? `⏱️ Your Move (${abortCountdown}s)` : `⏳ Waiting for Opponent (${abortCountdown}s)`}
               </Text>
               <Text style={styles.abortTimerSub}>
-                Play first move within {abortCountdown}s or match automatically aborts
+                {isMyTurn
+                  ? `Play opening move within ${abortCountdown}s or match automatically aborts`
+                  : `Waiting for opponent's opening move (${abortCountdown}s)`}
               </Text>
             </View>
             <TouchableOpacity

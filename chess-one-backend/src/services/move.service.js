@@ -14,7 +14,7 @@ class MoveService {
    * Authoritative move execution
    * Validates move legality, clocks, turn order, and persists atomically
    */
-  async makeMove({ gameId, userId, from, to, promotion }) {
+  async makeMove({ gameId, userId, from, to, promotion, clientTurnElapsedMs }) {
     // 1. Resolve game
     const isNum = !isNaN(gameId) && !isNaN(parseInt(gameId, 10));
     const where = isNum
@@ -54,8 +54,8 @@ class MoveService {
 
     const moveTime = new Date();
 
-    // 5. Authoritative clock check
-    const clockResult = processMoveClock(game, playerColor, moveTime);
+    // 5. Authoritative clock check with mobile latency allowance
+    const clockResult = processMoveClock(game, playerColor, moveTime, clientTurnElapsedMs);
 
     if (clockResult.hasTimedOut) {
       // Player ran out of time

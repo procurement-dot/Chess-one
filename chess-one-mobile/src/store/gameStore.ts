@@ -107,12 +107,19 @@ class GameStore {
   }
 
   updateGameState(state: Partial<GameState>) {
+    // Guard against stale updates: if incoming state has moveCount and it is less than local moves, ignore
+    const incomingMoveCount = (state as any).moveCount;
+    if (typeof incomingMoveCount === 'number' && incomingMoveCount < this.state.moves.length) {
+      console.log(`[gameStore] Ignored stale update: incoming moveCount ${incomingMoveCount} < local ${this.state.moves.length}`);
+      return;
+    }
+
     let whiteTimeMs = this.state.whiteTimeMs;
     let blackTimeMs = this.state.blackTimeMs;
 
     if (state.whiteTimeMs !== undefined && state.whiteTimeMs !== null) {
       if (this.state.currentTurn === 'WHITE' && this.state.gameStatus === 'ACTIVE' && whiteTimeMs !== null) {
-        // Prevent clock from bouncing backwards/upwards due to polling latency
+        // Prevent active clock from jumping upwards due to latency
         if (state.whiteTimeMs <= whiteTimeMs || Math.abs(state.whiteTimeMs - whiteTimeMs) > 3000) {
           whiteTimeMs = state.whiteTimeMs;
         }
@@ -166,10 +173,16 @@ class GameStore {
   }
 
   setMoves(moves: GameMove[]) {
+    // Never overwrite with an older moves array
+    if (moves.length < this.state.moves.length) {
+      console.log(`[gameStore] Ignored stale moves update: incoming ${moves.length} < local ${this.state.moves.length}`);
+      return;
+    }
     const last = moves.length > 0 ? moves[moves.length - 1] : null;
     this.state = {
       ...this.state,
       moves,
+      fen: last?.fenAfter || this.state.fen,
       lastMove: last ? { from: last.from, to: last.to } : null,
     };
     this.notify();
@@ -187,6 +200,15 @@ class GameStore {
     moveNumber?: number;
     color?: PlayerColor;
   }) {
+    // Guard against stale moves: if incoming moveNumber is strictly older than our last move, ignore
+    if (move.moveNumber && this.state.moves.length > 0) {
+      const latest = this.state.moves[this.state.moves.length - 1];
+      if (move.moveNumber < latest.moveNumber) {
+        console.log(`[gameStore] Ignored stale move ${move.moveNumber} (current latest: ${latest.moveNumber})`);
+        return;
+      }
+    }
+
     const fen = (move.fen && typeof move.fen === 'string' && move.fen.trim().length > 0)
       ? move.fen
       : (this.state.fen || DEFAULT_FEN);
@@ -256,11 +278,32 @@ class GameStore {
   }
 
   updateClocks(whiteTimeMs: number | null, blackTimeMs: number | null) {
+    let finalWhite = whiteTimeMs;
+    let finalBlack = blackTimeMs;
+
+    if (finalWhite !== null && this.state.whiteTimeMs !== null) {
+      if (this.state.currentTurn === 'WHITE' && this.state.gameStatus === 'ACTIVE') {
+        // Prevent active clock from jumping upwards due to latency
+        if (finalWhite > this.state.whiteTimeMs && (finalWhite - this.state.whiteTimeMs) < 3000) {
+          finalWhite = this.state.whiteTimeMs;
+        }
+      }
+    }
+
+    if (finalBlack !== null && this.state.blackTimeMs !== null) {
+      if (this.state.currentTurn === 'BLACK' && this.state.gameStatus === 'ACTIVE') {
+        // Prevent active clock from jumping upwards due to latency
+        if (finalBlack > this.state.blackTimeMs && (finalBlack - this.state.blackTimeMs) < 3000) {
+          finalBlack = this.state.blackTimeMs;
+        }
+      }
+    }
+
     this.lastTickTimestamp = Date.now();
     this.state = {
       ...this.state,
-      whiteTimeMs,
-      blackTimeMs,
+      whiteTimeMs: finalWhite,
+      blackTimeMs: finalBlack,
     };
     this.notify();
   }

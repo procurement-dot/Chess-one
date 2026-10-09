@@ -238,7 +238,9 @@ class GameService {
    * Get live game state with clocks (authoritative for reconnection)
    */
   async getGameState(gameId) {
-    const game = await this.findGameByIdOrCode(gameId);
+    const game = await this.findGameByIdOrCode(gameId, {
+      moves: { select: { id: true, moveNumber: true }, orderBy: { id: "desc" } },
+    });
 
     // Calculate live clocks and check for timeout
     const liveTimes = getLiveTimes(game);
@@ -282,6 +284,8 @@ class GameService {
         result: updated.result,
         winnerId: updated.winnerId,
         drawOfferFrom: updated.drawOfferFrom,
+        moveCount: game.moves ? game.moves.length : 0,
+        lastMoveNumber: (game.moves && game.moves.length > 0) ? game.moves[0].moveNumber : 0,
       };
     }
 
@@ -308,6 +312,8 @@ class GameService {
       result: game.result,
       winnerId: game.winnerId,
       drawOfferFrom: game.drawOfferFrom,
+      moveCount: game.moves ? game.moves.length : 0,
+      lastMoveNumber: (game.moves && game.moves.length > 0) ? game.moves[0].moveNumber : 0,
     };
   }
 

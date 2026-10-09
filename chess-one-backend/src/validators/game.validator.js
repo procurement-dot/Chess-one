@@ -23,6 +23,7 @@ const makeMoveSchema = z.object({
     .max(2)
     .regex(/^[a-h][1-8]$/, "to square must be a valid chess square (e.g. e4)"),
   promotion: z.enum(["q", "r", "b", "n"]).optional(),
+  clientTurnElapsedMs: z.number().int().min(0).max(86400000).optional(),
 });
 
 function validate(schema) {

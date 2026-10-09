@@ -95,27 +95,38 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
   const handleAcceptInvite = async (invitationId: number) => {
     handledInvitesRef.current.add(invitationId);
     setIsProcessingIncoming(true);
+
+    const targetInvite =
+      incomingInvite?.id === invitationId
+        ? incomingInvite
+        : invitations.find((i) => i.id === invitationId);
+    const preGameId = targetInvite?.gameId;
+
+    // Immediately navigate to the live match screen if gameId is already known
+    if (preGameId) {
+      try {
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          window.sessionStorage.setItem(`chess_game_color_${preGameId}`, 'BLACK');
+        }
+      } catch {}
+      gameStore.reset();
+      router.replace(`/game/${preGameId}` as any);
+    }
+
     setIncomingModalVisible(false);
     setIncomingInvite(null);
 
     try {
-      const targetInvite =
-        incomingInvite?.id === invitationId
-          ? incomingInvite
-          : invitations.find((i) => i.id === invitationId);
-
       const game = await acceptInvitation(invitationId);
-      const gameId = (game as any)?.gameId || game?.id || targetInvite?.gameId;
+      const gameId = (game as any)?.gameId || game?.id || preGameId;
 
-      if (gameId) {
+      if (gameId && !preGameId) {
         const playerColor = (game as any)?.playerColor || 'BLACK';
         try {
           if (typeof window !== 'undefined' && window.sessionStorage) {
             window.sessionStorage.setItem(`chess_game_color_${gameId}`, playerColor);
           }
         } catch {}
-
-        // Reset gameStore and navigate immediately so user doesn't lose time
         gameStore.reset();
         router.replace(`/game/${gameId}` as any);
       }
