@@ -258,13 +258,25 @@ export default function CreateMatchScreen() {
 
         {/* Time Control Section */}
         <Text style={styles.sectionTitle}>Time Control</Text>
-        <View style={styles.timeGrid}>
+        
+        <ScrollView 
+          horizontal 
+          showsHorizontalScrollIndicator={false} 
+          contentContainerStyle={{ paddingHorizontal: 16, paddingVertical: 10, gap: 12 }}
+          snapToInterval={112}
+          decelerationRate="fast"
+          style={{ marginHorizontal: -16 }} // Bleed to edges
+        >
           {TIME_CONTROLS.map((tc) => {
             const isSelected = timeControl === tc.id;
             return (
               <TouchableOpacity
                 key={tc.id}
-                style={[styles.timeBtn, isSelected && styles.timeBtnActive]}
+                style={[
+                  styles.timeBtn,
+                  isSelected && styles.timeBtnActive,
+                  { width: 100 }
+                ]}
                 activeOpacity={0.8}
                 onPress={() => setTimeControl(tc.id)}
               >
@@ -277,7 +289,8 @@ export default function CreateMatchScreen() {
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
+
 
         {/* Piece Color Choice */}
         <Text style={styles.sectionTitle}>Play as</Text>
