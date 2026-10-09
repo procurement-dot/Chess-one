@@ -3,7 +3,8 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput } from 
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
+import { Feather } from '@expo/vector-icons';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
 
 export default function OnboardingScreen() {
   const router = useRouter();

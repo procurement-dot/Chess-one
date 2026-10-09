@@ -380,7 +380,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionCard: {
-    borderRadius: 16,
+    borderRadius: 18,
     padding: 16,
     borderWidth: 1,
   },

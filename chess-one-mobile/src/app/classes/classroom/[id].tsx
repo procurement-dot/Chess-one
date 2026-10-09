@@ -35,8 +35,8 @@ export default function ClassroomPreviewScreen() {
             fen={fens[step]} 
             boardSize={320} 
             colors={{
-              black: COLORS.boardDark,
-              white: COLORS.boardLight
+              dark: COLORS.boardDark,
+              light: COLORS.boardLight
             }}
           />
         </View>

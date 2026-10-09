@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
   segmentContainer: {
     flexDirection: 'row',
     backgroundColor: '#1E232A',
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 4,
     marginBottom: 20,
   },
@@ -581,7 +581,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#181A26',
-    borderRadius: 14,
+    borderRadius: 18,
     padding: 14,
     borderWidth: 1,
     borderColor: '#312E81',
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   submitBtn: {
     backgroundColor: '#2563EB',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#2563EB',

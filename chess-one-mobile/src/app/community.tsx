@@ -23,6 +23,7 @@ import { MatchStartVsModal } from '../components/game/MatchStartVsModal';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { authStore, useAuthStore } from '../store/authStore';
 import { gameStore } from '../store/gameStore';
+import { COLORS, SIZES, SHADOWS } from '../constants/chessone-theme';
 
 export default function CommunityScreen() {
   const router = useRouter();
@@ -190,7 +191,7 @@ export default function CommunityScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
       {/* Header */}
       <AppHeader
@@ -207,7 +208,7 @@ export default function CommunityScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refresh}
-            tintColor="#38BDF8"
+            tintColor="#194E40"
           />
         }
       >
@@ -418,7 +419,7 @@ export default function CommunityScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
@@ -434,12 +435,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#202D29',
     letterSpacing: 0.2,
   },
   sectionHint: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 2,
   },
   timeControlsRow: {
@@ -451,38 +452,38 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 12,
-    backgroundColor: '#161F2E',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#223049',
+    borderColor: '#E4E9E1',
     alignItems: 'center',
     minWidth: 78,
   },
   timeControlPillActive: {
-    backgroundColor: '#1E3A8A',
-    borderColor: '#38BDF8',
+    backgroundColor: '#EEF3E8',
+    borderColor: '#194E40',
   },
   timeControlLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#74817A',
   },
   timeControlLabelActive: {
-    color: '#FFFFFF',
+    color: '#194E40',
   },
   timeControlSub: {
     fontSize: 10,
-    color: '#64748B',
+    color: '#74817A',
     marginTop: 2,
   },
   timeControlSubActive: {
-    color: '#93C5FD',
+    color: '#194E40',
   },
   joinCodeCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#131A26',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: '#E4E9E1',
     borderRadius: 14,
     padding: 12,
     marginBottom: 14,
@@ -492,7 +493,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 10,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -505,51 +506,56 @@ const styles = StyleSheet.create({
   joinCodeTitle: {
     fontSize: 13.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
   },
   joinCodeSub: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: '#74817A',
     marginTop: 1,
   },
   joinCodeArrow: {
     fontSize: 14,
-    color: '#38BDF8',
+    color: '#194E40',
     fontWeight: '700',
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161D27',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#243042',
+    borderColor: '#E4E9E1',
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 42,
     marginBottom: 12,
     gap: 8,
+    shadowColor: '#202D29',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
   },
   searchIcon: {
     fontSize: 14,
   },
   searchInput: {
     flex: 1,
-    color: '#FFFFFF',
+    color: '#202D29',
     fontSize: 13,
   },
   clearSearchIcon: {
-    color: '#94A3B8',
+    color: '#74817A',
     fontSize: 14,
     paddingHorizontal: 4,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#161D27',
+    backgroundColor: '#EEF3E8',
     borderRadius: 12,
     padding: 3,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#222F42',
+    borderColor: '#D5DFC8',
   },
   tabBtn: {
     flex: 1,
@@ -559,7 +565,7 @@ const styles = StyleSheet.create({
     borderRadius: 9,
   },
   tabBtnActive: {
-    backgroundColor: '#2563EB',
+    backgroundColor: '#194E40',
   },
   tabRow: {
     flexDirection: 'row',
@@ -570,12 +576,12 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 3.5,
-    backgroundColor: '#10B981',
+    backgroundColor: '#4F8A5B',
   },
   tabBtnText: {
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: '#74817A',
   },
   tabBtnTextActive: {
     color: '#FFFFFF',
@@ -589,7 +595,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: '#74817A',
   },
   emptyBox: {
     paddingVertical: 36,
@@ -604,12 +610,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 12.5,
-    color: '#94A3B8',
+    color: '#74817A',
     textAlign: 'center',
     lineHeight: 18,
     marginBottom: 16,
@@ -617,13 +623,13 @@ const styles = StyleSheet.create({
   refreshBtn: {
     paddingHorizontal: 16,
     paddingVertical: 9,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#D5DFC8',
   },
   refreshBtnText: {
-    color: '#E2E8F0',
+    color: '#194E40',
     fontSize: 12.5,
     fontWeight: '700',
   },
@@ -633,12 +639,11 @@ const styles = StyleSheet.create({
   playerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#141A24',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#202B3B',
+    backgroundColor: COLORS.white,
+    padding: 16,
+    borderRadius: SIZES.radiusCard,
     gap: 12,
+    ...SHADOWS.soft,
   },
   avatarWrapper: {
     position: 'relative',
@@ -653,15 +658,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarOnline: {
-    backgroundColor: '#1D4ED8',
+    backgroundColor: '#EEF3E8',
+    borderWidth: 1,
+    borderColor: '#D5DFC8',
   },
   avatarOffline: {
-    backgroundColor: '#334155',
+    backgroundColor: '#F5F7F2',
+    borderWidth: 1,
+    borderColor: '#E4E9E1',
   },
   avatarInitial: {
     fontSize: 17,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: '#194E40',
   },
   avatarDot: {
     position: 'absolute',
@@ -671,13 +680,13 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#141A24',
+    borderColor: '#FFFFFF',
   },
   dotOnline: {
-    backgroundColor: '#10B981',
+    backgroundColor: '#4F8A5B',
   },
   dotOffline: {
-    backgroundColor: '#64748B',
+    backgroundColor: '#74817A',
   },
   playerInfo: {
     flex: 1,
@@ -691,33 +700,37 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#202D29',
     maxWidth: 150,
   },
   idChip: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#D5DFC8',
   },
   idChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: '#194E40',
   },
   playerStatusText: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#94A3B8',
+    color: '#74817A',
   },
   youBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#1E293B',
+    backgroundColor: '#EEF3E8',
     borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#D5DFC8',
   },
   youBadgeText: {
-    color: '#94A3B8',
+    color: '#194E40',
     fontSize: 12,
     fontWeight: '700',
   },
@@ -729,15 +742,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   challengeBtnOnline: {
-    backgroundColor: '#2563EB',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: COLORS.primary,
   },
   challengeBtnOffline: {
-    backgroundColor: '#374151',
+    backgroundColor: '#EEF3E8',
+    borderWidth: 1,
+    borderColor: '#D5DFC8',
   },
   btnDisabled: {
     opacity: 0.7,

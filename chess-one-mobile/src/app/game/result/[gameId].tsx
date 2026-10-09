@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
   aiReviewBtn: {
     backgroundColor: '#4F46E5',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   primaryBtn: {
     backgroundColor: '#2563EB',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
   secondaryBtn: {
     backgroundColor: '#1E232A',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,

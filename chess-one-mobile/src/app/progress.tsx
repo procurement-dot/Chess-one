@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
 
 export default function ProgressScreen() {
   const router = useRouter();
