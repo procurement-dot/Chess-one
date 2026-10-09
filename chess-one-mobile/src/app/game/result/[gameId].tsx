@@ -62,10 +62,15 @@ export default function GameResultScreen() {
   }
 
   const currentUserId = user?.id ? parseInt(user.id, 10) : null;
-  const winnerId = game?.winnerId;
-  const isDraw = game?.result === 'DRAW';
-  const isWinner = winnerId && currentUserId && winnerId === currentUserId;
-  const isLoser = winnerId && currentUserId && winnerId !== currentUserId;
+  const winnerId = game?.winnerId ?? (game?.winner?.id as any) ?? null;
+  const isDraw = game?.result === 'DRAW' || game?.result === 'STALEMATE';
+  const isWinner = Boolean(winnerId && currentUserId && winnerId === currentUserId);
+  const isLoser = Boolean(winnerId && currentUserId && winnerId !== currentUserId);
+
+  const whiteId = game?.whitePlayerId ?? game?.whitePlayer?.id ?? null;
+  const blackId = game?.blackPlayerId ?? game?.blackPlayer?.id ?? null;
+  const isWhiteWinner = Boolean(winnerId && whiteId && winnerId === whiteId);
+  const isBlackWinner = Boolean(winnerId && blackId && winnerId === blackId);
 
   const titleText = isDraw
     ? 'Draw'
@@ -137,7 +142,7 @@ export default function GameResultScreen() {
             </View>
             <View style={styles.playerScore}>
               <Text style={styles.scoreText}>
-                {game?.winnerId === game?.whitePlayerId ? '1' : isDraw ? '½' : '0'}
+                {isWhiteWinner ? '1' : isDraw ? '½' : '0'}
               </Text>
             </View>
           </View>
@@ -159,7 +164,7 @@ export default function GameResultScreen() {
             </View>
             <View style={styles.playerScore}>
               <Text style={styles.scoreText}>
-                {game?.winnerId === game?.blackPlayerId ? '1' : isDraw ? '½' : '0'}
+                {isBlackWinner ? '1' : isDraw ? '½' : '0'}
               </Text>
             </View>
           </View>

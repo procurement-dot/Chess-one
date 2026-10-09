@@ -119,13 +119,20 @@ export default function MatchHistoryScreen() {
                 ? 'AI'
                 : opponent?.name || 'Opponent';
 
-            const isWinner = Boolean(g.winnerId && currentUserId && g.winnerId === currentUserId);
-            const isLoser = Boolean(g.winnerId && currentUserId && g.winnerId !== currentUserId);
-            const isDraw = g.result === 'DRAW';
+            const isCancelled =
+              g.status === 'CANCELLED' ||
+              (g.status as string) === 'ABORTED' ||
+              (g.result as any) === 'ABORTED';
+            const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
+            const isWinner = Boolean(winnerId && currentUserId && winnerId === currentUserId);
+            const isLoser = Boolean(winnerId && currentUserId && winnerId !== currentUserId);
+            const isDraw = !isCancelled && (g.result === 'DRAW' || g.result === 'STALEMATE') && !winnerId;
             const isActive = g.status === 'ACTIVE';
 
             const outcomeText = isActive
               ? 'In Progress'
+              : isCancelled
+              ? 'Cancelled'
               : isWinner
               ? 'Win'
               : isLoser

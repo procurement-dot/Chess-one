@@ -45,6 +45,18 @@ class GameSocketManager {
     return this.socket;
   }
 
+  private isEventForCurrentGame(payload: any): boolean {
+    if (!this.currentGameId) return true;
+    if (!payload) return true;
+    const targetId = payload.gameId || payload.id;
+    if (!targetId) return true;
+    const matches = String(targetId) === String(this.currentGameId);
+    if (!matches) {
+      console.log(`[Socket] Ignored event for stale match ${targetId} (current: ${this.currentGameId})`);
+    }
+    return matches;
+  }
+
   private setupListeners() {
     if (!this.socket) return;
 
@@ -70,12 +82,14 @@ class GameSocketManager {
     });
 
     this.socket.on('game:joined', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Confirmed joined game room:', payload);
       gameStore.setConnectionStatus('connected');
     });
 
     // Match activated / started
     this.socket.on('game:started', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Match started:', payload);
       if (payload) {
         gameStore.updateGameState({
@@ -88,7 +102,7 @@ class GameSocketManager {
 
     // Real-time opponent/server chess move
     this.socket.on('game:move', (payload: any) => {
-      if (!payload) return;
+      if (!payload || !this.isEventForCurrentGame(payload)) return;
 
       const m = payload.move || {};
       const from = payload.from || m.from;
@@ -123,6 +137,7 @@ class GameSocketManager {
 
     // Authoritative clock sync
     this.socket.on('game:clock', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       if (payload && payload.whiteTimeMs !== undefined && payload.blackTimeMs !== undefined) {
         gameStore.updateClocks(payload.whiteTimeMs, payload.blackTimeMs);
       }
@@ -130,46 +145,60 @@ class GameSocketManager {
 
     // Draw offer events
     this.socket.on('game:draw-offered', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Draw offered by:', payload?.offeredByColor);
       gameStore.setDrawOffer(payload?.offeredByColor as PlayerColor);
     });
 
-    this.socket.on('game:draw-accepted', () => {
+    this.socket.on('game:draw-accepted', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Draw accepted');
       gameStore.setGameFinished('DRAW', null);
     });
 
-    this.socket.on('game:draw-rejected', () => {
+    this.socket.on('game:draw-rejected', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Draw rejected by opponent');
       gameStore.setDrawOffer(null);
     });
 
     // Resignation
     this.socket.on('game:resigned', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Player resigned:', payload);
       gameStore.setGameFinished('RESIGNATION', payload?.winnerId);
     });
 
     // Game finished
     this.socket.on('game:finished', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Game finished:', payload);
       if (payload) {
         gameStore.setGameFinished(payload.result as GameResult, payload.winnerId);
       }
     });
 
-    // Game cancelled
-    this.socket.on('game:cancelled', () => {
+    // Game cancelled / aborted
+    this.socket.on('game:cancelled', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Game cancelled');
+      gameStore.updateGameState({ status: 'CANCELLED' });
+    });
+
+    this.socket.on('game:aborted', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
+      console.log('[Socket] Game aborted:', payload);
       gameStore.updateGameState({ status: 'CANCELLED' });
     });
 
     // Player connection status indicators
     this.socket.on('game:player-disconnected', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Opponent disconnected:', payload);
     });
 
     this.socket.on('game:player-reconnected', (payload) => {
+      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Opponent reconnected:', payload);
     });
   }
@@ -178,6 +207,9 @@ class GameSocketManager {
    * Join a specific live game room
    */
   joinGame(gameId: number | string) {
+    if (this.currentGameId && String(this.currentGameId) !== String(gameId)) {
+      this.leaveGame(this.currentGameId);
+    }
     this.currentGameId = gameId;
     const socket = this.connect();
 
@@ -202,7 +234,7 @@ class GameSocketManager {
     if (this.socket && this.socket.connected) {
       this.socket.emit('game:leave', { gameId });
     }
-    if (this.currentGameId === gameId) {
+    if (String(this.currentGameId) === String(gameId)) {
       this.currentGameId = null;
     }
   }

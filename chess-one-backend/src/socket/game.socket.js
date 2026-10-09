@@ -61,6 +61,22 @@ function registerGameHandlers(io, socket) {
   });
 
   /**
+   * Client leaves a game room
+   * Payload: { gameId }
+   */
+  socket.on("game:leave", (payload = {}) => {
+    try {
+      const { gameId } = payload;
+      if (!gameId) return;
+      socket.leave(`game:${gameId}`);
+      socket.leave(`game:${gameId.toString().toUpperCase()}`);
+      console.log(`[Socket] Socket ${socket.id} left room game:${gameId}`);
+    } catch (err) {
+      console.warn("Socket game:leave error:", err.message);
+    }
+  });
+
+  /**
    * Real-time game move via socket
    * Payload: { gameId, from, to, promotion }
    */

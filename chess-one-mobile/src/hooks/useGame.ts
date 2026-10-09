@@ -94,8 +94,8 @@ export function useGame(gameId: number | string) {
     if (store.gameStatus !== 'ACTIVE') return;
 
     const timer = setInterval(() => {
-      gameStore.tickActiveClock(1000);
-    }, 1000);
+      gameStore.tickActiveClock();
+    }, 500);
 
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn]);
@@ -246,25 +246,37 @@ export function useGame(gameId: number | string) {
     return store.currentTurn === userColor;
   }, [store.gameStatus, store.currentTurn, userColor]);
 
-  // In check square
-  const inCheckSquare = useMemo<Square | null>(() => {
-    const chess = chessRef.current;
-    if (!chess.isCheck()) return null;
+  // In check square and color (authoritatively derived directly from store.fen synchronously)
+  const { inCheckSquare, inCheckColor } = useMemo<{
+    inCheckSquare: Square | null;
+    inCheckColor: PlayerColor | null;
+  }>(() => {
+    try {
+      if (!store.fen) return { inCheckSquare: null, inCheckColor: null };
+      const chess = new Chess(store.fen);
+      if (!chess.isCheck()) return { inCheckSquare: null, inCheckColor: null };
 
-    const turn = chess.turn();
-    const board = chess.board();
+      const turn = chess.turn();
+      const checkedColor: PlayerColor = turn === 'w' ? 'WHITE' : 'BLACK';
+      const board = chess.board();
 
-    for (let r = 0; r < 8; r++) {
-      for (let c = 0; c < 8; c++) {
-        const piece = board[r][c];
-        if (piece && piece.type === 'k' && piece.color === turn) {
-          const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-          const rank = 8 - r;
-          return `${files[c]}${rank}` as Square;
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          const piece = board[r][c];
+          if (piece && piece.type === 'k' && piece.color === turn) {
+            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+            const rank = 8 - r;
+            return {
+              inCheckSquare: `${files[c]}${rank}` as Square,
+              inCheckColor: checkedColor,
+            };
+          }
         }
       }
+      return { inCheckSquare: null, inCheckColor: checkedColor };
+    } catch {
+      return { inCheckSquare: null, inCheckColor: null };
     }
-    return null;
   }, [store.fen]);
 
   // Handle board square click
@@ -507,6 +519,7 @@ export function useGame(gameId: number | string) {
     selectedSquare,
     possibleMoves,
     inCheckSquare,
+    inCheckColor,
     pendingPromotion,
     handleSquarePress,
     confirmPromotion,

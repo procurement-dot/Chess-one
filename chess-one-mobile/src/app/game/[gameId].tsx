@@ -27,6 +27,7 @@ import { GameOverModal } from '../../components/game/GameOverModal';
 import { GameAbortModal } from '../../components/game/GameAbortModal';
 import { AiReviewModal } from '../../components/game/AiReviewModal';
 import { useAuthStore } from '../../store/authStore';
+import { gameStore } from '../../store/gameStore';
 import { gameSocket } from '../../socket/game.socket';
 import { gameService } from '../../services/game.service';
 import { PieceSymbol } from 'chess.js';
@@ -60,6 +61,7 @@ export default function LiveGameScreen() {
     selectedSquare,
     possibleMoves,
     inCheckSquare,
+    inCheckColor,
     pendingPromotion,
     handleSquarePress,
     confirmPromotion,
@@ -280,8 +282,8 @@ export default function LiveGameScreen() {
   const bottomPlayerIsTurn = currentTurn === bottomPlayerColor;
   const bottomPlayerFallback = isUserWhite ? 'You (White)' : 'You (Black)';
 
-  const isCheckForTop = Boolean(inCheckSquare && topPlayerIsTurn);
-  const isCheckForBottom = Boolean(inCheckSquare && bottomPlayerIsTurn);
+  const isCheckForTop = Boolean(inCheckColor && inCheckColor === topPlayerColor);
+  const isCheckForBottom = Boolean(inCheckColor && inCheckColor === bottomPlayerColor);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>

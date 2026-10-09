@@ -51,6 +51,7 @@ type Listener = () => void;
 class GameStore {
   private state: LiveGameState = { ...initialState };
   private listeners: Set<Listener> = new Set();
+  private lastTickTimestamp: number = Date.now();
 
   getState(): LiveGameState {
     return this.state;
@@ -86,6 +87,7 @@ class GameStore {
       blackPlayerId: game.blackPlayerId ?? (game.blackPlayer?.id as any) ?? null,
     };
 
+    this.lastTickTimestamp = Date.now();
     this.state = {
       ...this.state,
       currentGame: normalizedGame,
@@ -127,6 +129,10 @@ class GameStore {
       } else {
         blackTimeMs = state.blackTimeMs;
       }
+    }
+
+    if (state.whiteTimeMs !== undefined || state.blackTimeMs !== undefined) {
+      this.lastTickTimestamp = Date.now();
     }
 
     this.state = {
@@ -226,6 +232,7 @@ class GameStore {
 
     const updatedMoves = isDuplicate ? existingMoves : [...existingMoves, newMoveRecord];
 
+    this.lastTickTimestamp = Date.now();
     this.state = {
       ...this.state,
       fen,
@@ -249,6 +256,7 @@ class GameStore {
   }
 
   updateClocks(whiteTimeMs: number | null, blackTimeMs: number | null) {
+    this.lastTickTimestamp = Date.now();
     this.state = {
       ...this.state,
       whiteTimeMs,
@@ -257,14 +265,26 @@ class GameStore {
     this.notify();
   }
 
-  tickActiveClock(decrementMs: number = 1000) {
-    if (this.state.gameStatus !== 'ACTIVE') return;
+  tickActiveClock() {
+    if (this.state.gameStatus !== 'ACTIVE') {
+      this.lastTickTimestamp = Date.now();
+      return;
+    }
 
     // Do not tick down clock until the first move has been played
-    if (this.state.moves.length === 0 && !this.state.lastMove) return;
+    if (this.state.moves.length === 0 && !this.state.lastMove) {
+      this.lastTickTimestamp = Date.now();
+      return;
+    }
+
+    const now = Date.now();
+    const elapsedMs = Math.min(2500, Math.max(0, now - this.lastTickTimestamp));
+    this.lastTickTimestamp = now;
+
+    if (elapsedMs === 0) return;
 
     if (this.state.currentTurn === 'WHITE' && this.state.whiteTimeMs !== null) {
-      const nextTime = Math.max(0, this.state.whiteTimeMs - decrementMs);
+      const nextTime = Math.max(0, this.state.whiteTimeMs - elapsedMs);
       if (nextTime === 0) {
         // White timed out -> Black wins
         const winnerId = this.state.currentGame?.blackPlayerId ?? null;
@@ -282,7 +302,7 @@ class GameStore {
       this.state = { ...this.state, whiteTimeMs: nextTime };
       this.notify();
     } else if (this.state.currentTurn === 'BLACK' && this.state.blackTimeMs !== null) {
-      const nextTime = Math.max(0, this.state.blackTimeMs - decrementMs);
+      const nextTime = Math.max(0, this.state.blackTimeMs - elapsedMs);
       if (nextTime === 0) {
         // Black timed out -> White wins
         const winnerId = this.state.currentGame?.whitePlayerId ?? null;
@@ -324,6 +344,7 @@ class GameStore {
   }
 
   reset() {
+    this.lastTickTimestamp = Date.now();
     this.state = {
       ...initialState,
       connectionStatus: this.state.connectionStatus,

@@ -79,17 +79,25 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
     };
   }, [isAuthenticated, refreshInvites]);
 
+  // Track invitations already accepted/declined to prevent re-opening modal loop
+  const handledInvitesRef = React.useRef<Set<number>>(new Set());
+
   // Show incoming challenge popup if there are pending invitations
   useEffect(() => {
-    if (invitations.length > 0 && !incomingModalVisible) {
-      setIncomingInvite(invitations[0]);
+    const unhandled = invitations.filter((inv) => !handledInvitesRef.current.has(inv.id));
+    if (unhandled.length > 0 && !incomingModalVisible && !vsModalVisible) {
+      setIncomingInvite(unhandled[0]);
       setIncomingModalVisible(true);
     }
-  }, [invitations, incomingModalVisible]);
+  }, [invitations, incomingModalVisible, vsModalVisible]);
 
   // Handle accepting incoming challenge
   const handleAcceptInvite = async (invitationId: number) => {
+    handledInvitesRef.current.add(invitationId);
     setIsProcessingIncoming(true);
+    setIncomingModalVisible(false);
+    setIncomingInvite(null);
+
     try {
       const targetInvite =
         incomingInvite?.id === invitationId
@@ -97,10 +105,8 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
           : invitations.find((i) => i.id === invitationId);
 
       const game = await acceptInvitation(invitationId);
-      setIncomingModalVisible(false);
-      setIncomingInvite(null);
-
       const gameId = (game as any)?.gameId || game?.id || targetInvite?.gameId;
+
       if (gameId) {
         const playerColor = (game as any)?.playerColor || 'BLACK';
         try {
@@ -109,31 +115,12 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
           }
         } catch {}
 
-        // Resolve player names for animated VS faceoff
-        const myName = user?.name || user?.email || 'You';
-        const opponentName = targetInvite?.sender?.name || targetInvite?.sender?.email || 'Opponent';
-
-        let whiteName = opponentName;
-        let blackName = myName;
-
-        if ((game as any)?.whitePlayer?.name && (game as any)?.blackPlayer?.name) {
-          whiteName = (game as any).whitePlayer.name;
-          blackName = (game as any).blackPlayer.name;
-        } else if ((game as any)?.playerColor === 'WHITE') {
-          whiteName = myName;
-          blackName = opponentName;
-        }
-
-        setVsModalData({
-          gameId,
-          whitePlayerName: whiteName,
-          blackPlayerName: blackName,
-          whitePlayerAvatar: targetInvite?.sender?.avatarUrl,
-          blackPlayerAvatar: user?.photo,
-          timeControl: targetInvite?.timeControl || '5+0',
-        });
-        setVsModalVisible(true);
+        // Reset gameStore and navigate immediately so user doesn't lose time
+        gameStore.reset();
+        router.replace(`/game/${gameId}` as any);
       }
+    } catch (err) {
+      console.warn('[PlayHub] Accept invite error:', err);
     } finally {
       setIsProcessingIncoming(false);
     }
@@ -141,11 +128,15 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 
   // Handle declining incoming challenge
   const handleDeclineInvite = async (invitationId: number) => {
+    handledInvitesRef.current.add(invitationId);
     setIsProcessingIncoming(true);
+    setIncomingModalVisible(false);
+    setIncomingInvite(null);
+
     try {
       await declineInvitation(invitationId);
-      setIncomingModalVisible(false);
-      setIncomingInvite(null);
+    } catch (err) {
+      console.warn('[PlayHub] Decline invite error:', err);
     } finally {
       setIsProcessingIncoming(false);
     }
@@ -302,7 +293,7 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
           onComplete={() => {
             setVsModalVisible(false);
             gameStore.reset();
-            router.push(`/game/${vsModalData.gameId}` as any);
+            router.replace(`/game/${vsModalData.gameId}` as any);
           }}
         />
       )}

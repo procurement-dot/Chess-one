@@ -91,21 +91,25 @@ export default function LoginScreen() {
     filteredGames,
   } = useMemo(() => {
     const completed = games.filter(
-      (g) => g.status === 'COMPLETED' || Boolean(g.result)
+      (g) =>
+        (g.status === 'COMPLETED' || Boolean(g.result)) &&
+        g.status !== 'CANCELLED' &&
+        (g.status as string) !== 'ABORTED' &&
+        (g.result as any) !== 'ABORTED'
     );
 
-    const wins = completed.filter(
-      (g) => g.winnerId && currentUserId && g.winnerId === currentUserId
-    );
-    const losses = completed.filter(
-      (g) => g.winnerId && currentUserId && g.winnerId !== currentUserId
-    );
-    const draws = completed.filter(
-      (g) =>
-        g.result === 'DRAW' ||
-        g.result === 'STALEMATE' ||
-        (!g.winnerId && g.result)
-    );
+    const wins = completed.filter((g) => {
+      const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
+      return Boolean(winnerId && currentUserId && winnerId === currentUserId);
+    });
+    const losses = completed.filter((g) => {
+      const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
+      return Boolean(winnerId && currentUserId && winnerId !== currentUserId);
+    });
+    const draws = completed.filter((g) => {
+      const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
+      return (g.result === 'DRAW' || g.result === 'STALEMATE') && !winnerId;
+    });
 
     const total = completed.length;
     const winsNum = wins.length;
@@ -121,13 +125,15 @@ export default function LoginScreen() {
 
     let displayList = games;
     if (historyFilter === 'wins') {
-      displayList = games.filter(
-        (g) => g.winnerId && currentUserId && g.winnerId === currentUserId
-      );
+      displayList = games.filter((g) => {
+        const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
+        return Boolean(winnerId && currentUserId && winnerId === currentUserId);
+      });
     } else if (historyFilter === 'losses') {
-      displayList = games.filter(
-        (g) => g.winnerId && currentUserId && g.winnerId !== currentUserId
-      );
+      displayList = games.filter((g) => {
+        const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
+        return Boolean(winnerId && currentUserId && winnerId !== currentUserId);
+      });
     }
 
     return {
@@ -410,14 +416,19 @@ export default function LoginScreen() {
                             ? 'AI'
                             : opponent?.name || 'Opponent';
 
+                        const isCancelled =
+                          g.status === 'CANCELLED' ||
+                          (g.status as string) === 'ABORTED' ||
+                          (g.result as any) === 'ABORTED';
+                        const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
                         const isWinner =
-                          Boolean(g.winnerId && currentUserId && g.winnerId === currentUserId);
+                          Boolean(winnerId && currentUserId && winnerId === currentUserId);
                         const isLoser =
-                          Boolean(g.winnerId && currentUserId && g.winnerId !== currentUserId);
+                          Boolean(winnerId && currentUserId && winnerId !== currentUserId);
                         const isDraw =
-                          g.result === 'DRAW' ||
-                          g.result === 'STALEMATE' ||
-                          (!g.winnerId && g.result);
+                          !isCancelled &&
+                          (g.result === 'DRAW' || g.result === 'STALEMATE') &&
+                          !winnerId;
                         const isActive = g.status === 'ACTIVE';
 
                         const dateStr = g.createdAt
@@ -464,6 +475,8 @@ export default function LoginScreen() {
                                   styles.outcomeBadge,
                                   isActive
                                     ? styles.badgeActive
+                                    : isCancelled
+                                    ? styles.badgeDraw
                                     : isWinner
                                     ? styles.badgeWin
                                     : isLoser
@@ -474,6 +487,8 @@ export default function LoginScreen() {
                                 <Text style={styles.outcomeBadgeText}>
                                   {isActive
                                     ? 'In Progress'
+                                    : isCancelled
+                                    ? 'Cancelled'
                                     : isWinner
                                     ? '🏆 Win'
                                     : isLoser
