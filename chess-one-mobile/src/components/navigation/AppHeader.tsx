@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
@@ -64,9 +65,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               onPress={handleBack}
             >
               <Feather name="chevron-left" size={24} color={COLORS.primary} style={styles.backIcon} />
-              <View style={styles.logoSquare}>
-                <Text style={styles.logoKnight}>♞</Text>
-              </View>
               <View style={styles.backTitleCol}>
                 <Text style={styles.backText}>
                   {title !== 'ChessOne' ? title : 'Back'}
@@ -84,10 +82,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.8}
               onPress={() => router.replace('/' as any)}
             >
-              <View style={styles.logoSquare}>
-                <Text style={styles.logoKnight}>♞</Text>
-              </View>
-              <Text style={styles.brandTitle}>ChessOne</Text>
+              <Image 
+                source={require('../../assets/images/chessone-logo.png')} 
+                style={{ width: 140, height: 40, resizeMode: 'contain' }}
+              />
             </TouchableOpacity>
           )}
         </View>
