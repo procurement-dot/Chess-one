@@ -12,7 +12,7 @@ interface ChessPieceProps {
 
 export const ChessPiece: React.FC<ChessPieceProps> = ({ type, color, size }) => {
   const isWhite = color === 'w';
-  const fillColor = isWhite ? COLORS.textHeading : '#2B2B2B';
+  const fillColor = isWhite ? '#FFFFFF' : '#2B2B2B';
   const strokeColor = isWhite ? '#202020' : '#111111';
   const strokeWidth = 1.5;
 
@@ -45,7 +45,7 @@ export const ChessPiece: React.FC<ChessPieceProps> = ({ type, color, size }) => 
             <G fill={fillColor} stroke={strokeColor} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
               <Path d="M22 10c10.5 1 16.5 8 16 29H15c0-9 10-6.5 8-21" />
               <Path d="M24 18c.38 2.91-5.55 7.37-8 9-3 2-2.82 4.34-5 4-1.042-.94 1.41-3.04 0-3-1 0-.632 1.2-1 2.5-.5 1.5-1.5 2.5-3.5 2.5-1.5 0-2.5-.5-2.5-1.5 0-2 2-3 3-5 1.5-3 2-4 3.5-6.5s3-4 6-5.5c4-2 7.5-2 7.5 3z" />
-              <Circle cx="15.5" cy="18.5" r="1.5" fill={isWhite ? '#202020' : COLORS.textHeading} stroke="none" />
+              <Circle cx="15.5" cy="18.5" r="1.5" fill={isWhite ? '#202020' : '#FFFFFF'} stroke="none" />
             </G>
           </Svg>
         );

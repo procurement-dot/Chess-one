@@ -643,15 +643,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   connBadgeOnline: {
-    backgroundColor: '#064E3B',
+    backgroundColor: '#ECFDF5',
     borderColor: '#059669',
   },
   connBadgeConnecting: {
-    backgroundColor: '#78350F',
+    backgroundColor: '#FEF3C7',
     borderColor: '#D97706',
   },
   connBadgeOffline: {
-    backgroundColor: '#451A03',
+    backgroundColor: '#FEF2F2',
     borderColor: '#DC2626',
   },
   connDot: {
@@ -829,10 +829,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   turnTextMyTurn: {
-    color: '#4ADE80',
+    color: '#059669',
   },
   turnTextOpponentTurn: {
-    color: '#D1D5DB',
+    color: COLORS.textHeading,
   },
   drawFeedbackBanner: {
     backgroundColor: 'rgba(59, 130, 246, 0.2)',
@@ -853,7 +853,7 @@ const styles = StyleSheet.create({
   abortTimerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1C150B',
+    backgroundColor: '#FEF3C7',
     borderWidth: 1.5,
     borderColor: '#D97706',
     borderRadius: 18,
@@ -886,11 +886,11 @@ const styles = StyleSheet.create({
   abortCircleText: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#FDE047',
+    color: '#D97706',
     textAlign: 'center',
   },
   abortCircleTextUrgent: {
-    color: '#F87171',
+    color: '#DC2626',
   },
   abortTextCol: {
     flex: 1,
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
   },
   abortTimerSub: {
     fontSize: 11,
-    color: '#FEF08A',
+    color: '#D97706',
     lineHeight: 15,
   },
 });

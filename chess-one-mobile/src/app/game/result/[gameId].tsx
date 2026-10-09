@@ -257,11 +257,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   outcomeWin: {
-    backgroundColor: '#064E3B',
+    backgroundColor: '#ECFDF5',
     borderColor: '#059669',
   },
   outcomeLoss: {
-    backgroundColor: '#451A03',
+    backgroundColor: '#FEF2F2',
     borderColor: '#DC2626',
   },
   outcomeDraw: {
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   outcomeReason: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   playersCard: {
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   blackIconBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   blackPieceSym: {
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   playerInfo: {
     flex: 1,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   playerScore: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.white,
     borderRadius: 8,
   },
   scoreText: {
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.white,
     marginVertical: 14,
   },
   actionsCol: {
@@ -389,7 +389,7 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
   },
   secondaryBtnText: {
-    color: '#CBD5E1',
+    color: COLORS.textBody,
     fontSize: 16,
     fontWeight: '600',
   },
