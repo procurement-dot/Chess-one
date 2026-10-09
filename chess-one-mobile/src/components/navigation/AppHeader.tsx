@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Platform,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
+import { HOME_THEME } from '../../constants/home-theme';
+import { Feather } from '@expo/vector-icons';
+
+const logoImg = require('../../assets/images/logo-kindersports.png');
 
 interface AppHeaderProps {
   title?: string;
@@ -17,8 +21,10 @@ interface AppHeaderProps {
   rightAction?: 'profile' | 'none';
 }
 
+const ROLES = ['Student', 'Parent', 'Coach', 'School', 'Organiser'];
+
 export const AppHeader: React.FC<AppHeaderProps> = ({
-  title = 'ChessOne',
+  title,
   subtitle,
   showBack = false,
   onBack,
@@ -26,6 +32,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
+  const [role, setRole] = useState('Student');
 
   const handleBack = () => {
     if (onBack) {
@@ -41,6 +48,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     router.push('/login' as any);
   };
 
+  const cycleRole = () => {
+    const nextIdx = (ROLES.indexOf(role) + 1) % ROLES.length;
+    setRole(ROLES[nextIdx]);
+  };
+
   return (
     <View style={styles.headerContainer}>
       <View style={styles.contentRow}>
@@ -52,8 +64,16 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.7}
               onPress={handleBack}
             >
-              <Text style={styles.backIcon}>‹</Text>
-              <Text style={styles.backText}>Back</Text>
+              <Feather name="chevron-left" size={24} color={HOME_THEME.colors.primary} style={styles.backIcon} />
+              <Image source={logoImg} style={styles.logoImg} resizeMode="contain" />
+              {title && (
+                <View style={styles.backTitleCol}>
+                  <Text style={styles.backText}>{title}</Text>
+                  {subtitle ? (
+                    <Text style={styles.backSubtitle} numberOfLines={1}>{subtitle}</Text>
+                  ) : null}
+                </View>
+              )}
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
@@ -61,17 +81,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.8}
               onPress={() => router.replace('/' as any)}
             >
-              <View style={styles.brandIconBox}>
-                <Text style={styles.brandIcon}>♟️</Text>
-              </View>
-              <View>
-                <Text style={styles.brandTitle}>{title}</Text>
-                {subtitle ? (
-                  <Text style={styles.brandSubtitle}>{subtitle}</Text>
-                ) : (
-                  <Text style={styles.brandSubtitle}>Live Match Arena</Text>
-                )}
-              </View>
+              <Image source={logoImg} style={styles.logoImg} resizeMode="contain" />
             </TouchableOpacity>
           )}
         </View>
@@ -80,26 +90,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {rightAction === 'profile' && (
           <View style={styles.rightSection}>
             {isAuthenticated && user ? (
-              <TouchableOpacity
-                style={styles.userChip}
-                activeOpacity={0.75}
-                onPress={handleProfilePress}
-              >
-                <View style={styles.userAvatar}>
+              <View style={styles.profileSection}>
+                <TouchableOpacity
+                  style={styles.roleChip}
+                  activeOpacity={0.7}
+                  onPress={cycleRole}
+                >
+                  <Text style={styles.roleChipText}>{role} ▾</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.userAvatar}
+                  activeOpacity={0.75}
+                  onPress={handleProfilePress}
+                >
                   <Text style={styles.userInitial}>
                     {(user.name || user.email || 'P')[0].toUpperCase()}
                   </Text>
-                  <View style={styles.onlineDot} />
-                </View>
-                <View style={styles.userMeta}>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {user.name || 'Player'}
-                  </Text>
-                  <View style={styles.idBadge}>
-                    <Text style={styles.idBadgeText}>ID: #{user.id}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             ) : (
               <TouchableOpacity
                 style={styles.signInBtn}
@@ -118,33 +127,17 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#12161C',
-    borderBottomWidth: 1,
-    borderBottomColor: '#1F2633',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 4,
-      },
-      web: {
-        position: 'sticky' as any,
-        top: 0,
-        zIndex: 50,
-      },
-    }),
+    backgroundColor: HOME_THEME.colors.background,
+    height: 56,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    zIndex: 50,
   },
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 46,
+    flex: 1,
   },
   leftSection: {
     flexDirection: 'row',
@@ -158,113 +151,67 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backIcon: {
-    fontSize: 26,
-    color: '#38BDF8',
-    lineHeight: 26,
     marginRight: 4,
   },
+  logoImg: {
+    width: 120,
+    height: 32,
+    marginRight: 8,
+  },
+  backTitleCol: {
+    justifyContent: 'center',
+  },
   backText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#38BDF8',
+    fontSize: 16,
+    fontWeight: '700',
+    color: HOME_THEME.colors.primary,
+  },
+  backSubtitle: {
+    fontSize: 11,
+    color: HOME_THEME.colors.mutedText,
+    fontWeight: '500',
   },
   brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  brandIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#1E293B',
-    borderWidth: 1,
-    borderColor: '#38BDF8',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  brandIcon: {
-    fontSize: 20,
-  },
-  brandTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#FFFFFF',
-    letterSpacing: 0.3,
-  },
-  brandSubtitle: {
-    fontSize: 11,
-    color: '#94A3B8',
-    fontWeight: '500',
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  userChip: {
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A212D',
-    borderRadius: 20,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: '#2D3748',
-    gap: 8,
+  },
+  roleChip: {
+    backgroundColor: HOME_THEME.colors.roleChipBg,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  roleChipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: HOME_THEME.colors.roleChipText,
   },
   userAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#2563EB',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: HOME_THEME.colors.avatarCircle,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   userInitial: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  onlineDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#10B981',
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    borderWidth: 1,
-    borderColor: '#12161C',
-  },
-  userMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  userName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#FFFFFF',
-    maxWidth: 90,
-  },
-  idBadge: {
-    backgroundColor: '#0F172A',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 0.5,
-    borderColor: '#334155',
-  },
-  idBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#60A5FA',
+    color: HOME_THEME.colors.headingText,
   },
   signInBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: HOME_THEME.colors.primary,
     paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingVertical: 7,
     borderRadius: 10,
   },
   signInBtnText: {

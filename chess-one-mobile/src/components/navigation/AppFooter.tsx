@@ -9,8 +9,10 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useInvitations } from '../../hooks/useInvitations';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { HOME_THEME } from '../../constants/home-theme';
 
-export type FooterTab = 'home' | 'create' | 'community' | 'history' | 'account' | 'join';
+export type FooterTab = 'home' | 'create' | 'community' | 'history' | 'account' | 'join' | 'learn' | 'tournaments' | 'classes' | 'play';
 
 interface AppFooterProps {
   activeTab?: FooterTab;
@@ -23,35 +25,61 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
 
   const tabs: {
     id: FooterTab;
+    highlightIds: FooterTab[];
     label: string;
-    icon: string;
+    family: 'Ionicons' | 'MaterialCommunityIcons';
+    icon: any;
     route: string;
     badgeCount?: number;
   }[] = [
     {
       id: 'home',
+      highlightIds: ['home'],
       label: 'Home',
-      icon: '♟️',
+      family: 'Ionicons',
+      icon: 'home-outline',
       route: '/',
       badgeCount: pendingCount,
     },
     {
-      id: 'create',
-      label: 'Create',
-      icon: '⚔️',
-      route: '/play/create',
+      id: 'learn',
+      highlightIds: ['learn'],
+      label: 'Learn',
+      family: 'MaterialCommunityIcons',
+      icon: 'view-grid-outline',
+      route: '/learn',
+    },
+    {
+      id: 'play',
+      highlightIds: ['play', 'create', 'join'],
+      label: 'Play',
+      family: 'MaterialCommunityIcons',
+      icon: 'chess-knight',
+      route: '/play',
+    },
+    {
+      id: 'tournaments',
+      highlightIds: ['tournaments'],
+      label: 'Tournaments',
+      family: 'MaterialCommunityIcons',
+      icon: 'chess-rook',
+      route: '/tournaments',
     },
     {
       id: 'community',
+      highlightIds: ['community'],
       label: 'Community',
-      icon: '👥',
+      family: 'Ionicons',
+      icon: 'happy-outline',
       route: '/community',
     },
     {
-      id: 'account',
-      label: 'Account',
-      icon: '👤',
-      route: '/login',
+      id: 'classes',
+      highlightIds: ['classes'],
+      label: 'Classes',
+      family: 'MaterialCommunityIcons',
+      icon: 'view-list-outline',
+      route: '/classes',
     },
   ];
 
@@ -63,7 +91,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
     <View style={styles.footerContainer}>
       <View style={styles.innerFooter}>
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
+          const isActive = tab.highlightIds.includes(activeTab);
+          const iconColor = isActive ? HOME_THEME.colors.primary : HOME_THEME.colors.mutedText;
+
           return (
             <TouchableOpacity
               key={tab.id}
@@ -72,9 +102,12 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
               onPress={() => handleTabPress(tab.route)}
             >
               <View style={styles.iconWrapper}>
-                <Text style={[styles.tabIcon, isActive && styles.activeTabIcon]}>
-                  {tab.icon}
-                </Text>
+                {tab.family === 'Ionicons' ? (
+                  <Ionicons name={tab.icon} size={20} color={iconColor} />
+                ) : (
+                  <MaterialCommunityIcons name={tab.icon} size={20} color={iconColor} />
+                )}
+                
                 {Boolean(tab.badgeCount && tab.badgeCount > 0) && (
                   <View style={styles.badgePill}>
                     <Text style={styles.badgeText}>
@@ -83,12 +116,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
                   </View>
                 )}
               </View>
-
               <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
                 {tab.label}
               </Text>
-
-              {isActive && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
           );
         })}
@@ -99,26 +129,17 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
 
 const styles = StyleSheet.create({
   footerContainer: {
-    backgroundColor: '#12161C',
-    borderTopWidth: 1,
-    borderTopColor: '#1F2633',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    backgroundColor: HOME_THEME.colors.footerBackground,
+    borderTopWidth: 0,
+    paddingBottom: Platform.OS === 'web' ? 10 : (Platform.OS === 'ios' ? 24 : 10),
     paddingTop: 8,
     paddingHorizontal: 8,
+    height: Platform.OS === 'web' ? 68 : (Platform.OS === 'ios' ? 92 : 68),
     ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
-      },
-      android: {
-        elevation: 8,
-      },
       web: {
         position: 'sticky' as any,
         bottom: 0,
-        zIndex: 50,
+        zIndex: 2147483647,
       },
     }),
   },
@@ -134,49 +155,34 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
-    borderRadius: 12,
-    position: 'relative',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderRadius: 10,
+    cursor: 'pointer' as any,
   },
   activeTabButton: {
-    backgroundColor: '#161D2A',
+    backgroundColor: HOME_THEME.colors.activeTabPill,
   },
   iconWrapper: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIcon: {
-    fontSize: 20,
-    opacity: 0.7,
-  },
-  activeTabIcon: {
-    opacity: 1,
-    transform: [{ scale: 1.1 }],
-  },
   tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#64748B',
-    marginTop: 3,
+    fontSize: 10.5,
+    fontWeight: '500',
+    color: HOME_THEME.colors.mutedText,
+    marginTop: 2,
   },
   activeTabLabel: {
-    color: '#38BDF8',
+    color: HOME_THEME.colors.primary,
     fontWeight: '700',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -6,
-    width: 18,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#38BDF8',
   },
   badgePill: {
     position: 'absolute',
-    top: -4,
+    top: -6,
     right: -10,
-    backgroundColor: '#EF4444',
+    backgroundColor: '#FBA586',
     minWidth: 16,
     height: 16,
     borderRadius: 8,
