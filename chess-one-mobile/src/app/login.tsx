@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -181,12 +182,8 @@ export default function LoginScreen() {
       >
         {/* Brand Banner */}
         <View style={styles.brandContainer}>
-          <View style={styles.logoBadge}>
-            <Text style={styles.logoIcon}>♟️</Text>
-          </View>
-          <Text style={styles.appName}>
-            {isAuthenticated ? 'Player Profile' : 'ChessOne'}
-          </Text>
+          
+          <Image source={require('../../assets/images/chessone-logo.png')} style={{ width: 180, height: 60, resizeMode: 'contain', marginBottom: 12 }} />
           <Text style={styles.appTagline}>
             {isAuthenticated ? 'Career Records & Match Insights' : 'Compete • Learn • Master'}
           </Text>
@@ -625,7 +622,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   scrollView: {
     flex: 1,
@@ -644,7 +641,7 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderWidth: 1.5,
     borderColor: '#38BDF8',
     justifyContent: 'center',
@@ -667,7 +664,7 @@ const styles = StyleSheet.create({
   },
   appTagline: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 2,
     letterSpacing: 0.8,
   },
@@ -679,11 +676,11 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   profileHeaderCard: {
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
@@ -706,7 +703,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderWidth: 2,
     borderColor: '#38BDF8',
     justifyContent: 'center',
@@ -727,7 +724,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: '#10B981',
     borderWidth: 2,
-    borderColor: '#161B22',
+    borderColor: COLORS.white,
   },
   profileTextCol: {
     flex: 1,
@@ -735,17 +732,17 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 19,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginBottom: 6,
   },
   idChip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -780,16 +777,16 @@ const styles = StyleSheet.create({
 
   /* Player Career Stats Grid */
   statsContainer: {
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
   },
   statsHeaderTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 12,
     letterSpacing: 0.2,
   },
@@ -824,7 +821,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   statLabel: {
     fontSize: 11,
@@ -834,7 +831,7 @@ const styles = StyleSheet.create({
   },
   statSub: {
     fontSize: 10,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   recordPillRow: {
@@ -844,29 +841,29 @@ const styles = StyleSheet.create({
   },
   recordPill: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     borderRadius: 10,
     paddingVertical: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
   },
   recordPillText: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   boldText: {
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
 
   /* Match History Section */
   historySection: {
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
   },
   historyHeaderRow: {
     flexDirection: 'row',
@@ -882,10 +879,10 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   historyCountBadge: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -915,9 +912,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
   },
   filterPillActive: {
     backgroundColor: '#2563EB',
@@ -926,10 +923,10 @@ const styles = StyleSheet.create({
   filterPillText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   filterPillTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   historyList: {
@@ -942,7 +939,7 @@ const styles = StyleSheet.create({
   },
   historyLoadingText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   historyEmptyBox: {
     paddingVertical: 24,
@@ -954,7 +951,7 @@ const styles = StyleSheet.create({
   },
   historyEmptyText: {
     fontSize: 12.5,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -962,7 +959,7 @@ const styles = StyleSheet.create({
 
   /* Match Card */
   matchCard: {
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
@@ -973,7 +970,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#17140B',
   },
   matchCardLoser: {
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   matchCardHeader: {
     flexDirection: 'row',
@@ -992,12 +989,12 @@ const styles = StyleSheet.create({
   matchOpponentName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     maxWidth: 170,
   },
   matchMetaText: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   outcomeBadge: {
@@ -1019,12 +1016,12 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
   },
   badgeDraw: {
-    backgroundColor: '#374151',
+    backgroundColor: COLORS.border,
   },
   outcomeBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
 
   /* Trophy Banner for Wins */
@@ -1058,7 +1055,7 @@ const styles = StyleSheet.create({
 
   /* AI Suggestion Box for Losses */
   aiSuggestionBox: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderWidth: 1,
     borderColor: '#3B82F6',
     borderRadius: 10,
@@ -1131,7 +1128,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   enterHubButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1141,9 +1138,9 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   signOutButtonText: {
     color: '#EF4444',
@@ -1155,11 +1152,11 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 440,
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.35,
@@ -1172,13 +1169,13 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
@@ -1261,12 +1258,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.border,
   },
   dividerText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#64748B',
+    color: COLORS.textBody,
     letterSpacing: 1,
   },
   devSignInButton: {
@@ -1286,13 +1283,13 @@ const styles = StyleSheet.create({
     borderColor: '#059669',
   },
   devSignInButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },
   disclaimerText: {
     fontSize: 11,
-    color: '#64748B',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginTop: 20,
     lineHeight: 16,
