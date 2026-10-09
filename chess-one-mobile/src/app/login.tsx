@@ -141,7 +141,15 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     const res = await signInWithGoogle();
     if (res?.success) {
-      router.replace('/play' as any);
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const done = await AsyncStorage.getItem('@chessone_onboardingDone');
+        if (!done) {
+          router.replace('/onboarding' as any);
+          return;
+        }
+      } catch (e) {}
+      router.replace('/' as any);
     }
   };
 
