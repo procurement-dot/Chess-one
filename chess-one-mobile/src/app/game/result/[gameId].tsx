@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../../constants/chessone-theme';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -54,7 +55,7 @@ export default function GameResultScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="COLORS.primary" />
           <Text style={styles.loadingText}>Finalizing match result...</Text>
         </View>
       </SafeAreaView>
@@ -209,7 +210,7 @@ export default function GameResultScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -218,25 +219,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: COLORS.white,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     lineHeight: 28,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   spacer: {
     width: 40,
@@ -264,7 +265,7 @@ const styles = StyleSheet.create({
     borderColor: '#DC2626',
   },
   outcomeDraw: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderColor: '#475569',
   },
   outcomeIcon: {
@@ -274,7 +275,7 @@ const styles = StyleSheet.create({
   outcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   outcomeReason: {
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   playersCard: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
@@ -321,12 +322,12 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   playerSub: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   playerScore: {
     paddingHorizontal: 12,
@@ -337,7 +338,7 @@ const styles = StyleSheet.create({
   scoreText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   divider: {
     height: 1,
@@ -362,30 +363,30 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   aiReviewBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     height: 52,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
   secondaryBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     height: 52,
     borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   secondaryBtnText: {
     color: '#CBD5E1',
@@ -400,7 +401,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 14,
   },
 });

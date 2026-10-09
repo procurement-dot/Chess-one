@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   View,
@@ -48,7 +49,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color="#94A3B8" />
+            <ActivityIndicator size="small" color="COLORS.textBody" />
           ) : (
             <Text style={styles.refreshText}>🔄 Refresh</Text>
           )}
@@ -124,7 +125,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({
                   disabled={isThisInviting}
                 >
                   {isThisInviting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color="COLORS.textHeading" />
                   ) : (
                     <Text style={styles.inviteBtnText}>⚔️ Invite</Text>
                   )}
@@ -159,13 +160,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -193,7 +194,7 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   refreshBtn: {
     paddingHorizontal: 10,
@@ -205,7 +206,7 @@ const styles = StyleSheet.create({
   },
   refreshText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   emptyCard: {
@@ -259,14 +260,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   avatarStatusDot: {
     position: 'absolute',
@@ -304,7 +305,7 @@ const styles = StyleSheet.create({
   idChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   statusRow: {
     flexDirection: 'row',
@@ -336,13 +337,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   inviteBtnOffline: {
-    backgroundColor: '#374151',
+    backgroundColor: COLORS.border,
   },
   inviteBtnLoading: {
     opacity: 0.8,
   },
   inviteBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },

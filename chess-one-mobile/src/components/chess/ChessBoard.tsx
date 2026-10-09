@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useMemo } from 'react';
 import {
   View,
@@ -102,7 +103,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const isInCheck = inCheckSquare === square;
 
               // Refined, professional tile coloring (standard Chess.com / Lichess palette)
-              let tileBg = isLight ? '#EBECD0' : '#779556';
+              let tileBg = isLight ? '#E8ECDE' : '#8B9E7E';
               if (isInCheck) {
                 tileBg = '#EF4444';
               } else if (isSelected) {
@@ -136,7 +137,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       pointerEvents="none"
                       style={[
                         styles.coordRankText,
-                        { color: isLight ? '#779556' : '#EBECD0' },
+                        { color: isLight ? '#8B9E7E' : '#E8ECDE' },
                       ]}
                     >
                       {RANKS[rIdx]}
@@ -149,7 +150,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       pointerEvents="none"
                       style={[
                         styles.coordFileText,
-                        { color: isLight ? '#779556' : '#EBECD0' },
+                        { color: isLight ? '#8B9E7E' : '#E8ECDE' },
                       ]}
                     >
                       {FILES[cIdx]}
@@ -209,7 +210,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 2,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
     padding: 24,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
@@ -137,7 +138,7 @@ const styles = StyleSheet.create({
   },
   desc: {
     fontSize: 13.5,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
@@ -170,18 +171,18 @@ const styles = StyleSheet.create({
   newMatchBtn: {
     width: '100%',
     height: 48,
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2563EB',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
   },
   newMatchBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.2,
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
   homeBtn: {
     width: '100%',
     height: 44,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',

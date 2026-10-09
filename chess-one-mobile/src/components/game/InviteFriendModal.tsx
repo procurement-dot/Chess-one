@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -137,7 +138,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                         disabled={isInviting}
                       >
                         {isInviting ? (
-                          <ActivityIndicator size="small" color="#FFFFFF" />
+                          <ActivityIndicator size="small" color="COLORS.textHeading" />
                         ) : (
                           <Text style={styles.inviteBtnText}>⚔️ Invite</Text>
                         )}
@@ -190,11 +191,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   subtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   closeBtn: {
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 14,
   },
   emptyBox: {
@@ -241,7 +242,7 @@ const styles = StyleSheet.create({
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 12,
   },
@@ -289,7 +290,7 @@ const styles = StyleSheet.create({
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
@@ -306,14 +307,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   avatarDot: {
     position: 'absolute',
@@ -324,7 +325,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#10B981',
     borderWidth: 2,
-    borderColor: '#0F1318',
+    borderColor: COLORS.background,
   },
   infoCol: {
     flex: 1,
@@ -342,7 +343,7 @@ const styles = StyleSheet.create({
     maxWidth: 140,
   },
   idChip: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   idChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   onlineStatusText: {
     fontSize: 11,
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   inviteBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },

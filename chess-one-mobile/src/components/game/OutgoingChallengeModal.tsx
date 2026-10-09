@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -141,13 +142,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
     lineHeight: 19,
@@ -155,7 +156,7 @@ const styles = StyleSheet.create({
   previewBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     padding: 12,
     borderRadius: 14,
     width: '100%',
@@ -168,14 +169,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   previewInfo: {
     flex: 1,
@@ -191,13 +192,13 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
   cancelBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     width: '100%',
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   cancelBtnText: {
     color: '#CBD5E1',

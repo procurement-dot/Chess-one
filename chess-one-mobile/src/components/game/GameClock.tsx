@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
@@ -62,8 +63,8 @@ const styles = StyleSheet.create({
   },
   activeClockContainer: {
     backgroundColor: '#EFF6FF',
-    borderColor: '#3B82F6',
-    shadowColor: '#2563EB',
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
@@ -79,10 +80,10 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   inactiveDot: {
-    backgroundColor: '#94A3B8',
+    backgroundColor: COLORS.textBody,
   },
   activeDot: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
   },
   lowTimeDot: {
     backgroundColor: '#EF4444',

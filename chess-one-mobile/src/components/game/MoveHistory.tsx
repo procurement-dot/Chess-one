@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   View,
@@ -451,7 +452,7 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
   },
   tabLabelActive: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   activeTabIndicator: {
@@ -477,7 +478,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   unreadBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 10,
     fontWeight: '700',
   },
@@ -544,7 +545,7 @@ const styles = StyleSheet.create({
   normalMoveText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     paddingLeft: 4,
   },
   latestMoveBadge: {
@@ -557,7 +558,7 @@ const styles = StyleSheet.create({
   latestMoveBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
 
   /* Chat Tab Styles */
@@ -610,7 +611,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   chatBubbleMe: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     borderBottomRightRadius: 2,
   },
   chatBubbleOpponent: {
@@ -619,7 +620,7 @@ const styles = StyleSheet.create({
   },
   chatBubbleText: {
     fontSize: 13,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     lineHeight: 17,
   },
   chatTimestamp: {
@@ -675,12 +676,12 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     paddingHorizontal: 12,
     fontSize: 12.5,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     borderWidth: 1,
     borderColor: '#3A3A3E',
   },
   sendButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 12,
     height: 34,
     borderRadius: 17,
@@ -688,11 +689,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#374151',
+    backgroundColor: COLORS.border,
     opacity: 0.6,
   },
   sendButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 12,
     fontWeight: '700',
   },

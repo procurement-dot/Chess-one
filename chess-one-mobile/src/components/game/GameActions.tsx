@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
     color: '#334155',
   },
   drawButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.textHeading,
     borderColor: '#E2E8F0',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
@@ -94,7 +95,7 @@ const styles = StyleSheet.create({
   drawButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2563EB',
+    color: COLORS.primary,
   },
   resignButton: {
     backgroundColor: '#FEF2F2',

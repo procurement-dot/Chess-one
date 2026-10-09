@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -73,7 +74,7 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color="COLORS.textHeading" />
               ) : (
                 <Text style={styles.acceptBtnText}>✅ Accept Challenge</Text>
               )}
@@ -134,20 +135,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
   },
   challengerBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     padding: 14,
     borderRadius: 14,
     width: '100%',
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   challengerInfo: {
     flex: 1,
@@ -180,7 +181,7 @@ const styles = StyleSheet.create({
   },
   challengerDetails: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   buttonCol: {
     width: '100%',
@@ -198,17 +199,17 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   acceptBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   declineBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   declineBtnText: {
     color: '#EF4444',

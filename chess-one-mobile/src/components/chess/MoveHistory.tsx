@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MovePair } from '../../types/chess.types';
@@ -78,7 +79,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({ movePairs }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2F3642',
@@ -107,7 +108,7 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   emptyContainer: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#2F3642',
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
   activeMoveText: {
-    color: '#60A5FA',
+    color: COLORS.primary,
     fontWeight: '700',
   },
 });

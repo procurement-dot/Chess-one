@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   View,
@@ -74,7 +75,7 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
           onPress={() => onAccept(invitation.id)}
         >
           {isProcessing ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color="COLORS.textHeading" />
           ) : (
             <Text style={styles.acceptText}>Accept Challenge</Text>
           )}
@@ -86,7 +87,7 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -112,12 +113,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   avatarText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#3B82F6',
+    color: COLORS.primary,
   },
   infoCol: {
     flex: 1,
@@ -125,16 +126,16 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   subtext: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   codeBadge: {
     fontSize: 12,
-    color: '#60A5FA',
+    color: COLORS.primary,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -152,7 +153,7 @@ const styles = StyleSheet.create({
   declineButton: {
     backgroundColor: '#262D38',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   declineText: {
     color: '#CBD5E1',
@@ -163,7 +164,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#10B981',
   },
   acceptText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },

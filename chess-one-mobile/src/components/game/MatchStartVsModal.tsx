@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useEffect, useRef } from 'react';
 import {
   Modal,
@@ -206,10 +207,10 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 18,
     shadowColor: '#4F46E5',
@@ -337,13 +338,13 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   playerName: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
     maxWidth: 120,
   },
   playerNameRight: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'right',
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   vsText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '900',
     fontStyle: 'italic',

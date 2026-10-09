@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -82,7 +83,7 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -97,7 +98,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   subtitle: {
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   piecePreview: {
     width: 48,
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 11,
     borderRadius: 10,
-    backgroundColor: '#374151',
+    backgroundColor: COLORS.border,
     alignItems: 'center',
   },
   cancelText: {

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -117,7 +118,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
   // Outcome banner
   let outcomeText = 'MATCH FINISHED';
-  let outcomeBg = '#374151';
+  let outcomeBg = COLORS.border;
   let outcomeColor = '#9CA3AF';
 
   if (isWinner) {
@@ -232,7 +233,7 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
@@ -258,7 +259,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -290,13 +291,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 6,
     textAlign: 'center',
   },
   reason: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 18,
     lineHeight: 20,
@@ -309,7 +310,7 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: COLORS.border,
   },
   playerRow: {
     flexDirection: 'row',
@@ -354,24 +355,24 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   aiReviewBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   primaryBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -382,7 +383,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   secondaryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ghostBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
   },

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -595,7 +596,7 @@ export default function LiveGameScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -604,19 +605,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: COLORS.white,
   },
   iconBtn: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backIcon: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     lineHeight: 28,
   },
   headerCenter: {
@@ -625,11 +626,11 @@ const styles = StyleSheet.create({
   headerGameType: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 1,
   },
   connBadge: {
@@ -668,7 +669,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F87171',
   },
   connText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -706,7 +707,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 14,
   },
   errorIcon: {
@@ -716,18 +717,18 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 8,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 24,
     height: 48,
     borderRadius: 12,
@@ -735,7 +736,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -758,28 +759,28 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   aiReviewActionBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '800',
   },
   viewResultBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   viewResultBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   reopenModalBtn: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingVertical: 11,
     borderRadius: 12,
     alignItems: 'center',
@@ -787,7 +788,7 @@ const styles = StyleSheet.create({
     borderColor: '#334155',
   },
   reopenModalBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -836,7 +837,7 @@ const styles = StyleSheet.create({
   drawFeedbackBanner: {
     backgroundColor: 'rgba(59, 130, 246, 0.2)',
     borderWidth: 1,
-    borderColor: '#3B82F6',
+    borderColor: COLORS.primary,
     paddingVertical: 7,
     paddingHorizontal: 16,
     borderRadius: 20,

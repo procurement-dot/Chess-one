@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { GamePlayer, PlayerColor } from '../../types/game.types';
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.textHeading,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 16,
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     borderColor: '#CBD5E1',
   },
   blackBadge: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderColor: '#0F172A',
   },
   avatarText: {
@@ -132,7 +133,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   blackBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   metaSection: {
     flex: 1,
@@ -174,7 +175,7 @@ const styles = StyleSheet.create({
   },
   turnLabel: {
     fontSize: 11,
-    color: '#2563EB',
+    color: COLORS.primary,
     fontWeight: '600',
     marginTop: 2,
   },
