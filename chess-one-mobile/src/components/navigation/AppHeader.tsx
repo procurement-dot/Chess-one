@@ -11,7 +11,7 @@ import { useAuthStore } from '../../store/authStore';
 import { HOME_THEME } from '../../constants/home-theme';
 import { Feather } from '@expo/vector-icons';
 
-const logoImg = require('../../assets/images/logo-kindersports.png');
+const logoImg = require('../../../assets/images/logo-kindersports.png');
 
 interface AppHeaderProps {
   title?: string;
