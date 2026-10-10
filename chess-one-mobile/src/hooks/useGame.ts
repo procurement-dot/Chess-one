@@ -20,19 +20,8 @@ export function useGame(gameId: number | string) {
 
   // Authoritative local chess.js instance synced with store.fen
   const chessRef = useRef<Chess>(new Chess());
-  const isSubmittingMoveRef = useRef(false);
-  const movesCountRef = useRef(0);
-  const turnStartTimestampRef = useRef<number>(Date.now());
 
-  useEffect(() => {
-    turnStartTimestampRef.current = Date.now();
-  }, [store.currentTurn]);
-
-  useEffect(() => {
-    movesCountRef.current = store.moves.length;
-  }, [store.moves.length]);
-
-  // Sync chess.js instance whenever FEN updates in the store, and clear ghost selections
+  // Sync chess.js instance whenever FEN updates in the store
   useEffect(() => {
     try {
       if (store.fen) {
@@ -41,10 +30,6 @@ export function useGame(gameId: number | string) {
     } catch (err) {
       console.warn('[useGame] Failed to load FEN into chess.js:', err);
     }
-    // Clear any previous selection / dots whenever board position updates
-    setSelectedSquare(null);
-    setPossibleMoves([]);
-    setPendingPromotion(null);
   }, [store.fen]);
 
   // Initial load of game metadata, initial state, and moves
@@ -99,53 +84,34 @@ export function useGame(gameId: number | string) {
     if (store.gameStatus !== 'ACTIVE') return;
 
     const timer = setInterval(() => {
-      gameStore.tickActiveClock();
-    }, 500);
+      gameStore.tickActiveClock(1000);
+    }, 1000);
 
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn]);
 
-  // Authoritative polling fallback: syncs state reliably when disconnected from WebSocket
+  // Authoritative polling fallback: guarantees synchronization even if WebSockets are delayed or lost
   useEffect(() => {
     if (!gameId || store.gameStatus !== 'ACTIVE') return;
 
     let isPolling = false;
-
     const interval = setInterval(async () => {
-      if (isPolling || isSubmittingMoveRef.current) return;
-      const live = gameStore.getState();
-      if (live.gameStatus !== 'ACTIVE') return;
-
-      // When WebSocket is connected, WebSocket delivers all moves and clocks in real-time.
-      // Do not run aggressive polling loops that can race with live WebSockets.
-      if (live.connectionStatus === 'connected') return;
-
+      if (isPolling) return;
       isPolling = true;
       try {
         const state = await gameService.getGameState(gameId);
-        if (state && !isSubmittingMoveRef.current) {
-          // If match finished/cancelled on server, immediately apply
-          if (state.status === 'COMPLETED' || state.status === 'CANCELLED') {
+        if (state) {
+          // If FEN or turn or status changed on server, synchronize store immediately!
+          if (
+            state.fen !== store.fen ||
+            state.currentTurn !== store.currentTurn ||
+            state.status !== store.gameStatus
+          ) {
+            console.log('[useGame] Polling detected state update:', state.currentTurn, state.fen);
             gameStore.updateGameState(state);
-            return;
-          }
-
-          const current = gameStore.getState();
-          // Guard: ignore stale poll response if server moveCount is less than local moves
-          if (typeof state.moveCount === 'number' && state.moveCount < current.moves.length) {
-            return;
-          }
-
-          // If turn or FEN differs, verify server has at least as many moves before applying
-          if (state.fen !== current.fen || state.currentTurn !== current.currentTurn) {
             const moves = await gameService.getMoves(gameId).catch(() => []);
-            const fresh = gameStore.getState();
-            if (!isSubmittingMoveRef.current && moves && moves.length >= fresh.moves.length) {
-              console.log('[useGame] Disconnected fallback sync detected authoritative update');
-              gameStore.updateGameState(state);
-              if (moves.length > 0) {
-                gameStore.setMoves(moves);
-              }
+            if (moves && moves.length > 0) {
+              gameStore.setMoves(moves);
             }
           }
         }
@@ -154,10 +120,10 @@ export function useGame(gameId: number | string) {
       } finally {
         isPolling = false;
       }
-    }, 3000);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [gameId, store.gameStatus, store.connectionStatus]);
+  }, [gameId, store.gameStatus, store.fen, store.currentTurn]);
 
   // Synchronize timeout state with backend
   useEffect(() => {
@@ -244,8 +210,8 @@ export function useGame(gameId: number | string) {
 
     // In PLAYER_VS_AI, one slot is null for the AI engine
     if (game.gameType === 'PLAYER_VS_AI') {
-      if (!game.whitePlayer && !game.whitePlayerId) return { userColor: 'BLACK', currentUserId: activeId };
-      if (!game.blackPlayer && !game.blackPlayerId) return { userColor: 'WHITE', currentUserId: activeId };
+      if (game.whitePlayerId === null) return { userColor: 'BLACK', currentUserId: activeId };
+      if (game.blackPlayerId === null) return { userColor: 'WHITE', currentUserId: activeId };
     }
 
     if (game.blackPlayerId && !game.whitePlayerId) return { userColor: 'BLACK', currentUserId: activeId };
@@ -260,37 +226,25 @@ export function useGame(gameId: number | string) {
     return store.currentTurn === userColor;
   }, [store.gameStatus, store.currentTurn, userColor]);
 
-  // In check square and color (authoritatively derived directly from store.fen synchronously)
-  const { inCheckSquare, inCheckColor } = useMemo<{
-    inCheckSquare: Square | null;
-    inCheckColor: PlayerColor | null;
-  }>(() => {
-    try {
-      if (!store.fen) return { inCheckSquare: null, inCheckColor: null };
-      const chess = new Chess(store.fen);
-      if (!chess.isCheck()) return { inCheckSquare: null, inCheckColor: null };
+  // In check square
+  const inCheckSquare = useMemo<Square | null>(() => {
+    const chess = chessRef.current;
+    if (!chess.isCheck()) return null;
 
-      const turn = chess.turn();
-      const checkedColor: PlayerColor = turn === 'w' ? 'WHITE' : 'BLACK';
-      const board = chess.board();
+    const turn = chess.turn();
+    const board = chess.board();
 
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          const piece = board[r][c];
-          if (piece && piece.type === 'k' && piece.color === turn) {
-            const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-            const rank = 8 - r;
-            return {
-              inCheckSquare: `${files[c]}${rank}` as Square,
-              inCheckColor: checkedColor,
-            };
-          }
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const piece = board[r][c];
+        if (piece && piece.type === 'k' && piece.color === turn) {
+          const files = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+          const rank = 8 - r;
+          return `${files[c]}${rank}` as Square;
         }
       }
-      return { inCheckSquare: null, inCheckColor: checkedColor };
-    } catch {
-      return { inCheckSquare: null, inCheckColor: null };
     }
+    return null;
   }, [store.fen]);
 
   // Handle board square click
@@ -409,16 +363,13 @@ export function useGame(gameId: number | string) {
     });
 
     setIsSubmittingMove(true);
-    isSubmittingMoveRef.current = true;
 
-    // 3. Send move to backend in background with client turn elapsed time for network lag compensation
-    const clientTurnElapsedMs = Math.max(0, Date.now() - turnStartTimestampRef.current);
+    // 3. Send move to backend in background
     try {
       const response = await gameService.makeMove(gameId, {
         from,
         to,
         promotion,
-        clientTurnElapsedMs,
       });
 
       // Synchronize authoritative clocks & verified status
@@ -429,27 +380,6 @@ export function useGame(gameId: number | string) {
         if (response.status === 'COMPLETED' || response.result) {
           gameStore.setGameFinished(response.result!, response.winnerId ?? null);
         }
-      }
-
-      // If playing vs AI, single safe fallback poll for the AI's counter-move (scheduled in 400ms on server)
-      if (store.currentGame?.gameType === 'PLAYER_VS_AI') {
-        const fetchAiMove = async () => {
-          const live = gameStore.getState();
-          if (live.gameStatus === 'ACTIVE' && live.currentTurn !== userColor) {
-            try {
-              const state = await gameService.getGameState(gameId);
-              const currentLive = gameStore.getState();
-              if (state && state.fen !== currentLive.fen && currentLive.currentTurn !== userColor) {
-                const moves = await gameService.getMoves(gameId).catch(() => []);
-                gameStore.updateGameState(state);
-                if (moves && moves.length > 0) {
-                  gameStore.setMoves(moves);
-                }
-              }
-            } catch {}
-          }
-        };
-        setTimeout(fetchAiMove, 800);
       }
     } catch (err: any) {
       console.warn('[useGame] Move rejected by server, rolling back:', err);
@@ -462,9 +392,6 @@ export function useGame(gameId: number | string) {
       gameStore.setMoves(previousMoves);
     } finally {
       setIsSubmittingMove(false);
-      setTimeout(() => {
-        isSubmittingMoveRef.current = false;
-      }, 400);
     }
   };
 
@@ -535,7 +462,6 @@ export function useGame(gameId: number | string) {
     selectedSquare,
     possibleMoves,
     inCheckSquare,
-    inCheckColor,
     pendingPromotion,
     handleSquarePress,
     confirmPromotion,

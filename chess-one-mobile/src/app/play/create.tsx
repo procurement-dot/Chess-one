@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import {
   View,
   Text,
@@ -16,6 +17,7 @@ import { gameSocket } from '../../socket/game.socket';
 import { GameType, AIDifficulty, ColorPreference, OnlineUser } from '../../types/game.types';
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
+import { CustomWheelPicker } from '../../components/ui/CustomWheelPicker';
 import { InviteFriendModal } from '../../components/game/InviteFriendModal';
 import { OutgoingChallengeModal } from '../../components/game/OutgoingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
@@ -202,17 +204,9 @@ export default function CreateMatchScreen() {
       });
 
       const gameId = response.gameId;
-      const playerColor = response.playerColor || (selectedColor === 'BLACK' ? 'BLACK' : 'WHITE');
-
-      if (gameId && typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.setItem(`chess_game_color_${gameId}`, playerColor);
-      }
 
       if (gameType === 'PLAYER_VS_AI' || response.status === 'ACTIVE') {
-        router.replace({
-          pathname: `/game/${gameId}`,
-          params: { mode: gameType === 'PLAYER_VS_AI' ? 'ai' : 'pvp' },
-        } as any);
+        router.replace(`/game/${gameId}` as any);
       } else {
         router.replace(`/play/waiting/${gameId}` as any);
       }
@@ -226,7 +220,7 @@ export default function CreateMatchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Top Header */}
       <AppHeader
@@ -265,26 +259,21 @@ export default function CreateMatchScreen() {
 
         {/* Time Control Section */}
         <Text style={styles.sectionTitle}>Time Control</Text>
-        <View style={styles.timeGrid}>
-          {TIME_CONTROLS.map((tc) => {
-            const isSelected = timeControl === tc.id;
-            return (
-              <TouchableOpacity
-                key={tc.id}
-                style={[styles.timeBtn, isSelected && styles.timeBtnActive]}
-                activeOpacity={0.8}
-                onPress={() => setTimeControl(tc.id)}
-              >
-                <Text style={[styles.timeLabel, isSelected && styles.timeLabelActive]}>
-                  {tc.label}
-                </Text>
-                <Text style={[styles.timeSub, isSelected && styles.timeSubActive]}>
-                  {tc.sub}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View style={{ flexDirection: 'row', backgroundColor: COLORS.white, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, paddingVertical: 8, marginVertical: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+          <CustomWheelPicker
+            items={Array.from({length: 60}, (_, i) => ({ label: String(i + 1).padStart(2, '0'), value: String(i + 1) }))}
+            selectedValue={timeControl.split('+')[0]}
+            onValueChange={(val) => setTimeControl(val + '+' + timeControl.split('+')[1])}
+            suffix="M"
+          />
+          <CustomWheelPicker
+            items={Array.from({length: 60}, (_, i) => ({ label: String(i).padStart(2, '0'), value: String(i) }))}
+            selectedValue={timeControl.split('+')[1] || '0'}
+            onValueChange={(val) => setTimeControl(timeControl.split('+')[0] + '+' + val)}
+            suffix="S"
+          />
         </View>
+
 
         {/* Piece Color Choice */}
         <Text style={styles.sectionTitle}>Play as</Text>
@@ -442,7 +431,7 @@ export default function CreateMatchScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
@@ -453,40 +442,36 @@ const styles = StyleSheet.create({
   },
   segmentContainer: {
     flexDirection: 'row',
-    backgroundColor: '#EEF3E8',
-    borderRadius: 14,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusCard,
     padding: 4,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
+    ...SHADOWS.soft,
   },
   segmentBtn: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: 10,
+    borderRadius: SIZES.radiusButton,
   },
   segmentBtnActive: {
-    backgroundColor: '#194E40',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 2,
+    backgroundColor: COLORS.primary,
   },
   segmentText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   segmentTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontWeight: '700',
   },
   sectionTitle: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#202D29',
+    fontWeight: '700',
+    color: COLORS.textHeading,
     marginBottom: 10,
     marginTop: 4,
   },
@@ -501,37 +486,32 @@ const styles = StyleSheet.create({
   },
   timeBtn: {
     width: '31%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: SIZES.radiusButton,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: COLORS.border,
   },
   timeBtnActive: {
-    borderColor: '#194E40',
-    backgroundColor: '#EEF3E8',
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.hero,
   },
   timeLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   timeLabelActive: {
-    color: '#194E40',
+    color: COLORS.primary,
   },
   timeSub: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   timeSubActive: {
-    color: '#194E40',
+    color: COLORS.primary,
   },
   colorRow: {
     flexDirection: 'row',
@@ -540,31 +520,26 @@ const styles = StyleSheet.create({
   },
   colorBtn: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: SIZES.radiusButton,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: COLORS.border,
   },
   colorBtnActive: {
-    borderColor: '#194E40',
-    backgroundColor: '#EEF3E8',
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.hero,
   },
   pieceSymbol: {
     fontSize: 26,
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   colorLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   difficultyRow: {
     flexDirection: 'row',
@@ -573,63 +548,53 @@ const styles = StyleSheet.create({
   },
   diffBtn: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: SIZES.radiusButton,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    borderColor: COLORS.border,
   },
   diffBtnActive: {
-    borderColor: '#194E40',
-    backgroundColor: '#EEF3E8',
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.hero,
   },
   diffLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   diffLabelActive: {
-    color: '#194E40',
+    color: COLORS.primary,
   },
   diffRating: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   inviteFriendCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusCard,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     gap: 12,
     marginBottom: 8,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
+    ...SHADOWS.soft,
   },
   inviteFriendIconBox: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.hero,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
   },
   inviteFriendIcon: {
     fontSize: 20,
+    color: COLORS.primary,
   },
   inviteFriendTextBox: {
     flex: 1,
@@ -637,47 +602,42 @@ const styles = StyleSheet.create({
   inviteFriendTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   inviteFriendSub: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   inviteArrowBox: {
     width: 30,
     height: 30,
     borderRadius: 15,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   inviteArrowText: {
-    color: '#194E40',
+    color: COLORS.primary,
     fontSize: 14,
     fontWeight: '800',
   },
   hintText: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     lineHeight: 18,
     marginBottom: 18,
   },
   submitBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     height: 52,
-    borderRadius: 14,
+    borderRadius: SIZES.radiusButton,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    elevation: 3,
     marginTop: 6,
   },
   submitText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '700',
   },

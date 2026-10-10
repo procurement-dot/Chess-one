@@ -78,10 +78,9 @@ function getLiveTimes(game, now = new Date()) {
  * @param {object} game
  * @param {string} movingPlayerColor 'WHITE' | 'BLACK'
  * @param {Date} moveTime
- * @param {number} [clientTurnElapsedMs]
  * @returns {{ newWhiteTimeMs: number, newBlackTimeMs: number, hasTimedOut: boolean }}
  */
-function processMoveClock(game, movingPlayerColor, moveTime = new Date(), clientTurnElapsedMs) {
+function processMoveClock(game, movingPlayerColor, moveTime = new Date()) {
   const { incrementMs } = parseTimeControl(game.timeControl);
 
   let whiteTimeMs = game.whiteTimeMs ?? 0;
@@ -96,23 +95,10 @@ function processMoveClock(game, movingPlayerColor, moveTime = new Date(), client
     };
   }
 
-  const rawElapsedMs = Math.max(0, moveTime.getTime() - new Date(game.lastMoveAt).getTime());
-
-  // Latency allowance / Lag compensation (like Lichess/Chess.com):
-  // Mobile requests take 1-2.5s over cellular networks.
-  // We do not penalize players for transmission latency.
-  let chargedElapsedMs = rawElapsedMs;
-  if (typeof clientTurnElapsedMs === "number" && clientTurnElapsedMs >= 0) {
-    const networkLagMs = Math.max(0, rawElapsedMs - clientTurnElapsedMs);
-    const lagCompensation = Math.min(2500, networkLagMs);
-    chargedElapsedMs = Math.max(100, rawElapsedMs - lagCompensation);
-  } else {
-    // Default mobile network latency tolerance: allow up to 1000ms buffer
-    chargedElapsedMs = Math.max(100, rawElapsedMs - 1000);
-  }
+  const elapsedMs = Math.max(0, moveTime.getTime() - new Date(game.lastMoveAt).getTime());
 
   if (movingPlayerColor === "WHITE") {
-    const remaining = whiteTimeMs - chargedElapsedMs;
+    const remaining = whiteTimeMs - elapsedMs;
     if (remaining <= 0) {
       return {
         newWhiteTimeMs: 0,
@@ -126,7 +112,7 @@ function processMoveClock(game, movingPlayerColor, moveTime = new Date(), client
       hasTimedOut: false,
     };
   } else {
-    const remaining = blackTimeMs - chargedElapsedMs;
+    const remaining = blackTimeMs - elapsedMs;
     if (remaining <= 0) {
       return {
         newWhiteTimeMs: whiteTimeMs,

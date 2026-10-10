@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { GamePlayer, PlayerColor } from '../../types/game.types';
@@ -11,7 +12,6 @@ interface PlayerInfoProps {
   isTurn: boolean;
   isCheck?: boolean;
   isAI?: boolean;
-  isCurrentUser?: boolean;
 }
 
 export const PlayerInfo: React.FC<PlayerInfoProps> = ({
@@ -22,9 +22,8 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isTurn,
   isCheck = false,
   isAI = false,
-  isCurrentUser = false,
 }) => {
-  const displayName = isAI ? 'AI' : (player?.name || nameFallback);
+  const displayName = player?.name || nameFallback;
   const initial = displayName[0]?.toUpperCase() || 'P';
   const isWhite = color === 'WHITE';
 
@@ -63,13 +62,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
               <Text style={styles.timeoutText}>TIME EXPIRED</Text>
             </View>
           ) : isTurn ? (
-            isCurrentUser ? (
-              <View style={styles.yourTurnBadge}>
-                <Text style={styles.yourTurnText}>Your Turn</Text>
-              </View>
-            ) : (
-              <Text style={styles.turnLabel}>{isAI ? 'Thinking...' : "Opponent's Turn"}</Text>
-            )
+            <Text style={styles.turnLabel}>Thinking...</Text>
           ) : null}
         </View>
       </View>
@@ -85,22 +78,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.textHeading,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: '#E2E8F0',
     width: '100%',
-    shadowColor: '#202D29',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 1,
   },
   activeContainer: {
-    borderColor: '#194E40',
-    backgroundColor: '#EEF3E8',
+    borderColor: '#93C5FD',
+    backgroundColor: '#FAFCFF',
   },
   leftSection: {
     flexDirection: 'row',
@@ -114,7 +107,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#CBD5E1',
   },
   avatarPlaceholder: {
     width: 40,
@@ -125,22 +118,22 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   whiteBadge: {
-    backgroundColor: '#EEF0E0',
-    borderColor: '#D5DFC8',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
   },
   blackBadge: {
-    backgroundColor: '#194E40',
-    borderColor: '#194E40',
+    backgroundColor: COLORS.border,
+    borderColor: COLORS.border,
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
   },
   whiteBadgeText: {
-    color: '#202D29',
+    color: '#0F172A',
   },
   blackBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   metaSection: {
     flex: 1,
@@ -153,7 +146,7 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#202D29',
+    color: '#0F172A',
     maxWidth: 140,
   },
   colorChip: {
@@ -163,31 +156,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   whiteChip: {
-    backgroundColor: '#EEF0E0',
-    borderColor: '#D5DFC8',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
   },
   blackChip: {
-    backgroundColor: '#194E40',
-    borderColor: '#194E40',
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.border,
   },
   colorChipText: {
     fontSize: 10,
     fontWeight: '600',
   },
   whiteChipText: {
-    color: '#202D29',
+    color: '#475569',
   },
   blackChipText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   turnLabel: {
     fontSize: 11,
-    color: '#194E40',
+    color: COLORS.primary,
     fontWeight: '600',
     marginTop: 2,
   },
   checkBadge: {
-    backgroundColor: '#FCEDDF',
+    backgroundColor: '#FEE2E2',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -195,13 +188,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   checkText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   timeoutBadge: {
-    backgroundColor: '#FCEDDF',
+    backgroundColor: '#7F1D1D',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -209,23 +202,9 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   timeoutText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
-  },
-  yourTurnBadge: {
-    backgroundColor: '#E6F4EA',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-    alignSelf: 'flex-start',
-    marginTop: 2,
-  },
-  yourTurnText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#137333',
-    letterSpacing: 0.3,
   },
 });

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Color } from 'chess.js';
@@ -47,7 +48,7 @@ export const GameStatusBanner: React.FC<GameStatusBannerProps> = ({
         <View
           style={[
             styles.turnBadgeDot,
-            { backgroundColor: isWhite ? '#FFFFFF' : '#111827' },
+            { backgroundColor: isWhite ? COLORS.textHeading : COLORS.white },
           ]}
         />
         <Text style={styles.turnText}>
@@ -69,17 +70,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     width: '100%',
   },
   gameOverContainer: {
-    backgroundColor: '#EEF3E8',
-    borderColor: '#194E40',
+    backgroundColor: COLORS.border,
+    borderColor: COLORS.border,
     borderWidth: 1.5,
     paddingVertical: 14,
   },
@@ -90,21 +91,21 @@ const styles = StyleSheet.create({
   gameOverTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#194E40',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   gameOverSubtitle: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   newGameButton: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#4F46E5',
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
   },
   newGameButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -118,23 +119,23 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#202D29',
+    borderColor: COLORS.border,
   },
   turnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   checkBadge: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: 'rgba(239, 68, 68, 0.2)',
+    borderColor: '#EF4444',
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 6,
   },
   checkText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontWeight: '700',
     fontSize: 12,
     letterSpacing: 0.5,

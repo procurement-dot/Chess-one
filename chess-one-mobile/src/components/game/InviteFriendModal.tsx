@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -68,7 +69,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
           <View style={styles.body}>
             {isLoading && onlineUsers.length === 0 ? (
               <View style={styles.centerBox}>
-                <ActivityIndicator size="large" color="#194E40" />
+                <ActivityIndicator size="large" color="#4F46E5" />
                 <Text style={styles.loadingText}>Checking online players...</Text>
               </View>
             ) : onlineUsers.length === 0 ? (
@@ -137,7 +138,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                         disabled={isInviting}
                       >
                         {isInviting ? (
-                          <ActivityIndicator size="small" color="#FFFFFF" />
+                          <ActivityIndicator size="small" color="COLORS.textHeading" />
                         ) : (
                           <Text style={styles.inviteBtnText}>⚔️ Invite</Text>
                         )}
@@ -157,22 +158,17 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '75%',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     paddingBottom: 32,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 8,
   },
   header: {
     flexDirection: 'row',
@@ -182,7 +178,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: '#21262D',
   },
   titleRow: {
     flexDirection: 'row',
@@ -195,23 +191,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   subtitle: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -226,7 +222,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 14,
   },
   emptyBox: {
@@ -241,18 +237,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 12,
   },
   emptyHint: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -261,13 +257,13 @@ const styles = StyleSheet.create({
   refreshBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   refreshBtnText: {
-    color: '#194E40',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -284,21 +280,21 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#4F8A5B',
+    backgroundColor: COLORS.white,
   },
   onlineCountText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#194E40',
+    color: '#34D399',
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     marginBottom: 10,
     gap: 12,
   },
@@ -311,14 +307,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   avatarDot: {
     position: 'absolute',
@@ -327,9 +323,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4F8A5B',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.background,
   },
   infoCol: {
     flex: 1,
@@ -343,11 +339,11 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     maxWidth: 140,
   },
   idChip: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -355,21 +351,21 @@ const styles = StyleSheet.create({
   idChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   onlineStatusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#4F8A5B',
+    color: '#34D399',
   },
   inviteBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#4F46E5',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    shadowColor: '#194E40',
+    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 4,
     elevation: 3,
   },
@@ -377,7 +373,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   inviteBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },

@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
+import { COLORS } from '../../constants/chessone-theme';
 import Svg, { Path, G, Circle } from 'react-native-svg';
 import { PieceSymbol, Color } from 'chess.js';
 

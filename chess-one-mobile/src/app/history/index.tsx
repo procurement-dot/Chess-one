@@ -16,6 +16,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Game } from '../../types/game.types';
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
+import { COLORS, SIZES, SHADOWS } from '../../constants/chessone-theme';
 
 // AI Coach contextual advice for losses
 const getAiCoachSuggestion = (game: Game, isUserWhite: boolean): string => {
@@ -232,7 +233,7 @@ export default function MatchHistoryScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -316,17 +317,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   matchCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusCard,
+    padding: 16,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    ...SHADOWS.soft,
   },
   matchCardWinner: {
     borderColor: '#D5DFC8',
@@ -382,7 +377,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   pillWin: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
   },
   pillLoss: {
     backgroundColor: '#C53030',
@@ -405,9 +400,7 @@ const styles = StyleSheet.create({
   trophyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF3E8',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
+    backgroundColor: COLORS.hero,
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -432,9 +425,7 @@ const styles = StyleSheet.create({
     lineHeight: 15,
   },
   aiSuggestionBox: {
-    backgroundColor: '#EEF3E8',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
+    backgroundColor: COLORS.hero,
     borderRadius: 12,
     padding: 10,
     marginTop: 10,

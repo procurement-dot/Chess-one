@@ -70,14 +70,13 @@ class GameController {
   async makeMove(req, res, next) {
     try {
       const { gameId } = req.params;
-      const { from, to, promotion, clientTurnElapsedMs } = req.validatedBody;
+      const { from, to, promotion } = req.validatedBody;
       const result = await moveService.makeMove({
         gameId,
         userId: req.user.id,
         from,
         to,
         promotion,
-        clientTurnElapsedMs,
       });
       return success(res, result);
     } catch (err) {

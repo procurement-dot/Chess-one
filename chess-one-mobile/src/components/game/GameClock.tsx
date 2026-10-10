@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
@@ -50,28 +51,28 @@ const styles = StyleSheet.create({
   clockContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E6ECDF',
+    backgroundColor: '#F1F5F9',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#E2E8F0',
     gap: 6,
     minWidth: 84,
     justifyContent: 'center',
   },
   activeClockContainer: {
-    backgroundColor: '#E5EDDA',
-    borderColor: '#194E40',
-    shadowColor: '#194E40',
+    backgroundColor: '#EFF6FF',
+    borderColor: COLORS.primary,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
     elevation: 2,
   },
   lowTimeClockContainer: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#EF4444',
   },
   statusDot: {
     width: 6,
@@ -79,25 +80,25 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   inactiveDot: {
-    backgroundColor: '#74817A',
+    backgroundColor: COLORS.textBody,
   },
   activeDot: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
   },
   lowTimeDot: {
-    backgroundColor: '#C53030',
+    backgroundColor: '#EF4444',
   },
   clockText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#172B26',
+    color: '#475569',
     fontVariant: ['tabular-nums'],
     letterSpacing: 0.5,
   },
   activeClockText: {
-    color: '#194E40',
+    color: '#1E3A8A',
   },
   lowTimeClockText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
   },
 });

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MovePair } from '../../types/chess.types';
@@ -78,10 +79,10 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({ movePairs }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     overflow: 'hidden',
     height: 120,
     width: '100%',
@@ -90,13 +91,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
-    backgroundColor: '#EEF3E8',
+    borderBottomColor: '#2F3642',
+    backgroundColor: COLORS.white,
   },
   headerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#194E40',
+    color: COLORS.textBody,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -107,10 +108,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   emptyContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   emptyText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 13,
     fontStyle: 'italic',
   },
@@ -129,14 +130,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   alternateRow: {
-    backgroundColor: '#F5F7F2',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
   },
   highlightRow: {
-    backgroundColor: 'rgba(214, 239, 158, 0.4)',
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
   },
   moveNumberText: {
     width: 38,
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 13,
     fontFamily: 'monospace',
     fontWeight: '600',
@@ -146,13 +147,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   moveText: {
-    color: '#202D29',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '500',
     fontFamily: 'monospace',
   },
   activeMoveText: {
-    color: '#194E40',
+    color: COLORS.primary,
     fontWeight: '700',
   },
 });

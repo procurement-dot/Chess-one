@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -7,11 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Pressable,
-  Image,
 } from 'react-native';
 import { GameInvitation } from '../../types/game.types';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface IncomingChallengeModalProps {
   visible: boolean;
@@ -44,13 +42,6 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
     >
       <Pressable style={styles.backdrop} onPress={onDismiss}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          {/* Official Brand Logo */}
-          <Image
-            source={logoBanner}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
-
           {/* Header Icon */}
           <View style={styles.iconCircle}>
             <Text style={styles.iconText}>⚔️</Text>
@@ -83,7 +74,7 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color="COLORS.textHeading" />
               ) : (
                 <Text style={styles.acceptBtnText}>✅ Accept Challenge</Text>
               )}
@@ -107,7 +98,7 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -115,33 +106,27 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  brandLogo: {
-    width: 110,
-    height: 38,
-    marginBottom: 10,
-    alignSelf: 'center',
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
   },
   iconCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: '#312E81',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#D5DFC8',
+    borderColor: '#6366F1',
     marginBottom: 16,
   },
   iconText: {
@@ -150,40 +135,40 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
   },
   challengerBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
     padding: 14,
     borderRadius: 14,
     width: '100%',
     marginBottom: 22,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     gap: 12,
   },
   avatar: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#194E40',
+    backgroundColor: '#4F46E5',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   challengerInfo: {
     flex: 1,
@@ -191,43 +176,43 @@ const styles = StyleSheet.create({
   challengerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 3,
   },
   challengerDetails: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   buttonCol: {
     width: '100%',
     gap: 10,
   },
   acceptBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.white,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
+    shadowColor: '#059669',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
     shadowRadius: 6,
     elevation: 3,
   },
   acceptBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   declineBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   declineBtnText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },

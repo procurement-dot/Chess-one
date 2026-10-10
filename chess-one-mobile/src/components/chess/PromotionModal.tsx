@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -74,7 +75,7 @@ export const PromotionModal: React.FC<PromotionModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -82,27 +83,27 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
+    borderColor: COLORS.border,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 10,
   },
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -116,11 +117,11 @@ const styles = StyleSheet.create({
   pieceButton: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   piecePreview: {
     width: 48,
@@ -132,19 +133,17 @@ const styles = StyleSheet.create({
   pieceLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   cancelButton: {
     width: '100%',
     paddingVertical: 11,
     borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
+    backgroundColor: COLORS.border,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#74817A',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   View,
@@ -74,7 +75,7 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
           onPress={() => onAccept(invitation.id)}
         >
           {isProcessing ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color="COLORS.textHeading" />
           ) : (
             <Text style={styles.acceptText}>Accept Challenge</Text>
           )}
@@ -86,17 +87,17 @@ export const InvitationCard: React.FC<InvitationCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
   },
   topRow: {
     flexDirection: 'row',
@@ -107,17 +108,17 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   avatarText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#194E40',
+    color: COLORS.primary,
   },
   infoCol: {
     flex: 1,
@@ -125,16 +126,16 @@ const styles = StyleSheet.create({
   senderName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   subtext: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   codeBadge: {
     fontSize: 12,
-    color: '#194E40',
+    color: COLORS.primary,
     fontWeight: '600',
     marginTop: 2,
   },
@@ -150,20 +151,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   declineButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   declineText: {
-    color: '#74817A',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },
   acceptButton: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.white,
   },
   acceptText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },

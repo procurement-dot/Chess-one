@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useMemo } from 'react';
 import {
   View,
@@ -101,16 +102,16 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
               const isLastMoveTo = lastMove?.to === square;
               const isInCheck = inCheckSquare === square;
 
-              // ChessOne School Board tokens (from style.css)
-              let tileBg = isLight ? '#EEF0E0' : '#8EA780';
+              // Refined, professional tile coloring (standard Chess.com / Lichess palette)
+              let tileBg = isLight ? '#E8ECDE' : '#8B9E7E';
               if (isInCheck) {
-                tileBg = '#F7A18C';
+                tileBg = '#EF4444';
               } else if (isSelected) {
-                tileBg = '#E9CB67';
+                tileBg = '#F7F769';
               } else if (isLastMoveTo) {
-                tileBg = isLight ? '#D6EF9E' : '#A2BE93';
+                tileBg = isLight ? '#F5F682' : '#BACA44';
               } else if (isLastMoveFrom) {
-                tileBg = isLight ? '#E5EDDA' : '#97AE89';
+                tileBg = isLight ? '#EAEB9B' : '#9CAE48';
               }
 
               // Rank coordinate shown on left edge; File coordinate shown on bottom edge
@@ -128,7 +129,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       backgroundColor: tileBg,
                     },
                   ]}
-                  unstable_pressDelay={0}
                   onPress={() => onSquarePress(square)}
                 >
                   {/* Rank notation (1-8) */}
@@ -137,7 +137,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       pointerEvents="none"
                       style={[
                         styles.coordRankText,
-                        { color: isLight ? '#8EA780' : '#EEF0E0' },
+                        { color: isLight ? '#8B9E7E' : '#E8ECDE' },
                       ]}
                     >
                       {RANKS[rIdx]}
@@ -150,7 +150,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       pointerEvents="none"
                       style={[
                         styles.coordFileText,
-                        { color: isLight ? '#8EA780' : '#EEF0E0' },
+                        { color: isLight ? '#8B9E7E' : '#E8ECDE' },
                       ]}
                     >
                       {FILES[cIdx]}
@@ -207,17 +207,16 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
 
 const styles = StyleSheet.create({
   boardContainer: {
-    borderRadius: 10,
+    borderRadius: 8,
     overflow: 'hidden',
-    borderWidth: 2.5,
-    borderColor: '#D5DFC8',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.1,
+    borderWidth: 2,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 4,
+    elevation: 6,
     userSelect: 'none' as any,
-    touchAction: 'manipulation' as any,
   },
   boardRow: {
     flexDirection: 'row',
@@ -228,16 +227,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     cursor: 'pointer' as any,
     userSelect: 'none' as any,
-    touchAction: 'manipulation' as any,
   },
   selectedTile: {
-    backgroundColor: '#E9CB67',
+    backgroundColor: '#F6F669',
   },
   lastMoveTile: {
-    backgroundColor: '#D6EF9E',
+    backgroundColor: '#D2E054',
   },
   inCheckTile: {
-    backgroundColor: '#F7A18C',
+    backgroundColor: '#EF4444',
   },
   coordRankText: {
     position: 'absolute',
@@ -255,11 +253,11 @@ const styles = StyleSheet.create({
   },
   moveDot: {
     position: 'absolute',
-    backgroundColor: 'rgba(25, 78, 64, 0.4)',
+    backgroundColor: 'rgba(20, 20, 20, 0.25)',
   },
   captureRing: {
     position: 'absolute',
     borderWidth: 4,
-    borderColor: 'rgba(25, 78, 64, 0.4)',
+    borderColor: 'rgba(20, 20, 20, 0.25)',
   },
 });

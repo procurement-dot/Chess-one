@@ -14,8 +14,11 @@ export function getApiBaseUrl(): string {
     return envUrl;
   }
 
-  // Deployed production backend URL on Render
-  return 'https://chess-one.onrender.com';
+  // Fallback defaults for local development
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:4000';
+  }
+  return 'http://localhost:4000';
 }
 
 /**

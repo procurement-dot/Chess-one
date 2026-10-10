@@ -72,7 +72,7 @@ export default function InvitationsScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <View style={styles.header}>
@@ -101,13 +101,13 @@ export default function InvitationsScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refresh}
-            tintColor="#194E40"
+            tintColor="#3B82F6"
           />
         }
       >
         {isLoading && invitations.length === 0 ? (
           <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color="#194E40" />
+            <ActivityIndicator size="large" color="#3B82F6" />
             <Text style={styles.loadingText}>Loading challenges...</Text>
           </View>
         ) : invitations.length === 0 ? (
@@ -155,7 +155,7 @@ export default function InvitationsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: '#0F1318',
   },
   header: {
     flexDirection: 'row',
@@ -164,25 +164,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: '#1A1F26',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: '#1E232A',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#202D29',
+    color: '#FFFFFF',
     lineHeight: 28,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#202D29',
+    color: '#FFFFFF',
   },
   spacer: {
     width: 40,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: '#74817A',
+    color: '#94A3B8',
   },
   emptyContainer: {
     paddingTop: 80,
@@ -215,12 +215,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#202D29',
+    color: '#E2E8F0',
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: '#74817A',
+    color: '#64748B',
     textAlign: 'center',
     lineHeight: 20,
   },

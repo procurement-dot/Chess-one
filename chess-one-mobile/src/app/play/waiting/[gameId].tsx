@@ -149,7 +149,7 @@ export default function WaitingLobbyScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color="#194E40" />
+          <ActivityIndicator size="large" color="#3B82F6" />
           <Text style={styles.loadingText}>Setting up match lobby...</Text>
         </View>
       </SafeAreaView>
@@ -158,7 +158,7 @@ export default function WaitingLobbyScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <AppHeader
@@ -171,7 +171,7 @@ export default function WaitingLobbyScreen() {
       <View style={styles.content}>
         {/* Pulsing indicator */}
         <View style={styles.indicatorContainer}>
-          <ActivityIndicator size="large" color="#194E40" />
+          <ActivityIndicator size="large" color="#60A5FA" />
         </View>
 
         <Text style={styles.waitingTitle}>Waiting for Opponent</Text>
@@ -251,7 +251,7 @@ export default function WaitingLobbyScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: '#0F1318',
   },
   header: {
     flexDirection: 'row',
@@ -260,25 +260,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: '#1A1F26',
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: '#1E232A',
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#202D29',
+    color: '#FFFFFF',
     lineHeight: 28,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#202D29',
+    color: '#FFFFFF',
   },
   spacer: {
     width: 40,
@@ -291,7 +291,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#74817A',
+    color: '#94A3B8',
   },
   content: {
     flex: 1,
@@ -303,9 +303,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#EEF3E8',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
+    backgroundColor: '#172554',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 24,
@@ -313,13 +311,13 @@ const styles = StyleSheet.create({
   waitingTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#202D29',
+    color: '#FFFFFF',
     marginBottom: 8,
     textAlign: 'center',
   },
   waitingSubtitle: {
     fontSize: 14,
-    color: '#74817A',
+    color: '#94A3B8',
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 32,
@@ -327,35 +325,30 @@ const styles = StyleSheet.create({
   },
   codeCard: {
     width: '100%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1A1F26',
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E4E9E1',
+    borderColor: '#2F3642',
     marginBottom: 24,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 3,
   },
   codeLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#74817A',
+    color: '#64748B',
     letterSpacing: 2,
     marginBottom: 8,
   },
   codeValue: {
     fontSize: 36,
     fontWeight: '800',
-    color: '#194E40',
+    color: '#60A5FA',
     letterSpacing: 6,
     marginBottom: 20,
   },
   shareButton: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#2563EB',
     height: 46,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -374,15 +367,15 @@ const styles = StyleSheet.create({
     marginBottom: 36,
   },
   infoBadge: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: '#1E232A',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#2F3642',
   },
   infoBadgeText: {
-    color: '#194E40',
+    color: '#CBD5E1',
     fontSize: 12,
     fontWeight: '600',
   },
@@ -392,12 +385,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#2A171A',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: '#7F1D1D',
   },
   cancelBtnText: {
-    color: '#C53030',
+    color: '#EF4444',
     fontSize: 14,
     fontWeight: '700',
   },

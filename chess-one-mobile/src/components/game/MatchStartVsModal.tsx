@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useEffect, useRef } from 'react';
 import {
   Modal,
@@ -7,8 +8,6 @@ import {
   Animated,
   Image,
 } from 'react-native';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface MatchStartVsModalProps {
   visible: boolean;
@@ -119,15 +118,8 @@ export const MatchStartVsModal: React.FC<MatchStartVsModalProps> = ({
         <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
           {/* Header Bar */}
           <View style={styles.topHeader}>
-            <Image
-              source={logoBanner}
-              style={styles.vsBrandLogo}
-              resizeMode="contain"
-            />
-            <View style={styles.topHeaderRight}>
-              <Text style={styles.headerBadge}>⚡ MATCH READY</Text>
-              <Text style={styles.headerSub}>⏱️ {timeControl} Live Chess</Text>
-            </View>
+            <Text style={styles.headerBadge}>⚡ MATCH READY</Text>
+            <Text style={styles.headerSub}>⏱️ {timeControl} Live Chess</Text>
           </View>
 
           {/* Horizontal Face-Off Arena */}
@@ -207,7 +199,7 @@ export const MatchStartVsModal: React.FC<MatchStartVsModalProps> = ({
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.65)',
+    backgroundColor: 'rgba(7, 10, 19, 0.88)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 16,
@@ -215,15 +207,15 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 18,
-    shadowColor: '#202D29',
+    shadowColor: '#4F46E5',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.5,
     shadowRadius: 20,
     elevation: 10,
   },
@@ -233,27 +225,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: '#1F2937',
     marginBottom: 14,
-  },
-  vsBrandLogo: {
-    width: 95,
-    height: 34,
-  },
-  topHeaderRight: {
-    alignItems: 'flex-end',
   },
   headerBadge: {
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1.5,
-    color: '#194E40',
+    color: COLORS.textHeading,
     textTransform: 'uppercase',
   },
   headerSub: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   horizontalArena: {
     flexDirection: 'row',
@@ -270,23 +255,23 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   whiteBox: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   blackBox: {
-    backgroundColor: '#202D29',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#2E3F3A',
+    borderColor: COLORS.border,
     justifyContent: 'flex-end',
   },
   avatarWhite: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderWidth: 2,
-    borderColor: '#D5DFC8',
+    borderColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -294,15 +279,15 @@ const styles = StyleSheet.create({
   avatarLetterWhite: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#194E40',
+    color: '#0F172A',
   },
   avatarBlack: {
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#172421',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: '#374B45',
+    borderColor: '#818CF8',
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -310,7 +295,7 @@ const styles = StyleSheet.create({
   avatarLetterBlack: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#D6EF9E',
+    color: COLORS.textHeading,
   },
   avatarImg: {
     width: '100%',
@@ -325,41 +310,41 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
   },
   colorPillWhite: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginBottom: 4,
   },
   colorPillTextWhite: {
-    color: '#194E40',
+    color: '#0F172A',
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.8,
   },
   colorPillBlack: {
-    backgroundColor: '#172421',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginBottom: 4,
     borderWidth: 1,
-    borderColor: '#374B45',
+    borderColor: COLORS.border,
   },
   colorPillTextBlack: {
-    color: '#D6EF9E',
+    color: COLORS.textHeading,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.8,
   },
   playerName: {
-    color: '#202D29',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
     maxWidth: 120,
   },
   playerNameRight: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'right',
@@ -373,19 +358,19 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#194E40',
+    backgroundColor: '#EF4444',
     borderWidth: 2.5,
-    borderColor: '#D6EF9E',
+    borderColor: '#FCA5A5',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#194E40',
+    shadowColor: '#EF4444',
     shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.6,
     shadowRadius: 8,
     elevation: 6,
   },
   vsText: {
-    color: '#D6EF9E',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '900',
     fontStyle: 'italic',

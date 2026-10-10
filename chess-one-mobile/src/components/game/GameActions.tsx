@@ -1,12 +1,10 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
 interface GameActionsProps {
   onOfferDraw: () => void;
   onResign: () => void;
-  onAbort?: () => void;
-  canAbort?: boolean;
-  abortCountdown?: number | null;
   onFlipBoard?: () => void;
   disabled?: boolean;
 }
@@ -14,9 +12,6 @@ interface GameActionsProps {
 export const GameActions: React.FC<GameActionsProps> = ({
   onOfferDraw,
   onResign,
-  onAbort,
-  canAbort = false,
-  abortCountdown,
   onFlipBoard,
   disabled = false,
 }) => {
@@ -34,41 +29,25 @@ export const GameActions: React.FC<GameActionsProps> = ({
         </TouchableOpacity>
       ) : null}
 
-      {canAbort && onAbort ? (
-        <TouchableOpacity
-          style={[styles.actionButton, styles.abortButton, disabled && styles.disabledButton]}
-          activeOpacity={0.7}
-          onPress={onAbort}
-          disabled={disabled}
-        >
-          <Text style={styles.buttonIcon}>🛑</Text>
-          <Text style={styles.abortButtonText}>
-            Abort Match{abortCountdown ? ` (${abortCountdown}s)` : ''}
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <>
-          <TouchableOpacity
-            style={[styles.actionButton, styles.drawButton, disabled && styles.disabledButton]}
-            activeOpacity={0.7}
-            onPress={onOfferDraw}
-            disabled={disabled}
-          >
-            <Text style={styles.buttonIcon}>🤝</Text>
-            <Text style={styles.drawButtonText}>Offer Draw</Text>
-          </TouchableOpacity>
+      <TouchableOpacity
+        style={[styles.actionButton, styles.drawButton, disabled && styles.disabledButton]}
+        activeOpacity={0.7}
+        onPress={onOfferDraw}
+        disabled={disabled}
+      >
+        <Text style={styles.buttonIcon}>🤝</Text>
+        <Text style={styles.drawButtonText}>Offer Draw</Text>
+      </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.actionButton, styles.resignButton, disabled && styles.disabledButton]}
-            activeOpacity={0.7}
-            onPress={onResign}
-            disabled={disabled}
-          >
-            <Text style={styles.buttonIcon}>🏳️</Text>
-            <Text style={styles.resignButtonText}>Resign</Text>
-          </TouchableOpacity>
-        </>
-      )}
+      <TouchableOpacity
+        style={[styles.actionButton, styles.resignButton, disabled && styles.disabledButton]}
+        activeOpacity={0.7}
+        onPress={onResign}
+        disabled={disabled}
+      >
+        <Text style={styles.buttonIcon}>🏳️</Text>
+        <Text style={styles.resignButtonText}>Resign</Text>
+      </TouchableOpacity>
     </View>
   );
 };
@@ -95,47 +74,37 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   flipButton: {
-    backgroundColor: '#EEF3E8',
-    borderColor: '#D5DFC8',
+    backgroundColor: '#F8FAFC',
+    borderColor: '#CBD5E1',
     flex: 0.8,
   },
   flipButtonText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#194E40',
-  },
-  abortButton: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
-    flex: 2,
-  },
-  abortButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#C53030',
+    color: '#334155',
   },
   drawButton: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
+    backgroundColor: COLORS.textHeading,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
+    shadowOpacity: 0.05,
     shadowRadius: 2,
     elevation: 1,
   },
   drawButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#194E40',
+    color: COLORS.primary,
   },
   resignButton: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FECACA',
   },
   resignButtonText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#C53030',
+    color: COLORS.textHeading,
   },
   disabledButton: {
     opacity: 0.5,

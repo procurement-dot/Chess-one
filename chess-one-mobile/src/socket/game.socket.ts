@@ -14,13 +14,7 @@ class GameSocketManager {
    * Connect to backend Socket.IO server with authentication
    */
   connect(): Socket {
-    if (this.socket) {
-      if (this.socket.connected) {
-        gameStore.setConnectionStatus('connected');
-        return this.socket;
-      }
-      gameStore.setConnectionStatus('connecting');
-      this.socket.connect();
+    if (this.socket && this.socket.connected) {
       return this.socket;
     }
 
@@ -30,12 +24,11 @@ class GameSocketManager {
     }
     const url = getSocketBaseUrl();
 
-    gameStore.setConnectionStatus('connecting');
     this.socket = io(url, {
       auth: { token: token || undefined },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 15,
+      reconnectionAttempts: 10,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
       timeout: 10000,
@@ -43,18 +36,6 @@ class GameSocketManager {
 
     this.setupListeners();
     return this.socket;
-  }
-
-  private isEventForCurrentGame(payload: any): boolean {
-    if (!this.currentGameId) return true;
-    if (!payload) return true;
-    const targetId = payload.gameId || payload.id;
-    if (!targetId) return true;
-    const matches = String(targetId) === String(this.currentGameId);
-    if (!matches) {
-      console.log(`[Socket] Ignored event for stale match ${targetId} (current: ${this.currentGameId})`);
-    }
-    return matches;
   }
 
   private setupListeners() {
@@ -82,14 +63,11 @@ class GameSocketManager {
     });
 
     this.socket.on('game:joined', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Confirmed joined game room:', payload);
-      gameStore.setConnectionStatus('connected');
     });
 
     // Match activated / started
     this.socket.on('game:started', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Match started:', payload);
       if (payload) {
         gameStore.updateGameState({
@@ -102,7 +80,7 @@ class GameSocketManager {
 
     // Real-time opponent/server chess move
     this.socket.on('game:move', (payload: any) => {
-      if (!payload || !this.isEventForCurrentGame(payload)) return;
+      if (!payload) return;
 
       const m = payload.move || {};
       const from = payload.from || m.from;
@@ -137,7 +115,6 @@ class GameSocketManager {
 
     // Authoritative clock sync
     this.socket.on('game:clock', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       if (payload && payload.whiteTimeMs !== undefined && payload.blackTimeMs !== undefined) {
         gameStore.updateClocks(payload.whiteTimeMs, payload.blackTimeMs);
       }
@@ -145,60 +122,46 @@ class GameSocketManager {
 
     // Draw offer events
     this.socket.on('game:draw-offered', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Draw offered by:', payload?.offeredByColor);
       gameStore.setDrawOffer(payload?.offeredByColor as PlayerColor);
     });
 
-    this.socket.on('game:draw-accepted', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
+    this.socket.on('game:draw-accepted', () => {
       console.log('[Socket] Draw accepted');
       gameStore.setGameFinished('DRAW', null);
     });
 
-    this.socket.on('game:draw-rejected', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
+    this.socket.on('game:draw-rejected', () => {
       console.log('[Socket] Draw rejected by opponent');
       gameStore.setDrawOffer(null);
     });
 
     // Resignation
     this.socket.on('game:resigned', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Player resigned:', payload);
       gameStore.setGameFinished('RESIGNATION', payload?.winnerId);
     });
 
     // Game finished
     this.socket.on('game:finished', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Game finished:', payload);
       if (payload) {
         gameStore.setGameFinished(payload.result as GameResult, payload.winnerId);
       }
     });
 
-    // Game cancelled / aborted
-    this.socket.on('game:cancelled', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
+    // Game cancelled
+    this.socket.on('game:cancelled', () => {
       console.log('[Socket] Game cancelled');
-      gameStore.updateGameState({ status: 'CANCELLED' });
-    });
-
-    this.socket.on('game:aborted', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
-      console.log('[Socket] Game aborted:', payload);
       gameStore.updateGameState({ status: 'CANCELLED' });
     });
 
     // Player connection status indicators
     this.socket.on('game:player-disconnected', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Opponent disconnected:', payload);
     });
 
     this.socket.on('game:player-reconnected', (payload) => {
-      if (!this.isEventForCurrentGame(payload)) return;
       console.log('[Socket] Opponent reconnected:', payload);
     });
   }
@@ -207,20 +170,14 @@ class GameSocketManager {
    * Join a specific live game room
    */
   joinGame(gameId: number | string) {
-    if (this.currentGameId && String(this.currentGameId) !== String(gameId)) {
-      this.leaveGame(this.currentGameId);
-    }
     this.currentGameId = gameId;
     const socket = this.connect();
 
     if (socket.connected) {
-      gameStore.setConnectionStatus('connected');
       socket.emit('game:join', { gameId });
       console.log('[Socket] Joined game room immediately:', gameId);
     } else {
-      gameStore.setConnectionStatus('connecting');
       socket.once('connect', () => {
-        gameStore.setConnectionStatus('connected');
         socket.emit('game:join', { gameId });
         console.log('[Socket] Joined game room upon connection:', gameId);
       });
@@ -234,7 +191,7 @@ class GameSocketManager {
     if (this.socket && this.socket.connected) {
       this.socket.emit('game:leave', { gameId });
     }
-    if (String(this.currentGameId) === String(gameId)) {
+    if (this.currentGameId === gameId) {
       this.currentGameId = null;
     }
   }

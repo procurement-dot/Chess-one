@@ -9,9 +9,9 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
-const logoIcon = require('../../../assets/images/chessone-icon.png');
+import { useRoleStore, roleStore, UserRole } from '../../features/roles/roleStore';
+import { COLORS, SIZES, FONTS } from '../../constants/chessone-theme';
+import { Feather } from '@expo/vector-icons';
 
 interface AppHeaderProps {
   title?: string;
@@ -20,6 +20,8 @@ interface AppHeaderProps {
   onBack?: () => void;
   rightAction?: 'profile' | 'none';
 }
+
+const ROLES: UserRole[] = ['Student', 'Parent', 'Coach', 'School', 'Organiser'];
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
   title = 'ChessOne',
@@ -30,6 +32,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 }) => {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
+  const role = useRoleStore();
 
   const handleBack = () => {
     if (onBack) {
@@ -45,6 +48,11 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     router.push('/login' as any);
   };
 
+  const cycleRole = () => {
+    const nextIdx = (ROLES.indexOf(role) + 1) % ROLES.length;
+    roleStore.setRole(ROLES[nextIdx]);
+  };
+
   return (
     <View style={styles.headerContainer}>
       <View style={styles.contentRow}>
@@ -56,12 +64,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.7}
               onPress={handleBack}
             >
-              <Text style={styles.backIcon}>‹</Text>
-              <Image
-                source={logoIcon}
-                style={styles.backLogoIcon}
-                resizeMode="contain"
-              />
+              <Feather name="chevron-left" size={24} color={COLORS.primary} style={styles.backIcon} />
               <View style={styles.backTitleCol}>
                 <Text style={styles.backText}>
                   {title !== 'ChessOne' ? title : 'Back'}
@@ -79,29 +82,10 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.8}
               onPress={() => router.replace('/' as any)}
             >
-              {title === 'ChessOne' ? (
-                <Image
-                  source={logoBanner}
-                  style={styles.brandLogoImage}
-                  resizeMode="contain"
-                />
-              ) : (
-                <>
-                  <Image
-                    source={logoIcon}
-                    style={styles.brandIconSquare}
-                    resizeMode="contain"
-                  />
-                  <View>
-                    <Text style={styles.brandTitle}>{title}</Text>
-                    {subtitle ? (
-                      <Text style={styles.brandSubtitle}>{subtitle}</Text>
-                    ) : (
-                      <Text style={styles.brandSubtitle}>Live Match Arena</Text>
-                    )}
-                  </View>
-                </>
-              )}
+              <Image 
+                source={require('../../../assets/images/chessone-logo.png')} 
+                style={{ width: 140, height: 40, resizeMode: 'contain' }}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -110,26 +94,25 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {rightAction === 'profile' && (
           <View style={styles.rightSection}>
             {isAuthenticated && user ? (
-              <TouchableOpacity
-                style={styles.userChip}
-                activeOpacity={0.75}
-                onPress={handleProfilePress}
-              >
-                <View style={styles.userAvatar}>
+              <View style={styles.profileSection}>
+                <TouchableOpacity
+                  style={styles.roleChip}
+                  activeOpacity={0.7}
+                  onPress={cycleRole}
+                >
+                  <Text style={styles.roleChipText}>{role}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.userAvatar}
+                  activeOpacity={0.75}
+                  onPress={handleProfilePress}
+                >
                   <Text style={styles.userInitial}>
                     {(user.name || user.email || 'P')[0].toUpperCase()}
                   </Text>
-                  <View style={styles.onlineDot} />
-                </View>
-                <View style={styles.userMeta}>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {user.name || 'Player'}
-                  </Text>
-                  <View style={styles.idBadge}>
-                    <Text style={styles.idBadgeText}>ID: #{user.id}</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
+                </TouchableOpacity>
+              </View>
             ) : (
               <TouchableOpacity
                 style={styles.signInBtn}
@@ -148,14 +131,14 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
 const styles = StyleSheet.create({
   headerContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
     ...Platform.select({
       ios: {
-        shadowColor: '#202D29',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 4,
@@ -188,127 +171,87 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   backIcon: {
-    fontSize: 26,
-    color: '#194E40',
-    lineHeight: 26,
     marginRight: 4,
-  },
-  backLogoIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
-    marginRight: 8,
   },
   backTitleCol: {
     justifyContent: 'center',
   },
   backText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#194E40',
+    fontSize: SIZES.fontBody,
+    fontWeight: FONTS.headingWeight,
+    color: COLORS.primary,
   },
   backSubtitle: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
     fontWeight: '500',
   },
   brandContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  brandLogoImage: {
-    width: 118,
-    height: 42,
+  logoSquare: {
+    width: 30,
+    height: 30,
+    borderRadius: SIZES.radiusChip,
+    backgroundColor: COLORS.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 4,
   },
-  brandIconSquare: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
+  logoKnight: {
+    fontSize: 18,
+    color: COLORS.white,
+    lineHeight: 22,
   },
   brandTitle: {
-    fontSize: 17,
-    fontWeight: '800',
-    color: '#202D29',
+    fontSize: 20,
+    fontWeight: FONTS.headingWeight,
+    color: COLORS.textHeading,
     letterSpacing: 0.3,
-  },
-  brandSubtitle: {
-    fontSize: 11,
-    color: '#74817A',
-    fontWeight: '500',
   },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  userChip: {
+  profileSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF3E8',
-    borderRadius: 20,
-    paddingVertical: 4,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
-    gap: 8,
+    gap: 12,
+  },
+  roleChip: {
+    backgroundColor: COLORS.hero,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: SIZES.radiusChip,
+  },
+  roleChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   userAvatar: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#194E40',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.accentPeach,
     justifyContent: 'center',
     alignItems: 'center',
-    position: 'relative',
   },
   userInitial: {
-    fontSize: 13,
+    fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
-  },
-  onlineDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 3.5,
-    backgroundColor: '#4F8A5B',
-    position: 'absolute',
-    bottom: -1,
-    right: -1,
-    borderWidth: 1,
-    borderColor: '#FFFFFF',
-  },
-  userMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  userName: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#202D29',
-    maxWidth: 90,
-  },
-  idBadge: {
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 0.5,
-    borderColor: '#D5DFC8',
-  },
-  idBadgeText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#194E40',
+    color: COLORS.white,
   },
   signInBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 10,
+    borderRadius: SIZES.radiusButton,
   },
   signInBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 13,
     fontWeight: '700',
   },

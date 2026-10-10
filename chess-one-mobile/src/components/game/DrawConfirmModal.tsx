@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -63,7 +64,7 @@ export const DrawConfirmModal: React.FC<DrawConfirmModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -71,25 +72,23 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
+    borderColor: COLORS.border,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.45,
     shadowRadius: 16,
-    elevation: 8,
+    elevation: 12,
   },
   iconCircle: {
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#EEF3E8',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
+    backgroundColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -100,14 +99,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
   },
   message: {
     fontSize: 14,
     lineHeight: 20,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -124,20 +123,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   cancelButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   cancelText: {
-    color: '#74817A',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '600',
   },
   drawButton: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
   },
   drawText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },

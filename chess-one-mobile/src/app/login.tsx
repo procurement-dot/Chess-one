@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -20,9 +21,6 @@ import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AppFooter } from '../components/navigation/AppFooter';
 import { gameService } from '../services/game.service';
 import { Game } from '../types/game.types';
-
-const logoBanner = require('../../assets/images/chessone-logo-transparent.png');
-const logoIcon = require('../../assets/images/chessone-icon.png');
 
 // AI Coach contextual advice for losses
 const getAiCoachSuggestion = (game: Game, isUserWhite: boolean): string => {
@@ -91,25 +89,21 @@ export default function LoginScreen() {
     filteredGames,
   } = useMemo(() => {
     const completed = games.filter(
-      (g) =>
-        (g.status === 'COMPLETED' || Boolean(g.result)) &&
-        g.status !== 'CANCELLED' &&
-        (g.status as string) !== 'ABORTED' &&
-        (g.result as any) !== 'ABORTED'
+      (g) => g.status === 'COMPLETED' || Boolean(g.result)
     );
 
-    const wins = completed.filter((g) => {
-      const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
-      return Boolean(winnerId && currentUserId && winnerId === currentUserId);
-    });
-    const losses = completed.filter((g) => {
-      const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
-      return Boolean(winnerId && currentUserId && winnerId !== currentUserId);
-    });
-    const draws = completed.filter((g) => {
-      const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
-      return (g.result === 'DRAW' || g.result === 'STALEMATE') && !winnerId;
-    });
+    const wins = completed.filter(
+      (g) => g.winnerId && currentUserId && g.winnerId === currentUserId
+    );
+    const losses = completed.filter(
+      (g) => g.winnerId && currentUserId && g.winnerId !== currentUserId
+    );
+    const draws = completed.filter(
+      (g) =>
+        g.result === 'DRAW' ||
+        g.result === 'STALEMATE' ||
+        (!g.winnerId && g.result)
+    );
 
     const total = completed.length;
     const winsNum = wins.length;
@@ -125,15 +119,13 @@ export default function LoginScreen() {
 
     let displayList = games;
     if (historyFilter === 'wins') {
-      displayList = games.filter((g) => {
-        const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
-        return Boolean(winnerId && currentUserId && winnerId === currentUserId);
-      });
+      displayList = games.filter(
+        (g) => g.winnerId && currentUserId && g.winnerId === currentUserId
+      );
     } else if (historyFilter === 'losses') {
-      displayList = games.filter((g) => {
-        const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
-        return Boolean(winnerId && currentUserId && winnerId !== currentUserId);
-      });
+      displayList = games.filter(
+        (g) => g.winnerId && currentUserId && g.winnerId !== currentUserId
+      );
     }
 
     return {
@@ -150,7 +142,15 @@ export default function LoginScreen() {
   const handleGoogleSignIn = async () => {
     const res = await signInWithGoogle();
     if (res?.success) {
-      router.replace('/play' as any);
+      try {
+        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+        const done = await AsyncStorage.getItem('@chessone_onboardingDone');
+        if (!done) {
+          router.replace('/onboarding' as any);
+          return;
+        }
+      } catch (e) {}
+      router.replace('/' as any);
     }
   };
 
@@ -164,7 +164,7 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       <ScrollView
         style={styles.scrollView}
@@ -175,35 +175,18 @@ export default function LoginScreen() {
             <RefreshControl
               refreshing={isLoadingGames}
               onRefresh={fetchGames}
-              tintColor="#194E40"
+              tintColor="#38BDF8"
             />
           ) : undefined
         }
       >
         {/* Brand Banner */}
         <View style={styles.brandContainer}>
-          {isAuthenticated ? (
-            <View style={styles.authBrandRow}>
-              <Image
-                source={logoIcon}
-                style={styles.authBrandIcon}
-                resizeMode="contain"
-              />
-              <View>
-                <Text style={styles.appName}>Player Profile</Text>
-                <Text style={styles.appTagline}>Career Records & Match Insights</Text>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.loggedOutBrandCol}>
-              <Image
-                source={logoBanner}
-                style={styles.loggedOutLogoBanner}
-                resizeMode="contain"
-              />
-              <Text style={styles.appTagline}>Compete • Learn • Master</Text>
-            </View>
-          )}
+          
+          <Image source={require('../../assets/images/chessone-logo.png')} style={{ width: 180, height: 60, resizeMode: 'contain', marginBottom: 12 }} />
+          <Text style={styles.appTagline}>
+            {isAuthenticated ? 'Career Records & Match Insights' : 'Compete • Learn • Master'}
+          </Text>
         </View>
 
         {isAuthenticated && user ? (
@@ -413,22 +396,17 @@ export default function LoginScreen() {
                         const opponent = isUserWhite ? g.blackPlayer : g.whitePlayer;
                         const opponentName =
                           g.gameType === 'PLAYER_VS_AI'
-                            ? 'AI'
+                            ? `Stockfish AI (${g.aiDifficulty || 'Medium'})`
                             : opponent?.name || 'Opponent';
 
-                        const isCancelled =
-                          g.status === 'CANCELLED' ||
-                          (g.status as string) === 'ABORTED' ||
-                          (g.result as any) === 'ABORTED';
-                        const winnerId = g.winnerId ?? (g.winner?.id as any) ?? null;
                         const isWinner =
-                          Boolean(winnerId && currentUserId && winnerId === currentUserId);
+                          Boolean(g.winnerId && currentUserId && g.winnerId === currentUserId);
                         const isLoser =
-                          Boolean(winnerId && currentUserId && winnerId !== currentUserId);
+                          Boolean(g.winnerId && currentUserId && g.winnerId !== currentUserId);
                         const isDraw =
-                          !isCancelled &&
-                          (g.result === 'DRAW' || g.result === 'STALEMATE') &&
-                          !winnerId;
+                          g.result === 'DRAW' ||
+                          g.result === 'STALEMATE' ||
+                          (!g.winnerId && g.result);
                         const isActive = g.status === 'ACTIVE';
 
                         const dateStr = g.createdAt
@@ -475,8 +453,6 @@ export default function LoginScreen() {
                                   styles.outcomeBadge,
                                   isActive
                                     ? styles.badgeActive
-                                    : isCancelled
-                                    ? styles.badgeDraw
                                     : isWinner
                                     ? styles.badgeWin
                                     : isLoser
@@ -487,8 +463,6 @@ export default function LoginScreen() {
                                 <Text style={styles.outcomeBadgeText}>
                                   {isActive
                                     ? 'In Progress'
-                                    : isCancelled
-                                    ? 'Cancelled'
                                     : isWinner
                                     ? '🏆 Win'
                                     : isLoser
@@ -648,12 +622,14 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingTop: 16,
     paddingBottom: 40,
@@ -661,39 +637,38 @@ const styles = StyleSheet.create({
   },
   brandContainer: {
     alignItems: 'center',
-    marginBottom: 20,
-    width: '100%',
+    marginBottom: 16,
   },
-  loggedOutBrandCol: {
-    alignItems: 'center',
+  logoBadge: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: COLORS.border,
+    borderWidth: 1.5,
+    borderColor: '#38BDF8',
     justifyContent: 'center',
-  },
-  loggedOutLogoBanner: {
-    width: 250,
-    height: 92,
-    marginBottom: 6,
-  },
-  authBrandRow: {
-    flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    marginBottom: 8,
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
+    elevation: 6,
   },
-  authBrandIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  logoIcon: {
+    fontSize: 30,
   },
   appName: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: '800',
-    color: '#202D29',
-    letterSpacing: 0.3,
+    color: '#F8FAFC',
+    letterSpacing: 0.5,
   },
   appTagline: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
 
   /* Authenticated Profile Styles */
@@ -703,16 +678,16 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   profileHeaderCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
   },
   avatarRow: {
     flexDirection: 'row',
@@ -724,15 +699,15 @@ const styles = StyleSheet.create({
     height: 64,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: '#194E40',
+    borderColor: '#38BDF8',
   },
   avatarPlaceholder: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     borderWidth: 2,
-    borderColor: '#D5DFC8',
+    borderColor: '#38BDF8',
     justifyContent: 'center',
     alignItems: 'center',
     position: 'relative',
@@ -740,7 +715,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#194E40',
+    color: '#38BDF8',
   },
   avatarOnlineDot: {
     position: 'absolute',
@@ -749,9 +724,9 @@ const styles = StyleSheet.create({
     width: 14,
     height: 14,
     borderRadius: 7,
-    backgroundColor: '#4F8A5B',
+    backgroundColor: '#10B981',
     borderWidth: 2,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.white,
   },
   profileTextCol: {
     flex: 1,
@@ -759,68 +734,61 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 19,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   userEmail: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginBottom: 6,
   },
   idChip: {
     alignSelf: 'flex-start',
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 0.5,
-    borderColor: '#D5DFC8',
+    borderColor: '#334155',
   },
   idChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#194E40',
+    color: '#60A5FA',
   },
   statusBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF3E8',
+    backgroundColor: '#064E3B',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
     marginTop: 12,
     gap: 6,
     alignSelf: 'flex-start',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
   },
   statusDot: {
     fontSize: 9,
-    color: '#4F8A5B',
+    color: '#34D399',
   },
   statusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#194E40',
+    color: '#D1FAE5',
   },
 
   /* Player Career Stats Grid */
   statsContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: COLORS.border,
   },
   statsHeaderTitle: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 12,
     letterSpacing: 0.2,
   },
@@ -837,16 +805,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   statCardRating: {
-    backgroundColor: '#EEF3E8',
-    borderColor: '#D5DFC8',
+    backgroundColor: '#172554',
+    borderColor: '#2563EB',
   },
   statCardGames: {
-    backgroundColor: '#F5F7F2',
-    borderColor: '#E4E9E1',
+    backgroundColor: '#1E1B4B',
+    borderColor: '#6366F1',
   },
   statCardWins: {
-    backgroundColor: '#E5EDDA',
-    borderColor: '#C8D9BE',
+    backgroundColor: '#143823',
+    borderColor: '#059669',
   },
   statIcon: {
     fontSize: 20,
@@ -855,17 +823,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   statLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#202D29',
+    color: '#CBD5E1',
     marginTop: 2,
   },
   statSub: {
     fontSize: 10,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   recordPillRow: {
@@ -875,34 +843,29 @@ const styles = StyleSheet.create({
   },
   recordPill: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
     borderRadius: 10,
     paddingVertical: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   recordPillText: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   boldText: {
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
 
   /* Match History Section */
   historySection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
+    borderColor: COLORS.border,
   },
   historyHeaderRow: {
     flexDirection: 'row',
@@ -918,20 +881,20 @@ const styles = StyleSheet.create({
   historyTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   historyCountBadge: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
     borderWidth: 0.5,
-    borderColor: '#D5DFC8',
+    borderColor: '#38BDF8',
   },
   historyCountText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#194E40',
+    color: '#38BDF8',
   },
   toggleHistoryBtn: {
     paddingVertical: 4,
@@ -939,8 +902,8 @@ const styles = StyleSheet.create({
   },
   toggleHistoryText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#194E40',
+    fontWeight: '600',
+    color: '#38BDF8',
   },
   filterPillsRow: {
     flexDirection: 'row',
@@ -951,21 +914,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 10,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   filterPillActive: {
-    backgroundColor: '#194E40',
-    borderColor: '#194E40',
+    backgroundColor: '#2563EB',
+    borderColor: '#38BDF8',
   },
   filterPillText: {
     fontSize: 11.5,
     fontWeight: '600',
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   filterPillTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   historyList: {
@@ -978,7 +941,7 @@ const styles = StyleSheet.create({
   },
   historyLoadingText: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   historyEmptyBox: {
     paddingVertical: 24,
@@ -990,7 +953,7 @@ const styles = StyleSheet.create({
   },
   historyEmptyText: {
     fontSize: 12.5,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -998,19 +961,18 @@ const styles = StyleSheet.create({
 
   /* Match Card */
   matchCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background,
     borderRadius: 14,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: '#242C38',
   },
   matchCardWinner: {
-    borderColor: '#C8D9BE',
-    backgroundColor: '#E5EDDA',
+    borderColor: '#D97706',
+    backgroundColor: '#17140B',
   },
   matchCardLoser: {
-    borderColor: '#E4E9E1',
-    backgroundColor: '#FFFFFF',
+    borderColor: COLORS.border,
   },
   matchCardHeader: {
     flexDirection: 'row',
@@ -1029,12 +991,12 @@ const styles = StyleSheet.create({
   matchOpponentName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     maxWidth: 170,
   },
   matchMetaText: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   outcomeBadge: {
@@ -1043,32 +1005,34 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   badgeActive: {
-    backgroundColor: '#D6EF9E',
+    backgroundColor: '#1E3A8A',
   },
   badgeWin: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#78350F',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
   },
   badgeLoss: {
-    backgroundColor: '#FCEDDF',
+    backgroundColor: '#450A0A',
     borderWidth: 1,
-    borderColor: '#F7A18C',
+    borderColor: '#EF4444',
   },
   badgeDraw: {
-    backgroundColor: '#E4E9E1',
+    backgroundColor: COLORS.border,
   },
   outcomeBadgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
 
   /* Trophy Banner for Wins */
   trophyBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E5EDDA',
+    backgroundColor: '#261C02',
     borderWidth: 1,
-    borderColor: '#C8D9BE',
+    borderColor: '#F59E0B',
     borderRadius: 10,
     padding: 8,
     marginTop: 10,
@@ -1083,19 +1047,19 @@ const styles = StyleSheet.create({
   trophyTitle: {
     fontSize: 12.5,
     fontWeight: '800',
-    color: '#194E40',
+    color: '#FBBF24',
   },
   trophySub: {
     fontSize: 10.5,
-    color: '#202D29',
+    color: '#FDE68A',
     marginTop: 1,
   },
 
   /* AI Suggestion Box for Losses */
   aiSuggestionBox: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#3B82F6',
     borderRadius: 10,
     padding: 9,
     marginTop: 10,
@@ -1112,11 +1076,11 @@ const styles = StyleSheet.create({
   aiSuggestionTitle: {
     fontSize: 11.5,
     fontWeight: '800',
-    color: '#194E40',
+    color: '#60A5FA',
   },
   aiSuggestionText: {
     fontSize: 11.5,
-    color: '#202D29',
+    color: '#E2E8F0',
     lineHeight: 16,
   },
   viewDetailsRow: {
@@ -1125,13 +1089,13 @@ const styles = StyleSheet.create({
   },
   viewDetailsText: {
     fontSize: 10.5,
-    fontWeight: '700',
-    color: '#194E40',
+    fontWeight: '600',
+    color: '#38BDF8',
   },
   seeMoreBtn: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: '#1E2530',
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#3B82F6',
     borderRadius: 12,
     paddingVertical: 11,
     paddingHorizontal: 16,
@@ -1140,7 +1104,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   seeMoreBtnText: {
-    color: '#194E40',
+    color: '#60A5FA',
     fontSize: 12.5,
     fontWeight: '700',
     letterSpacing: 0.3,
@@ -1155,18 +1119,18 @@ const styles = StyleSheet.create({
   enterHubButton: {
     width: '100%',
     height: 48,
-    backgroundColor: '#194E40',
+    backgroundColor: '#2563EB',
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    shadowColor: '#2563EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   enterHubButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -1176,12 +1140,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   signOutButtonText: {
-    color: '#C53030',
+    color: '#EF4444',
     fontSize: 13.5,
     fontWeight: '600',
   },
@@ -1190,39 +1154,39 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 440,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 24,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.35,
+    shadowRadius: 16,
+    elevation: 10,
   },
   authSection: {
     alignItems: 'center',
   },
   cardTitle: {
     fontSize: 22,
-    fontWeight: '800',
-    color: '#202D29',
+    fontWeight: '700',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
   },
   cardSubtitle: {
     fontSize: 14,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 24,
   },
   errorBanner: {
     flexDirection: 'row',
-    backgroundColor: '#FCEDDF',
+    backgroundColor: '#2D1B1F',
     borderWidth: 1,
-    borderColor: '#F7A18C',
+    borderColor: '#EF4444',
     borderRadius: 12,
     padding: 12,
     marginBottom: 16,
@@ -1237,36 +1201,36 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 13,
-    color: '#C53030',
+    color: '#FCA5A5',
     lineHeight: 18,
   },
   redirectHintBox: {
     marginTop: 10,
     paddingTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#F7C2B3',
+    borderTopColor: '#451A20',
   },
   redirectHintTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#C53030',
+    color: '#F87171',
     marginBottom: 4,
   },
   redirectHintText: {
     fontSize: 11,
-    color: '#C53030',
+    color: '#FCA5A5',
     lineHeight: 16,
     marginBottom: 6,
   },
   redirectHintCode: {
     fontSize: 11,
     fontFamily: 'monospace',
-    color: '#194E40',
-    backgroundColor: '#EEF3E8',
+    color: '#FEF08A',
+    backgroundColor: '#18181B',
     padding: 8,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#3F3F46',
     marginBottom: 8,
   },
   openConsoleButton: {
@@ -1275,8 +1239,8 @@ const styles = StyleSheet.create({
   },
   openConsoleButtonText: {
     fontSize: 12,
-    color: '#194E40',
-    fontWeight: '700',
+    color: '#60A5FA',
+    fontWeight: '600',
   },
   googleButton: {
     width: '100%',
@@ -1296,12 +1260,12 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E4E9E1',
+    backgroundColor: COLORS.border,
   },
   dividerText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#74817A',
+    color: COLORS.textBody,
     letterSpacing: 1,
   },
   devSignInButton: {
@@ -1313,21 +1277,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   player1Btn: {
-    backgroundColor: '#EEF3E8',
-    borderColor: '#D5DFC8',
+    backgroundColor: '#1A2333',
+    borderColor: '#2563EB',
   },
   player2Btn: {
-    backgroundColor: '#E5EDDA',
-    borderColor: '#C8D9BE',
+    backgroundColor: '#1C2622',
+    borderColor: '#059669',
   },
   devSignInButtonText: {
-    color: '#202D29',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },
   disclaimerText: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginTop: 20,
     lineHeight: 16,

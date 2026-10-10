@@ -207,7 +207,7 @@ class InvitationService {
           whiteTimeMs: initialTimeMs,
           blackTimeMs: initialTimeMs,
           startedAt: now,
-          lastMoveAt: null,
+          lastMoveAt: now,
         },
         include: {
           whitePlayer: { select: { id: true, name: true } },

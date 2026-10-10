@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import {
   View,
   Text,
@@ -7,7 +8,6 @@ import {
   ScrollView,
   StatusBar,
   RefreshControl,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -19,8 +19,6 @@ import { GameInvitation } from '../../types/game.types';
 import { IncomingChallengeModal } from '../../components/game/IncomingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
 import { AppFooter } from '../../components/navigation/AppFooter';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
   const router = useRouter();
@@ -79,59 +77,61 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
     };
   }, [isAuthenticated, refreshInvites]);
 
-  // Track invitations already accepted/declined to prevent re-opening modal loop
-  const handledInvitesRef = React.useRef<Set<number>>(new Set());
-
   // Show incoming challenge popup if there are pending invitations
   useEffect(() => {
-    const unhandled = invitations.filter((inv) => !handledInvitesRef.current.has(inv.id));
-    if (unhandled.length > 0 && !incomingModalVisible && !vsModalVisible) {
-      setIncomingInvite(unhandled[0]);
+    if (invitations.length > 0 && !incomingModalVisible) {
+      setIncomingInvite(invitations[0]);
       setIncomingModalVisible(true);
     }
-  }, [invitations, incomingModalVisible, vsModalVisible]);
+  }, [invitations, incomingModalVisible]);
 
   // Handle accepting incoming challenge
   const handleAcceptInvite = async (invitationId: number) => {
-    handledInvitesRef.current.add(invitationId);
     setIsProcessingIncoming(true);
-
-    const targetInvite =
-      incomingInvite?.id === invitationId
-        ? incomingInvite
-        : invitations.find((i) => i.id === invitationId);
-    const preGameId = targetInvite?.gameId;
-
-    // Immediately navigate to the live match screen if gameId is already known
-    if (preGameId) {
-      try {
-        if (typeof window !== 'undefined' && window.sessionStorage) {
-          window.sessionStorage.setItem(`chess_game_color_${preGameId}`, 'BLACK');
-        }
-      } catch {}
-      gameStore.reset();
-      router.replace(`/game/${preGameId}` as any);
-    }
-
-    setIncomingModalVisible(false);
-    setIncomingInvite(null);
-
     try {
-      const game = await acceptInvitation(invitationId);
-      const gameId = (game as any)?.gameId || game?.id || preGameId;
+      const targetInvite =
+        incomingInvite?.id === invitationId
+          ? incomingInvite
+          : invitations.find((i) => i.id === invitationId);
 
-      if (gameId && !preGameId) {
+      const game = await acceptInvitation(invitationId);
+      setIncomingModalVisible(false);
+      setIncomingInvite(null);
+
+      const gameId = (game as any)?.gameId || game?.id || targetInvite?.gameId;
+      if (gameId) {
         const playerColor = (game as any)?.playerColor || 'BLACK';
         try {
           if (typeof window !== 'undefined' && window.sessionStorage) {
             window.sessionStorage.setItem(`chess_game_color_${gameId}`, playerColor);
           }
         } catch {}
-        gameStore.reset();
-        router.replace(`/game/${gameId}` as any);
+
+        // Resolve player names for animated VS faceoff
+        const myName = user?.name || user?.email || 'You';
+        const opponentName = targetInvite?.sender?.name || targetInvite?.sender?.email || 'Opponent';
+
+        let whiteName = opponentName;
+        let blackName = myName;
+
+        if ((game as any)?.whitePlayer?.name && (game as any)?.blackPlayer?.name) {
+          whiteName = (game as any).whitePlayer.name;
+          blackName = (game as any).blackPlayer.name;
+        } else if ((game as any)?.playerColor === 'WHITE') {
+          whiteName = myName;
+          blackName = opponentName;
+        }
+
+        setVsModalData({
+          gameId,
+          whitePlayerName: whiteName,
+          blackPlayerName: blackName,
+          whitePlayerAvatar: targetInvite?.sender?.avatarUrl,
+          blackPlayerAvatar: user?.photo,
+          timeControl: targetInvite?.timeControl || '5+0',
+        });
+        setVsModalVisible(true);
       }
-    } catch (err) {
-      console.warn('[PlayHub] Accept invite error:', err);
     } finally {
       setIsProcessingIncoming(false);
     }
@@ -139,15 +139,11 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 
   // Handle declining incoming challenge
   const handleDeclineInvite = async (invitationId: number) => {
-    handledInvitesRef.current.add(invitationId);
     setIsProcessingIncoming(true);
-    setIncomingModalVisible(false);
-    setIncomingInvite(null);
-
     try {
       await declineInvitation(invitationId);
-    } catch (err) {
-      console.warn('[PlayHub] Decline invite error:', err);
+      setIncomingModalVisible(false);
+      setIncomingInvite(null);
     } finally {
       setIsProcessingIncoming(false);
     }
@@ -160,40 +156,38 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
-      {/* Top Header with Official Logo */}
+      {/* Top Header */}
       <View style={styles.header}>
-        <Image
-          source={logoBanner}
-          style={styles.headerLogo}
-          resizeMode="contain"
-        />
-
-        <View style={styles.headerRight}>
-          <TouchableOpacity
-            style={styles.headerUserChip}
-            activeOpacity={0.8}
-            onPress={() => router.push('/login' as any)}
-          >
-            <View style={styles.avatarCircleSmall}>
-              <Text style={styles.avatarLetterSmall}>
-                {(user?.name || user?.email || 'U')[0].toUpperCase()}
-              </Text>
-            </View>
-            <Text style={styles.userChipName} numberOfLines={1}>
-              {user?.name ? user.name.split(' ')[0] : 'Profile'}
+        <View style={styles.userProfileRow}>
+          <View style={styles.avatarCircle}>
+            <Text style={styles.avatarLetter}>
+              {(user?.name || user?.email || 'U')[0].toUpperCase()}
             </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.switchAccountButton}
-            activeOpacity={0.7}
-            onPress={handleSignOut}
-          >
-            <Text style={styles.switchAccountText}>Sign Out</Text>
-          </TouchableOpacity>
+          </View>
+          <View style={styles.titleCol}>
+            <View style={styles.nameAndIdRow}>
+              <Text style={styles.playerName} numberOfLines={1}>
+                {user?.name || user?.email || 'Chess Player'}
+              </Text>
+              {user?.id && (
+                <View style={styles.idChip}>
+                  <Text style={styles.idChipText}>ID: #{user.id}</Text>
+                </View>
+              )}
+            </View>
+            <Text style={styles.subtitle}>Select a game mode to begin playing</Text>
+          </View>
         </View>
+
+        <TouchableOpacity
+          style={styles.switchAccountButton}
+          activeOpacity={0.7}
+          onPress={handleSignOut}
+        >
+          <Text style={styles.switchAccountText}>Sign Out</Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -205,35 +199,11 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
             <RefreshControl
               refreshing={isLoadingInvites}
               onRefresh={refreshInvites}
-              tintColor="#194E40"
+              tintColor="#3B82F6"
             />
           ) : undefined
         }
       >
-        {/* Welcome Player Greeting Card */}
-        <View style={styles.welcomeCard}>
-          <View style={styles.userProfileRow}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarLetter}>
-                {(user?.name || user?.email || 'U')[0].toUpperCase()}
-              </Text>
-            </View>
-            <View style={styles.titleCol}>
-              <View style={styles.nameAndIdRow}>
-                <Text style={styles.playerName} numberOfLines={1}>
-                  {user?.name || user?.email || 'Chess Player'}
-                </Text>
-                {user?.id && (
-                  <View style={styles.idChip}>
-                    <Text style={styles.idChipText}>ID: #{user.id}</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.subtitle}>Welcome back! Choose a match mode to begin</Text>
-            </View>
-          </View>
-        </View>
-
         {/* Section Heading: Game Modes */}
         <Text style={styles.sectionTitle}>Game Modes</Text>
 
@@ -304,7 +274,7 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
           onComplete={() => {
             setVsModalVisible(false);
             gameStore.reset();
-            router.replace(`/game/${vsModalData.gameId}` as any);
+            router.push(`/game/${vsModalData.gameId}` as any);
           }}
         />
       )}
@@ -317,64 +287,17 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingVertical: 10,
+    paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
-    backgroundColor: '#FFFFFF',
-  },
-  headerLogo: {
-    width: 120,
-    height: 42,
-  },
-  headerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  headerUserChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#EEF3E8',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
-  },
-  avatarCircleSmall: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#194E40',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarLetterSmall: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  userChipName: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#194E40',
-    maxWidth: 80,
-  },
-  welcomeCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
   },
   userProfileRow: {
     flexDirection: 'row',
@@ -386,14 +309,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.accentPeach,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarLetter: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   titleCol: {
     flex: 1,
@@ -406,38 +329,38 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     maxWidth: 160,
   },
   idChip: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.hero,
     paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   idChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#194E40',
+    color: COLORS.primary,
   },
   subtitle: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   switchAccountButton: {
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: SIZES.radiusButton,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   switchAccountText: {
     fontSize: 12,
-    color: '#C53030',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   content: {
@@ -450,7 +373,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 14,
     letterSpacing: 0.2,
   },
@@ -458,30 +381,24 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionCard: {
-    borderRadius: 16,
-    padding: 18,
+    borderRadius: SIZES.radiusCard,
+    padding: 16,
     borderWidth: 1,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    elevation: 2,
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.border,
+    ...SHADOWS.soft,
   },
   aiCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4E9E1',
+    backgroundColor: COLORS.white,
   },
   pvpCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4E9E1',
+    backgroundColor: COLORS.white,
   },
   joinCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4E9E1',
+    backgroundColor: COLORS.white,
   },
   historyCard: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#E4E9E1',
+    backgroundColor: COLORS.white,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -493,34 +410,31 @@ const styles = StyleSheet.create({
     fontSize: 26,
   },
   badge: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.hero,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
-    borderWidth: 0.5,
-    borderColor: '#D5DFC8',
   },
   pvpBadge: {
-    backgroundColor: '#E5EDDA',
-    borderColor: '#C8D9BE',
+    backgroundColor: COLORS.hero,
   },
   joinBadge: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.hero,
   },
   badgeText: {
-    color: '#194E40',
+    color: COLORS.primary,
     fontSize: 11,
     fontWeight: '700',
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   cardDesc: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     lineHeight: 18,
   },
 });

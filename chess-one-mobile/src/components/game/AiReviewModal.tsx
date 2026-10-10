@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -8,12 +9,9 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
-  Image,
 } from 'react-native';
 import { gameService } from '../../services/game.service';
 import { AiReviewResponse } from '../../types/game.types';
-
-const logoIcon = require('../../../assets/images/chessone-icon.png');
 
 interface AiReviewModalProps {
   visible: boolean;
@@ -77,14 +75,12 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
           {/* Header Bar */}
           <View style={styles.header}>
             <View style={styles.headerLeft}>
-              <Image
-                source={logoIcon}
-                style={styles.aiLogoIcon}
-                resizeMode="contain"
-              />
+              <View style={styles.aiBadge}>
+                <Text style={styles.aiBadgeIcon}>🤖</Text>
+              </View>
               <View>
                 <Text style={styles.headerTitle}>AI Game Review</Text>
-                <Text style={styles.headerSubtitle}>ChessOne AI • Move Analysis</Text>
+                <Text style={styles.headerSubtitle}>Powered by Gemini & Stockfish</Text>
               </View>
             </View>
 
@@ -96,10 +92,10 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
           {/* Loading State */}
           {isLoading && (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#194E40" />
+              <ActivityIndicator size="large" color="COLORS.primary" />
               <Text style={styles.loadingTitle}>Analyzing Every Move...</Text>
               <Text style={styles.loadingSubtitle}>
-                AI is evaluating accuracy, tactical opportunities, and blunders.
+                Stockfish & Gemini AI are evaluating accuracy, tactical opportunities, and blunders.
               </Text>
             </View>
           )}
@@ -146,14 +142,14 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
                 <View style={styles.accuracyGrid}>
                   <View style={styles.accuracyBox}>
                     <Text style={styles.accuracyLabel}>White Accuracy</Text>
-                    <Text style={[styles.accuracyValue, { color: '#194E40' }]}>
+                    <Text style={[styles.accuracyValue, { color: COLORS.primary }]}>
                       {review.accuracyWhite}%
                     </Text>
                   </View>
                   <View style={styles.accuracyDivider} />
                   <View style={styles.accuracyBox}>
                     <Text style={styles.accuracyLabel}>Black Accuracy</Text>
-                    <Text style={[styles.accuracyValue, { color: '#202D29' }]}>
+                    <Text style={[styles.accuracyValue, { color: '#34D399' }]}>
                       {review.accuracyBlack}%
                     </Text>
                   </View>
@@ -268,21 +264,21 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.45)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'flex-end',
   },
   sheetCard: {
     width: '100%',
     maxHeight: '90%',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 18,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
+    borderColor: COLORS.border,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 20,
   },
@@ -293,39 +289,46 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: COLORS.border,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
   },
-  aiLogoIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 8,
-    marginRight: 8,
+  aiBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: COLORS.border,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.primary,
+  },
+  aiBadgeIcon: {
+    fontSize: 20,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     fontWeight: '500',
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -338,12 +341,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     fontSize: 17,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   loadingSubtitle: {
     marginTop: 8,
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: 280,
@@ -355,23 +358,23 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#C53030',
+    color: COLORS.textHeading,
   },
   errorSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 18,
   },
   retryBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
   },
   retryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -384,11 +387,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   verdictCard: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   verdictHeader: {
     flexDirection: 'row',
@@ -399,42 +402,40 @@ const styles = StyleSheet.create({
   verdictTag: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#194E40',
+    color: COLORS.primary,
     letterSpacing: 1,
   },
   coachRatingPill: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   coachRatingText: {
-    color: '#194E40',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },
   verdictTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 8,
   },
   summaryText: {
     fontSize: 14,
-    color: '#202D29',
+    color: COLORS.textHeading,
     lineHeight: 20,
     marginBottom: 16,
   },
   accuracyGrid: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
   },
   accuracyBox: {
     flex: 1,
@@ -443,11 +444,11 @@ const styles = StyleSheet.create({
   accuracyDivider: {
     width: 1,
     height: 30,
-    backgroundColor: '#E4E9E1',
+    backgroundColor: '#334155',
   },
   accuracyLabel: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -469,21 +470,21 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   bestMoveCard: {
-    backgroundColor: 'rgba(214, 239, 158, 0.35)',
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   worstMoveCard: {
-    backgroundColor: 'rgba(252, 237, 223, 0.7)',
+    backgroundColor: 'rgba(239, 68, 68, 0.08)',
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#F7A18C',
+    borderColor: 'rgba(239, 68, 68, 0.3)',
   },
   moveHeaderRow: {
     flexDirection: 'row',
@@ -493,36 +494,36 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   moveBadgeGreen: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   moveBadgeGreenText: {
-    color: '#D6EF9E',
+    color: '#34D399',
     fontSize: 11,
     fontWeight: '800',
   },
   moveBadgeAmber: {
-    backgroundColor: '#C53030',
+    backgroundColor: '#7F1D1D',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
   moveBadgeAmberText: {
-    color: '#FCEDDF',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '800',
   },
   moveTitleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     flex: 1,
   },
   moveExplanationText: {
     fontSize: 13,
-    color: '#202D29',
+    color: COLORS.textHeading,
     lineHeight: 18,
   },
   betterMoveBox: {
@@ -531,36 +532,36 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#F7A18C',
+    borderTopColor: 'rgba(239, 68, 68, 0.2)',
   },
   betterMoveLabel: {
     fontSize: 12,
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   betterMoveValue: {
     fontSize: 12,
-    color: '#202D29',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   turningPointCard: {
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.border,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   turningPointText: {
     fontSize: 13,
-    color: '#202D29',
+    color: COLORS.textHeading,
     lineHeight: 19,
   },
   tipCard: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
     borderRadius: 14,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: 'rgba(59, 130, 246, 0.35)',
   },
   tipHeaderRow: {
     flexDirection: 'row',
@@ -574,11 +575,11 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#194E40',
+    color: COLORS.primary,
   },
   tipText: {
     fontSize: 13,
-    color: '#202D29',
+    color: COLORS.textHeading,
     lineHeight: 19,
   },
   bottomButtonGroup: {
@@ -586,26 +587,26 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   fullResultsBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   fullResultsBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   closeDoneBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.border,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   closeDoneBtnText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 14,
     fontWeight: '600',
   },

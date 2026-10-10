@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Color, PieceSymbol } from 'chess.js';
@@ -38,10 +39,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <View
           style={[
             styles.avatarCircle,
-            { backgroundColor: isWhite ? '#FFFFFF' : '#202D29' },
+            { backgroundColor: isWhite ? COLORS.textHeading : COLORS.white },
           ]}
         >
-          <Text style={[styles.avatarText, { color: isWhite ? '#194E40' : '#D6EF9E' }]}>
+          <Text style={[styles.avatarText, { color: isWhite ? COLORS.white : COLORS.textHeading }]}>
             {isWhite ? '♔' : '♚'}
           </Text>
         </View>
@@ -89,26 +90,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     width: '100%',
   },
   activeContainer: {
-    borderColor: '#194E40',
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#194E40',
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.border,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.25,
     shadowRadius: 6,
-    elevation: 3,
+    elevation: 4,
   },
   checkContainer: {
-    borderColor: '#C53030',
-    backgroundColor: '#FCEDDF',
+    borderColor: '#EF4444',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
   },
   leftInfo: {
     flexDirection: 'row',
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -140,33 +141,33 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   activePlayerName: {
-    color: '#194E40',
+    color: COLORS.textHeading,
   },
   turnIndicatorBadge: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   turnIndicatorText: {
-    color: '#D6EF9E',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
   },
   checkBadge: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: 'rgba(239, 68, 68, 0.25)',
+    borderColor: '#EF4444',
     borderWidth: 1,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   checkText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },

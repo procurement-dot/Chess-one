@@ -79,7 +79,7 @@ class GameService {
           pgn: "",
           currentTurn: "WHITE",
           startedAt: new Date(),
-          lastMoveAt: !whitePlayerId ? new Date() : null,
+          lastMoveAt: new Date(),
         },
       });
 
@@ -135,13 +135,10 @@ class GameService {
     const game = await this.findGameByIdOrCode(gameId);
 
     return {
-      id: game.id,
       gameId: game.id,
       gameCode: game.gameCode,
       gameType: game.gameType,
       status: game.status,
-      whitePlayerId: game.whitePlayerId,
-      blackPlayerId: game.blackPlayerId,
       creator: game.creator,
       whitePlayer: game.whitePlayer,
       blackPlayer: game.blackPlayer,
@@ -149,7 +146,6 @@ class GameService {
       aiDifficulty: game.aiDifficulty,
       currentTurn: game.currentTurn,
       result: game.result,
-      winnerId: game.winnerId,
       winner: game.winner,
       createdAt: game.createdAt,
       startedAt: game.startedAt,
@@ -238,9 +234,7 @@ class GameService {
    * Get live game state with clocks (authoritative for reconnection)
    */
   async getGameState(gameId) {
-    const game = await this.findGameByIdOrCode(gameId, {
-      moves: { select: { id: true, moveNumber: true }, orderBy: { id: "desc" } },
-    });
+    const game = await this.findGameByIdOrCode(gameId);
 
     // Calculate live clocks and check for timeout
     const liveTimes = getLiveTimes(game);
@@ -284,8 +278,6 @@ class GameService {
         result: updated.result,
         winnerId: updated.winnerId,
         drawOfferFrom: updated.drawOfferFrom,
-        moveCount: game.moves ? game.moves.length : 0,
-        lastMoveNumber: (game.moves && game.moves.length > 0) ? game.moves[0].moveNumber : 0,
       };
     }
 
@@ -312,8 +304,6 @@ class GameService {
       result: game.result,
       winnerId: game.winnerId,
       drawOfferFrom: game.drawOfferFrom,
-      moveCount: game.moves ? game.moves.length : 0,
-      lastMoveNumber: (game.moves && game.moves.length > 0) ? game.moves[0].moveNumber : 0,
     };
   }
 
@@ -593,15 +583,7 @@ class GameService {
         gameCode: game.gameCode,
         gameType: game.gameType,
         status: game.status,
-        winnerId: game.winnerId,
-        whitePlayerId: game.whitePlayerId,
-        blackPlayerId: game.blackPlayerId,
-        whitePlayer: game.whitePlayer,
-        blackPlayer: game.blackPlayer,
       },
-      winnerId: game.winnerId,
-      whitePlayerId: game.whitePlayerId,
-      blackPlayerId: game.blackPlayerId,
       players: {
         white: game.whitePlayer,
         black: game.blackPlayer,

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -7,11 +8,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Pressable,
-  Image,
 } from 'react-native';
 import { OnlineUser } from '../../types/game.types';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface OutgoingChallengeModalProps {
   visible: boolean;
@@ -43,17 +41,10 @@ export const OutgoingChallengeModal: React.FC<OutgoingChallengeModalProps> = ({
     >
       <Pressable style={styles.backdrop} onPress={onCancel}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          {/* Official Brand Logo */}
-          <Image
-            source={logoBanner}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
-
           {/* Status Icon */}
           <View style={styles.iconCircle}>
             {status === 'waiting' || status === 'sending' ? (
-              <ActivityIndicator size="large" color="#194E40" />
+              <ActivityIndicator size="large" color="#818CF8" />
             ) : status === 'declined' ? (
               <Text style={styles.iconText}>🛑</Text>
             ) : (
@@ -114,7 +105,7 @@ export const OutgoingChallengeModal: React.FC<OutgoingChallengeModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -122,33 +113,27 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  brandLogo: {
-    width: 110,
-    height: 38,
-    marginBottom: 10,
-    alignSelf: 'center',
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
   },
   iconCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
     marginBottom: 16,
   },
   iconText: {
@@ -157,13 +142,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 6,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
     lineHeight: 19,
@@ -171,27 +156,27 @@ const styles = StyleSheet.create({
   previewBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
     padding: 12,
     borderRadius: 14,
     width: '100%',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
     gap: 12,
   },
   avatar: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   previewInfo: {
     flex: 1,
@@ -199,24 +184,24 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   previewSub: {
     fontSize: 11,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   cancelBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     width: '100%',
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   cancelBtnText: {
-    color: '#C53030',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },

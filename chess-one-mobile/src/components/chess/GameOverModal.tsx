@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -6,11 +7,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
-  Image,
 } from 'react-native';
 import { GameStatusInfo } from '../../types/chess.types';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface GameOverModalProps {
   visible: boolean;
@@ -44,11 +42,6 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
     >
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          <Image
-            source={logoBanner}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
           <View style={styles.iconCircle}>
             <Text style={styles.iconText}>{isCheckmate ? '👑' : '🤝'}</Text>
           </View>
@@ -91,7 +84,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -99,34 +92,28 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
+    borderColor: COLORS.border,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.5,
     shadowRadius: 16,
-    elevation: 8,
-  },
-  brandLogo: {
-    width: 110,
-    height: 38,
-    marginBottom: 12,
-    alignSelf: 'center',
+    elevation: 12,
   },
   iconCircle: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.primary,
   },
   iconText: {
     fontSize: 32,
@@ -134,7 +121,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#202D29',
+    color: COLORS.textHeading,
     letterSpacing: 1.5,
     marginBottom: 6,
     textTransform: 'uppercase',
@@ -142,26 +129,26 @@ const styles = StyleSheet.create({
   winnerSubtitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#194E40',
+    color: COLORS.primary,
     marginBottom: 6,
     textAlign: 'center',
   },
   descriptionText: {
     fontSize: 13,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
   },
   newGameButton: {
     width: '100%',
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 12,
   },
   newGameText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -172,7 +159,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   reviewText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
   },

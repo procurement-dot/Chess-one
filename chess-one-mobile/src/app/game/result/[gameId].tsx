@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../../constants/chessone-theme';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -54,7 +55,7 @@ export default function GameResultScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color="COLORS.primary" />
           <Text style={styles.loadingText}>Finalizing match result...</Text>
         </View>
       </SafeAreaView>
@@ -62,15 +63,10 @@ export default function GameResultScreen() {
   }
 
   const currentUserId = user?.id ? parseInt(user.id, 10) : null;
-  const winnerId = game?.winnerId ?? (game?.winner?.id as any) ?? null;
-  const isDraw = game?.result === 'DRAW' || game?.result === 'STALEMATE';
-  const isWinner = Boolean(winnerId && currentUserId && winnerId === currentUserId);
-  const isLoser = Boolean(winnerId && currentUserId && winnerId !== currentUserId);
-
-  const whiteId = game?.whitePlayerId ?? game?.whitePlayer?.id ?? null;
-  const blackId = game?.blackPlayerId ?? game?.blackPlayer?.id ?? null;
-  const isWhiteWinner = Boolean(winnerId && whiteId && winnerId === whiteId);
-  const isBlackWinner = Boolean(winnerId && blackId && winnerId === blackId);
+  const winnerId = game?.winnerId;
+  const isDraw = game?.result === 'DRAW';
+  const isWinner = winnerId && currentUserId && winnerId === currentUserId;
+  const isLoser = winnerId && currentUserId && winnerId !== currentUserId;
 
   const titleText = isDraw
     ? 'Draw'
@@ -96,7 +92,7 @@ export default function GameResultScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <AppHeader
@@ -142,7 +138,7 @@ export default function GameResultScreen() {
             </View>
             <View style={styles.playerScore}>
               <Text style={styles.scoreText}>
-                {isWhiteWinner ? '1' : isDraw ? '½' : '0'}
+                {game?.winnerId === game?.whitePlayerId ? '1' : isDraw ? '½' : '0'}
               </Text>
             </View>
           </View>
@@ -157,14 +153,14 @@ export default function GameResultScreen() {
             <View style={styles.playerInfo}>
               <Text style={styles.playerName}>
                 {game?.gameType === 'PLAYER_VS_AI'
-                  ? 'AI'
+                  ? `Stockfish AI (${game.aiDifficulty || 'Medium'})`
                   : game?.blackPlayer?.name || 'Black Player'}
               </Text>
               <Text style={styles.playerSub}>Black</Text>
             </View>
             <View style={styles.playerScore}>
               <Text style={styles.scoreText}>
-                {isBlackWinner ? '1' : isDraw ? '½' : '0'}
+                {game?.winnerId === game?.blackPlayerId ? '1' : isDraw ? '½' : '0'}
               </Text>
             </View>
           </View>
@@ -214,7 +210,7 @@ export default function GameResultScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -223,26 +219,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: COLORS.white,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#194E40',
+    color: COLORS.textHeading,
     lineHeight: 28,
   },
   headerTitle: {
     fontSize: 18,
-    fontWeight: '800',
-    color: '#202D29',
+    fontWeight: '700',
+    color: COLORS.textHeading,
   },
   spacer: {
     width: 40,
@@ -260,23 +255,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    elevation: 2,
   },
   outcomeWin: {
-    backgroundColor: '#E5EDDA',
-    borderColor: '#C8D9BE',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
   },
   outcomeLoss: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#DC2626',
   },
   outcomeDraw: {
-    backgroundColor: '#EEF3E8',
-    borderColor: '#D5DFC8',
+    backgroundColor: COLORS.border,
+    borderColor: '#475569',
   },
   outcomeIcon: {
     fontSize: 44,
@@ -285,26 +275,21 @@ const styles = StyleSheet.create({
   outcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   outcomeReason: {
     fontSize: 14,
-    color: '#74817A',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   playersCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: '#2F3642',
     marginBottom: 20,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
   },
   playerRow: {
     flexDirection: 'row',
@@ -314,24 +299,22 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: '#EEF0E0',
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
   },
   blackIconBox: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#194E40',
+    borderColor: '#334155',
   },
   pieceSym: {
     fontSize: 22,
-    color: '#202D29',
+    color: '#0F172A',
   },
   blackPieceSym: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   playerInfo: {
     flex: 1,
@@ -339,74 +322,74 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   playerSub: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
   },
   playerScore: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     borderRadius: 8,
   },
   scoreText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#194E40',
+    color: COLORS.textHeading,
   },
   divider: {
     height: 1,
-    backgroundColor: '#E4E9E1',
+    backgroundColor: COLORS.white,
     marginVertical: 14,
   },
   actionsCol: {
     gap: 12,
   },
   aiReviewBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#4F46E5',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#818CF8',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   aiReviewBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.primary,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#D5DFC8',
   },
   primaryBtnText: {
-    color: '#194E40',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
   secondaryBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: COLORS.border,
   },
   secondaryBtnText: {
-    color: '#74817A',
+    color: COLORS.textBody,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -418,7 +401,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 14,
   },
 });

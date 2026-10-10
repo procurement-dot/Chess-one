@@ -23,6 +23,7 @@ import { MatchStartVsModal } from '../components/game/MatchStartVsModal';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { authStore, useAuthStore } from '../store/authStore';
 import { gameStore } from '../store/gameStore';
+import { COLORS, SIZES, SHADOWS } from '../constants/chessone-theme';
 
 export default function CommunityScreen() {
   const router = useRouter();
@@ -418,7 +419,7 @@ export default function CommunityScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
@@ -638,17 +639,11 @@ const styles = StyleSheet.create({
   playerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    padding: 12,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
+    backgroundColor: COLORS.white,
+    padding: 16,
+    borderRadius: SIZES.radiusCard,
     gap: 12,
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    ...SHADOWS.soft,
   },
   avatarWrapper: {
     position: 'relative',
@@ -747,12 +742,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   challengeBtnOnline: {
-    backgroundColor: '#194E40',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: COLORS.primary,
   },
   challengeBtnOffline: {
     backgroundColor: '#EEF3E8',

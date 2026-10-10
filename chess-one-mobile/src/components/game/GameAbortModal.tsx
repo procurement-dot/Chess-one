@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -6,10 +7,7 @@ import {
   StyleSheet,
   TouchableOpacity,
   Pressable,
-  Image,
 } from 'react-native';
-
-const logoBanner = require('../../../assets/images/chessone-logo-transparent.png');
 
 interface GameAbortModalProps {
   visible: boolean;
@@ -32,7 +30,7 @@ export const GameAbortModal: React.FC<GameAbortModalProps> = ({
   const title = isDisconnected
     ? 'Connection Lost'
     : isTimeout
-    ? 'Match Aborted'
+    ? 'Match Auto-Aborted'
     : 'Match Aborted';
 
   const icon = isDisconnected ? '📡' : '⏱️';
@@ -40,7 +38,7 @@ export const GameAbortModal: React.FC<GameAbortModalProps> = ({
   const description = isDisconnected
     ? 'Internet connection was lost during the match. The game has been automatically aborted to maintain fairness.'
     : isTimeout
-    ? 'No moves were played within 10 seconds. The match has been automatically stopped to maintain fairness.'
+    ? 'No move was played within the initial 10-second countdown. The match was automatically aborted.'
     : 'The match has been cancelled and aborted.';
 
   return (
@@ -52,13 +50,6 @@ export const GameAbortModal: React.FC<GameAbortModalProps> = ({
     >
       <Pressable style={styles.backdrop} onPress={onGoHome}>
         <Pressable style={styles.card} onPress={(e) => e.stopPropagation()}>
-          {/* Official Brand Logo */}
-          <Image
-            source={logoBanner}
-            style={styles.brandLogo}
-            resizeMode="contain"
-          />
-
           {/* Header Icon */}
           <View style={styles.iconCircle}>
             <Text style={styles.iconEmoji}>{icon}</Text>
@@ -103,7 +94,7 @@ export const GameAbortModal: React.FC<GameAbortModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(32, 45, 41, 0.6)',
+    backgroundColor: 'rgba(0,0,0,0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -111,31 +102,25 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  brandLogo: {
-    width: 110,
-    height: 38,
-    marginBottom: 10,
-    alignSelf: 'center',
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 10,
   },
   iconCircle: {
     width: 68,
     height: 68,
     borderRadius: 34,
-    backgroundColor: '#FCEDDF',
+    backgroundColor: 'rgba(239, 68, 68, 0.14)',
     borderWidth: 2,
-    borderColor: '#F7A18C',
+    borderColor: 'rgba(239, 68, 68, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -146,14 +131,14 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 21,
     fontWeight: '800',
-    color: '#C53030',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
     letterSpacing: 0.3,
   },
   desc: {
     fontSize: 13.5,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 16,
@@ -162,9 +147,9 @@ const styles = StyleSheet.create({
   shieldBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF3E8',
+    backgroundColor: 'rgba(56, 189, 248, 0.1)',
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: 'rgba(56, 189, 248, 0.3)',
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 7,
@@ -176,8 +161,8 @@ const styles = StyleSheet.create({
   },
   shieldText: {
     fontSize: 11.5,
-    fontWeight: '700',
-    color: '#194E40',
+    fontWeight: '600',
+    color: COLORS.textBody,
   },
   actionsColumn: {
     width: '100%',
@@ -186,18 +171,18 @@ const styles = StyleSheet.create({
   newMatchBtn: {
     width: '100%',
     height: 48,
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
     shadowRadius: 6,
     elevation: 3,
   },
   newMatchBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.2,
@@ -205,16 +190,16 @@ const styles = StyleSheet.create({
   homeBtn: {
     width: '100%',
     height: 44,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.white,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   homeBtnText: {
-    color: '#194E40',
+    color: COLORS.textHeading,
     fontSize: 13,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

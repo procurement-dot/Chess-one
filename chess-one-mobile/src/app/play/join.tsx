@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import {
   View,
   Text,
@@ -33,12 +34,6 @@ export default function JoinMatchScreen() {
     try {
       const response = await gameService.joinGame(cleanCode);
       const gameId = response.game?.gameId || response.game?.id || (response as any).gameId;
-      const playerColor = response.game?.playerColor || (response as any).playerColor || 'BLACK';
-
-      if (gameId && typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.setItem(`chess_game_color_${gameId}`, playerColor);
-      }
-
       router.replace(`/game/${gameId}` as any);
     } catch (err: any) {
       const msg =
@@ -53,7 +48,7 @@ export default function JoinMatchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header */}
       <AppHeader
@@ -80,7 +75,7 @@ export default function JoinMatchScreen() {
             <TextInput
               style={styles.codeInput}
               placeholder="e.g. ABC123"
-              placeholderTextColor="#74817A"
+              placeholderTextColor="#475569"
               value={code}
               onChangeText={(text) => setCode(text.toUpperCase())}
               autoCapitalize="characters"
@@ -98,9 +93,7 @@ export default function JoinMatchScreen() {
             {isJoining ? (
               <ActivityIndicator color="#FFFFFF" />
             ) : (
-              <Text style={[styles.joinButtonText, !code.trim() && styles.joinButtonTextDisabled]}>
-                Join Match
-              </Text>
+              <Text style={styles.joinButtonText}>Join Match</Text>
             )}
           </TouchableOpacity>
         </View>
@@ -115,7 +108,7 @@ export default function JoinMatchScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -124,25 +117,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#202D29',
+    color: COLORS.primary,
     lineHeight: 28,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
   },
   spacer: {
     width: 40,
@@ -160,12 +154,12 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.hero,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: COLORS.border,
   },
   iconText: {
     fontSize: 34,
@@ -173,13 +167,13 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
   },
   subheading: {
     fontSize: 14,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 32,
@@ -190,40 +184,32 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   codeInput: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     borderWidth: 1.5,
-    borderColor: '#E4E9E1',
-    borderRadius: 16,
+    borderColor: COLORS.border,
+    borderRadius: SIZES.radiusCard,
     height: 64,
-    color: '#202D29',
+    color: COLORS.textHeading,
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: 4,
     textAlign: 'center',
+    ...SHADOWS.soft,
   },
   joinButton: {
     width: '100%',
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     height: 52,
-    borderRadius: 14,
+    borderRadius: SIZES.radiusButton,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 4,
   },
   joinButtonDisabled: {
-    backgroundColor: '#E4E9E1',
-    shadowOpacity: 0,
+    backgroundColor: COLORS.border,
   },
   joinButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '700',
-  },
-  joinButtonTextDisabled: {
-    color: '#74817A',
   },
 });

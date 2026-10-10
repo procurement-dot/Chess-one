@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -8,10 +9,7 @@ import {
   Alert,
   StatusBar,
   ScrollView,
-  Image,
 } from 'react-native';
-
-const logoIcon = require('../../../assets/images/chessone-icon.png');
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useGame } from '../../hooks/useGame';
@@ -27,16 +25,14 @@ import { GameOverModal } from '../../components/game/GameOverModal';
 import { GameAbortModal } from '../../components/game/GameAbortModal';
 import { AiReviewModal } from '../../components/game/AiReviewModal';
 import { useAuthStore } from '../../store/authStore';
-import { gameStore } from '../../store/gameStore';
 import { gameSocket } from '../../socket/game.socket';
 import { gameService } from '../../services/game.service';
 import { PieceSymbol } from 'chess.js';
 
 export default function LiveGameScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ gameId: string; mode?: string }>();
+  const params = useLocalSearchParams<{ gameId: string }>();
   const gameId = params.gameId ? parseInt(params.gameId, 10) : 0;
-  const isAIGame = params.mode === 'ai' || false;
   const { user } = useAuthStore();
 
   const {
@@ -61,7 +57,6 @@ export default function LiveGameScreen() {
     selectedSquare,
     possibleMoves,
     inCheckSquare,
-    inCheckColor,
     pendingPromotion,
     handleSquarePress,
     confirmPromotion,
@@ -87,17 +82,6 @@ export default function LiveGameScreen() {
 
   // Trigger auto-abort on server/socket and open modal
   const handleAutoAbort = async (reason: 'FIRST_MOVE_TIMEOUT' | 'DISCONNECTED') => {
-    // Safety check: before aborting, verify if any move was played on server
-    try {
-      const serverMoves = await gameService.getMoves(gameId);
-      if (serverMoves && serverMoves.length > 0) {
-        console.log('[LiveGameScreen] Server has moves, skipping abort and syncing');
-        gameStore.setMoves(serverMoves);
-        setAbortCountdown(null);
-        return;
-      }
-    } catch {}
-
     try {
       gameSocket.abortGameSocket(gameId, reason);
       await gameService.abortGame(gameId, reason);
@@ -111,16 +95,16 @@ export default function LiveGameScreen() {
   };
 
   // 1. Initial 10-second first-move auto-abort countdown
-  // Runs ONLY when match is ACTIVE, PvP, and NO moves have been played yet (moves.length === 0)
   useEffect(() => {
-    // If match is not active OR players start playing within 10 seconds (moves.length > 0) OR vs AI,
-    // immediately stop and clear the countdown timer! The match proceeds smoothly.
-    if (status !== 'ACTIVE' || moves.length > 0 || game?.gameType === 'PLAYER_VS_AI') {
-      setAbortCountdown(null);
+    // Only active during match start before any moves are played
+    if (status !== 'ACTIVE' || moves.length > 0) {
+      if (abortReason === 'FIRST_MOVE_TIMEOUT') {
+        setAbortCountdown(null);
+      }
       return;
     }
 
-    setAbortCountdown(20);
+    setAbortCountdown(10);
     setAbortReason('FIRST_MOVE_TIMEOUT');
 
     const interval = setInterval(() => {
@@ -128,7 +112,6 @@ export default function LiveGameScreen() {
         if (prev === null) return null;
         if (prev <= 1) {
           clearInterval(interval);
-          // Neither player played within 10 seconds -> automatically stop match
           handleAutoAbort('FIRST_MOVE_TIMEOUT');
           return 0;
         }
@@ -137,7 +120,35 @@ export default function LiveGameScreen() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [status, moves.length, game?.gameType, gameId]);
+  }, [status, moves.length, gameId]);
+
+  // 2. Disconnect / Internet lost 10-second auto-abort countdown
+  useEffect(() => {
+    if (status !== 'ACTIVE') return;
+    if (game?.gameType === 'PLAYER_VS_AI') return;
+
+    if (connectionStatus === 'disconnected') {
+      setAbortCountdown(10);
+      setAbortReason('DISCONNECTED');
+
+      const interval = setInterval(() => {
+        setAbortCountdown((prev) => {
+          if (prev === null) return null;
+          if (prev <= 1) {
+            clearInterval(interval);
+            handleAutoAbort('DISCONNECTED');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(interval);
+    } else if (abortReason === 'DISCONNECTED') {
+      // Reconnected!
+      setAbortCountdown(null);
+    }
+  }, [connectionStatus, status, game?.gameType]);
 
   // 3. Real-time socket listener for game:aborted event
   useEffect(() => {
@@ -173,10 +184,10 @@ export default function LiveGameScreen() {
     if (
       status === 'COMPLETED' &&
       Boolean(result) &&
-      game?.id === gameId
+      String(game?.id) === String(gameId)
     ) {
       setGameOverModalVisible(true);
-    } else {
+    } else if (status === 'ACTIVE') {
       setGameOverModalVisible(false);
     }
   }, [status, result, game?.id, gameId]);
@@ -241,10 +252,6 @@ export default function LiveGameScreen() {
     );
   }
 
-  const effectiveIsAI = isAIGame || game?.gameType === 'PLAYER_VS_AI';
-
-
-
   // Determine which player is top vs bottom based on user's color orientation
   const isUserWhite = userColor === 'WHITE';
   const effectiveOrientation: 'w' | 'b' = invertedOrientation
@@ -258,9 +265,9 @@ export default function LiveGameScreen() {
   const topPlayerColor = isUserWhite ? 'BLACK' : 'WHITE';
   const topPlayerTime = isUserWhite ? blackTimeMs : whiteTimeMs;
   const topPlayerIsTurn = currentTurn === topPlayerColor;
-  const topPlayerIsAI = effectiveIsAI && !isUserWhite ? false : effectiveIsAI;
+  const topPlayerIsAI = game?.gameType === 'PLAYER_VS_AI' && !isUserWhite ? false : game?.gameType === 'PLAYER_VS_AI';
   const topPlayerFallback = topPlayerIsAI
-    ? 'AI'
+    ? `Stockfish AI (${game?.aiDifficulty || 'Standard'})`
     : isUserWhite
     ? 'Opponent (Black)'
     : 'Opponent (White)';
@@ -271,12 +278,12 @@ export default function LiveGameScreen() {
   const bottomPlayerIsTurn = currentTurn === bottomPlayerColor;
   const bottomPlayerFallback = isUserWhite ? 'You (White)' : 'You (Black)';
 
-  const isCheckForTop = Boolean(inCheckColor && inCheckColor === topPlayerColor);
-  const isCheckForBottom = Boolean(inCheckColor && inCheckColor === bottomPlayerColor);
+  const isCheckForTop = Boolean(inCheckSquare && topPlayerIsTurn);
+  const isCheckForBottom = Boolean(inCheckSquare && bottomPlayerIsTurn);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle="light-content" />
 
       {/* Header Bar */}
       <View style={styles.header}>
@@ -286,16 +293,11 @@ export default function LiveGameScreen() {
           onPress={handleBackPress}
         >
           <Text style={styles.backIcon}>‹</Text>
-          <Image
-            source={logoIcon}
-            style={styles.headerLogoIcon}
-            resizeMode="contain"
-          />
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
           <Text style={styles.headerGameType}>
-            {effectiveIsAI ? '🤖 Play vs AI' : 'Live Match'}
+            {game?.gameType === 'PLAYER_VS_AI' ? '🤖 Play vs AI' : 'Live Match'}
           </Text>
           <Text style={styles.headerSubtitle}>
             {game?.timeControl} • {game?.gameCode ? `#${game.gameCode}` : `Match #${gameId}`}
@@ -306,7 +308,7 @@ export default function LiveGameScreen() {
         <View
           style={[
             styles.connBadge,
-            topPlayerIsAI || connectionStatus === 'connected'
+            connectionStatus === 'connected'
               ? styles.connBadgeOnline
               : connectionStatus === 'connecting'
               ? styles.connBadgeConnecting
@@ -316,7 +318,7 @@ export default function LiveGameScreen() {
           <View
             style={[
               styles.connDot,
-              topPlayerIsAI || connectionStatus === 'connected'
+              connectionStatus === 'connected'
                 ? styles.dotOnline
                 : connectionStatus === 'connecting'
                 ? styles.dotConnecting
@@ -324,9 +326,7 @@ export default function LiveGameScreen() {
             ]}
           />
           <Text style={styles.connText}>
-            {topPlayerIsAI
-              ? 'Ready'
-              : connectionStatus === 'connected'
+            {connectionStatus === 'connected'
               ? 'Live'
               : connectionStatus === 'connecting'
               ? 'Connecting'
@@ -350,7 +350,6 @@ export default function LiveGameScreen() {
             isTurn={topPlayerIsTurn && status === 'ACTIVE'}
             isCheck={isCheckForTop}
             isAI={topPlayerIsAI}
-            isCurrentUser={false}
           />
         </View>
 
@@ -368,7 +367,7 @@ export default function LiveGameScreen() {
         </View>
 
         {/* Turn Status Pill */}
-        {status === 'ACTIVE' ? (
+        {status === 'ACTIVE' && (
           <View
             style={[
               styles.turnStatusBanner,
@@ -392,17 +391,10 @@ export default function LiveGameScreen() {
                 : `Opponent's Turn (${currentTurn === 'WHITE' ? 'White' : 'Black'}) — Waiting for move...`}
             </Text>
           </View>
-        ) : (isLoading && !game) ? (
-          <View style={[styles.turnStatusBanner, styles.turnStatusOpponentTurn]}>
-            <ActivityIndicator size="small" color="#194E40" style={{ marginRight: 8 }} />
-            <Text style={[styles.turnStatusText, styles.turnTextOpponentTurn]}>
-              Connecting to live match...
-            </Text>
-          </View>
-        ) : null}
+        )}
 
-        {/* Small Circle Abort Countdown Timer & Abort Button (ONLY before any moves are played) */}
-        {abortCountdown !== null && abortCountdown > 0 && status === 'ACTIVE' && moves.length === 0 && (
+        {/* Small Circle Abort Countdown Timer */}
+        {abortCountdown !== null && abortCountdown > 0 && status === 'ACTIVE' && (
           <View style={styles.abortTimerContainer}>
             <View
               style={[
@@ -421,21 +413,14 @@ export default function LiveGameScreen() {
             </View>
             <View style={styles.abortTextCol}>
               <Text style={styles.abortTimerTitle}>
-                {isMyTurn ? `⏱️ Your Move (${abortCountdown}s)` : `⏳ Waiting for Opponent (${abortCountdown}s)`}
+                {abortReason === 'DISCONNECTED' ? '📡 Connection Lost' : '⏱️ Auto-Abort Countdown'}
               </Text>
               <Text style={styles.abortTimerSub}>
-                {isMyTurn
-                  ? `Play opening move within ${abortCountdown}s or match automatically aborts`
-                  : `Waiting for opponent's opening move (${abortCountdown}s)`}
+                {abortReason === 'DISCONNECTED'
+                  ? `Reconnecting... Game aborts in ${abortCountdown}s`
+                  : `First move required in ${abortCountdown}s or match aborts`}
               </Text>
             </View>
-            <TouchableOpacity
-              style={styles.abortInlineBtn}
-              activeOpacity={0.8}
-              onPress={() => handleAutoAbort('FIRST_MOVE_TIMEOUT')}
-            >
-              <Text style={styles.abortInlineBtnText}>🛑 Abort Match</Text>
-            </TouchableOpacity>
           </View>
         )}
 
@@ -456,7 +441,6 @@ export default function LiveGameScreen() {
             isTurn={bottomPlayerIsTurn && status === 'ACTIVE'}
             isCheck={isCheckForBottom}
             isAI={false}
-            isCurrentUser={true}
           />
         </View>
 
@@ -467,7 +451,7 @@ export default function LiveGameScreen() {
             gameId={gameId}
             currentUserId={currentUserId || (user?.id ? parseInt(String(user.id), 10) : null)}
             currentUserName={user?.name || (user?.email ? user.email.split('@')[0] : 'You')}
-            opponentName={topPlayer?.name || (topPlayerIsAI ? 'AI' : 'Opponent')}
+            opponentName={topPlayer?.name || (topPlayerIsAI ? 'Stockfish AI' : 'Opponent')}
             isAI={topPlayerIsAI}
           />
         </View>
@@ -507,9 +491,6 @@ export default function LiveGameScreen() {
             <GameActions
               onOfferDraw={handleOfferDraw}
               onResign={() => setResignModalVisible(true)}
-              onAbort={() => handleAutoAbort('FIRST_MOVE_TIMEOUT')}
-              canAbort={status === 'ACTIVE' && moves.length === 0}
-              abortCountdown={abortCountdown}
               onFlipBoard={() => setInvertedOrientation((prev) => !prev)}
               disabled={status !== 'ACTIVE'}
             />
@@ -555,7 +536,7 @@ export default function LiveGameScreen() {
           gameOverModalVisible &&
           status === 'COMPLETED' &&
           Boolean(result) &&
-          Boolean(game && game.id === gameId)
+          Boolean(game && String(game.id) === String(gameId))
         }
         result={result}
         winnerId={winnerId ?? null}
@@ -616,7 +597,7 @@ export default function LiveGameScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F7F2',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -625,39 +606,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E4E9E1',
-    backgroundColor: '#FFFFFF',
+    borderBottomColor: COLORS.white,
   },
   iconBtn: {
-    flexDirection: 'row',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#EEF3E8',
-    gap: 3,
   },
   backIcon: {
-    fontSize: 24,
-    color: '#194E40',
-    lineHeight: 26,
-  },
-  headerLogoIcon: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
+    fontSize: 26,
+    color: COLORS.textHeading,
+    lineHeight: 28,
   },
   headerCenter: {
     alignItems: 'center',
   },
   headerGameType: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#202D29',
+    fontWeight: '700',
+    color: COLORS.textHeading,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 1,
   },
   connBadge: {
@@ -670,16 +644,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   connBadgeOnline: {
-    backgroundColor: '#EEF3E8',
-    borderColor: '#D5DFC8',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#059669',
   },
   connBadgeConnecting: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: '#FEF3C7',
+    borderColor: '#D97706',
   },
   connBadgeOffline: {
-    backgroundColor: '#FCEDDF',
-    borderColor: '#F7A18C',
+    backgroundColor: '#FEF2F2',
+    borderColor: '#DC2626',
   },
   connDot: {
     width: 7,
@@ -687,16 +661,16 @@ const styles = StyleSheet.create({
     borderRadius: 3.5,
   },
   dotOnline: {
-    backgroundColor: '#4F8A5B',
+    backgroundColor: '#34D399',
   },
   dotConnecting: {
-    backgroundColor: '#F59E0B',
+    backgroundColor: '#FBBF24',
   },
   dotOffline: {
-    backgroundColor: '#C53030',
+    backgroundColor: '#F87171',
   },
   connText: {
-    color: '#202D29',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -734,7 +708,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#74817A',
+    color: COLORS.textBody,
     marginTop: 14,
   },
   errorIcon: {
@@ -744,18 +718,18 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#202D29',
+    color: COLORS.textHeading,
     marginBottom: 8,
   },
   errorMessage: {
     fontSize: 14,
-    color: '#74817A',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 24,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: '#194E40',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 24,
     height: 48,
     borderRadius: 12,
@@ -763,7 +737,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   retryButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -773,49 +747,49 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   aiReviewActionBtn: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#4F46E5',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#194E40',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#818CF8',
+    shadowColor: '#4F46E5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 4,
   },
   aiReviewActionBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '800',
   },
   viewResultBtn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E4E9E1',
-    shadowColor: '#202D29',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
   },
   viewResultBtnText: {
-    color: '#194E40',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   reopenModalBtn: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: COLORS.border,
     paddingVertical: 11,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#D5DFC8',
+    borderColor: '#334155',
   },
   reopenModalBtnText: {
-    color: '#194E40',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -830,14 +804,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   turnStatusMyTurn: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: 'rgba(34, 197, 94, 0.15)',
     borderWidth: 1,
-    borderColor: '#194E40',
+    borderColor: '#22C55E',
   },
   turnStatusOpponentTurn: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(55, 65, 81, 0.5)',
     borderWidth: 1,
-    borderColor: '#E4E9E1',
+    borderColor: '#4B5563',
   },
   turnStatusDot: {
     width: 8,
@@ -846,25 +820,25 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   turnDotMyTurn: {
-    backgroundColor: '#194E40',
+    backgroundColor: '#22C55E',
   },
   turnDotOpponentTurn: {
-    backgroundColor: '#74817A',
+    backgroundColor: '#9CA3AF',
   },
   turnStatusText: {
     fontSize: 13,
     fontWeight: '700',
   },
   turnTextMyTurn: {
-    color: '#194E40',
+    color: '#059669',
   },
   turnTextOpponentTurn: {
-    color: '#74817A',
+    color: COLORS.textHeading,
   },
   drawFeedbackBanner: {
-    backgroundColor: '#EEF3E8',
+    backgroundColor: 'rgba(59, 130, 246, 0.2)',
     borderWidth: 1,
-    borderColor: '#194E40',
+    borderColor: COLORS.primary,
     paddingVertical: 7,
     paddingHorizontal: 16,
     borderRadius: 20,
@@ -872,7 +846,7 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   drawFeedbackText: {
-    color: '#194E40',
+    color: '#93C5FD',
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'center',
@@ -880,44 +854,44 @@ const styles = StyleSheet.create({
   abortTimerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FCEDDF',
+    backgroundColor: '#FEF3C7',
     borderWidth: 1.5,
-    borderColor: '#F7A18C',
-    borderRadius: 16,
+    borderColor: '#D97706',
+    borderRadius: 18,
     paddingVertical: 8,
     paddingHorizontal: 14,
     marginVertical: 6,
     alignSelf: 'center',
     width: '92%',
     gap: 12,
-    shadowColor: '#202D29',
+    shadowColor: '#D97706',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   abortCircle: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(245, 158, 11, 0.18)',
     borderWidth: 2.5,
-    borderColor: '#F7A18C',
+    borderColor: '#F59E0B',
     justifyContent: 'center',
     alignItems: 'center',
   },
   abortCircleUrgent: {
-    backgroundColor: '#FFFFFF',
-    borderColor: '#C53030',
+    backgroundColor: 'rgba(239, 68, 68, 0.25)',
+    borderColor: '#EF4444',
   },
   abortCircleText: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#C53030',
+    color: '#D97706',
     textAlign: 'center',
   },
   abortCircleTextUrgent: {
-    color: '#C53030',
+    color: '#DC2626',
   },
   abortTextCol: {
     flex: 1,
@@ -925,26 +899,12 @@ const styles = StyleSheet.create({
   abortTimerTitle: {
     fontSize: 12.5,
     fontWeight: '800',
-    color: '#C53030',
+    color: '#F59E0B',
     marginBottom: 2,
   },
   abortTimerSub: {
     fontSize: 11,
-    color: '#202D29',
+    color: '#D97706',
     lineHeight: 15,
-  },
-  abortInlineBtn: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#F7A18C',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 8,
-    alignSelf: 'center',
-  },
-  abortInlineBtnText: {
-    color: '#C53030',
-    fontSize: 12,
-    fontWeight: '800',
   },
 });
