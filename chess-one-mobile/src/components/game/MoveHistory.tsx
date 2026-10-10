@@ -56,7 +56,7 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
   const movesScrollRef = useRef<ScrollView>(null);
   const chatScrollRef = useRef<ScrollView>(null);
 
-  // Group moves into pairs (1. White Move, Black Move)
+  // Group moves strictly into White and Black pairs based on player color
   const movePairs = useMemo(() => {
     const pairs: {
       moveNumber: number;
@@ -65,16 +65,49 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
       whiteIndex: number;
       blackIndex?: number;
     }[] = [];
-    for (let i = 0; i < moves.length; i += 2) {
-      const whiteMove = moves[i];
-      const blackMove = moves[i + 1];
-      pairs.push({
-        moveNumber: Math.floor(i / 2) + 1,
-        white: whiteMove.san,
-        black: blackMove?.san,
-        whiteIndex: i,
-        blackIndex: blackMove ? i + 1 : undefined,
-      });
+
+    let currentPair: {
+      moveNumber: number;
+      white: string;
+      black?: string;
+      whiteIndex: number;
+      blackIndex?: number;
+    } | null = null;
+
+    let pairNumber = 1;
+    for (let i = 0; i < moves.length; i++) {
+      const m = moves[i];
+      const isWhite = m.color ? m.color === 'WHITE' : (i % 2 === 0);
+
+      if (isWhite) {
+        if (currentPair) {
+          pairs.push(currentPair);
+        }
+        currentPair = {
+          moveNumber: pairNumber++,
+          white: m.san,
+          whiteIndex: i,
+        };
+      } else {
+        if (currentPair) {
+          currentPair.black = m.san;
+          currentPair.blackIndex = i;
+          pairs.push(currentPair);
+          currentPair = null;
+        } else {
+          // If Black move arrived without preceding White move in pair
+          pairs.push({
+            moveNumber: pairNumber++,
+            white: '...',
+            black: m.san,
+            whiteIndex: -1,
+            blackIndex: i,
+          });
+        }
+      }
+    }
+    if (currentPair) {
+      pairs.push(currentPair);
     }
     return pairs;
   }, [moves]);
@@ -549,16 +582,18 @@ const styles = StyleSheet.create({
     paddingLeft: 4,
   },
   latestMoveBadge: {
-    backgroundColor: '#3E3E42', // Gray highlight badge matching [d3] in Image 1
+    backgroundColor: COLORS.hero,
+    borderWidth: 1,
+    borderColor: '#C6D9BC',
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 4,
+    borderRadius: 6,
     alignSelf: 'flex-start',
   },
   latestMoveBadgeText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textHeading,
+    color: COLORS.primary,
   },
 
   /* Chat Tab Styles */

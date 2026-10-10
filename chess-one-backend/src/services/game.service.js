@@ -79,7 +79,7 @@ class GameService {
           pgn: "",
           currentTurn: "WHITE",
           startedAt: new Date(),
-          lastMoveAt: new Date(),
+          lastMoveAt: null,
         },
       });
 
@@ -135,6 +135,7 @@ class GameService {
     const game = await this.findGameByIdOrCode(gameId);
 
     return {
+      id: game.id,
       gameId: game.id,
       gameCode: game.gameCode,
       gameType: game.gameType,
@@ -293,6 +294,7 @@ class GameService {
     }
 
     return {
+      id: game.id,
       gameId: game.id,
       gameCode: game.gameCode,
       status: game.status,

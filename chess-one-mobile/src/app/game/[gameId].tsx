@@ -183,14 +183,13 @@ export default function LiveGameScreen() {
   useEffect(() => {
     if (
       status === 'COMPLETED' &&
-      Boolean(result) &&
-      String(game?.id) === String(gameId)
+      Boolean(result)
     ) {
       setGameOverModalVisible(true);
     } else if (status === 'ACTIVE') {
       setGameOverModalVisible(false);
     }
-  }, [status, result, game?.id, gameId]);
+  }, [status, result]);
 
   const handleBackPress = () => {
     if (status === 'ACTIVE') {
@@ -252,6 +251,21 @@ export default function LiveGameScreen() {
     );
   }
 
+  if (isLoading || !game) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.centerBox}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingTitle}>Setting up Match...</Text>
+          <Text style={styles.loadingText}>
+            Preparing chess board and synchronizing engine clocks
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   // Determine which player is top vs bottom based on user's color orientation
   const isUserWhite = userColor === 'WHITE';
   const effectiveOrientation: 'w' | 'b' = invertedOrientation
@@ -304,35 +318,41 @@ export default function LiveGameScreen() {
           </Text>
         </View>
 
-        {/* Socket Status Badge */}
-        <View
-          style={[
-            styles.connBadge,
-            connectionStatus === 'connected'
-              ? styles.connBadgeOnline
-              : connectionStatus === 'connecting'
-              ? styles.connBadgeConnecting
-              : styles.connBadgeOffline,
-          ]}
-        >
+        {/* Engine / Socket Status Badge */}
+        {game?.gameType === 'PLAYER_VS_AI' ? (
+          <View style={[styles.connBadge, styles.connBadgeAI]}>
+            <Text style={styles.connTextAI}>🤖 Engine Ready</Text>
+          </View>
+        ) : (
           <View
             style={[
-              styles.connDot,
+              styles.connBadge,
               connectionStatus === 'connected'
-                ? styles.dotOnline
+                ? styles.connBadgeOnline
                 : connectionStatus === 'connecting'
-                ? styles.dotConnecting
-                : styles.dotOffline,
+                ? styles.connBadgeConnecting
+                : styles.connBadgeOffline,
             ]}
-          />
-          <Text style={styles.connText}>
-            {connectionStatus === 'connected'
-              ? 'Live'
-              : connectionStatus === 'connecting'
-              ? 'Connecting'
-              : 'Offline'}
-          </Text>
-        </View>
+          >
+            <View
+              style={[
+                styles.connDot,
+                connectionStatus === 'connected'
+                  ? styles.dotOnline
+                  : connectionStatus === 'connecting'
+                  ? styles.dotConnecting
+                  : styles.dotOffline,
+              ]}
+            />
+            <Text style={styles.connText}>
+              {connectionStatus === 'connected'
+                ? 'Live'
+                : connectionStatus === 'connecting'
+                ? 'Connecting'
+                : 'Offline'}
+            </Text>
+          </View>
+        )}
       </View>
 
       <ScrollView
@@ -654,6 +674,22 @@ const styles = StyleSheet.create({
   connBadgeOffline: {
     backgroundColor: '#FEF2F2',
     borderColor: '#DC2626',
+  },
+  connBadgeAI: {
+    backgroundColor: COLORS.hero,
+    borderColor: '#A3C293',
+  },
+  connTextAI: {
+    color: COLORS.primary,
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  loadingTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.textHeading,
+    marginTop: 14,
+    marginBottom: 4,
   },
   connDot: {
     width: 7,

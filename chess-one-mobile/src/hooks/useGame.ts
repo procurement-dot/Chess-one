@@ -30,6 +30,10 @@ export function useGame(gameId: number | string) {
     } catch (err) {
       console.warn('[useGame] Failed to load FEN into chess.js:', err);
     }
+    // Always clear square selection and move dots when board position updates
+    setSelectedSquare(null);
+    setPossibleMoves([]);
+    setPendingPromotion(null);
   }, [store.fen]);
 
   // Initial load of game metadata, initial state, and moves
@@ -100,12 +104,13 @@ export function useGame(gameId: number | string) {
       isPolling = true;
       try {
         const state = await gameService.getGameState(gameId);
-        if (state) {
+        const currentStoreState = gameStore.getState();
+        if (state && currentStoreState.gameStatus === 'ACTIVE') {
           // If FEN or turn or status changed on server, synchronize store immediately!
           if (
-            state.fen !== store.fen ||
-            state.currentTurn !== store.currentTurn ||
-            state.status !== store.gameStatus
+            state.fen !== currentStoreState.fen ||
+            state.currentTurn !== currentStoreState.currentTurn ||
+            state.status !== currentStoreState.gameStatus
           ) {
             console.log('[useGame] Polling detected state update:', state.currentTurn, state.fen);
             gameStore.updateGameState(state);
@@ -123,7 +128,7 @@ export function useGame(gameId: number | string) {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [gameId, store.gameStatus, store.fen, store.currentTurn]);
+  }, [gameId, store.gameStatus]);
 
   // Synchronize timeout state with backend
   useEffect(() => {
@@ -225,6 +230,15 @@ export function useGame(gameId: number | string) {
     if (store.gameStatus !== 'ACTIVE') return false;
     return store.currentTurn === userColor;
   }, [store.gameStatus, store.currentTurn, userColor]);
+
+  // Clear selections when game finishes or when it is not player's turn
+  useEffect(() => {
+    if (store.gameStatus !== 'ACTIVE' || !isMyTurn) {
+      setSelectedSquare(null);
+      setPossibleMoves([]);
+      setPendingPromotion(null);
+    }
+  }, [store.gameStatus, isMyTurn]);
 
   // In check square
   const inCheckSquare = useMemo<Square | null>(() => {

@@ -61,8 +61,10 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
             <View style={styles.timeoutBadge}>
               <Text style={styles.timeoutText}>TIME EXPIRED</Text>
             </View>
-          ) : isTurn ? (
+          ) : isAI && isTurn ? (
             <Text style={styles.turnLabel}>Thinking...</Text>
+          ) : isTurn ? (
+            <Text style={styles.yourTurnLabel}>Your Turn</Text>
           ) : null}
         </View>
       </View>
@@ -78,22 +80,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: COLORS.textHeading,
+    backgroundColor: COLORS.white,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
     width: '100%',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
-    elevation: 1,
+    elevation: 2,
   },
   activeContainer: {
-    borderColor: '#93C5FD',
-    backgroundColor: '#FAFCFF',
+    borderColor: COLORS.primary,
+    backgroundColor: '#F8FAF7',
+    borderWidth: 2,
   },
   leftSection: {
     flexDirection: 'row',
@@ -118,12 +121,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   whiteBadge: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F1F5F9',
     borderColor: '#CBD5E1',
   },
   blackBadge: {
-    backgroundColor: COLORS.border,
-    borderColor: COLORS.border,
+    backgroundColor: '#1E293B',
+    borderColor: '#0F172A',
   },
   avatarText: {
     fontSize: 16,
@@ -133,7 +136,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   blackBadgeText: {
-    color: COLORS.textHeading,
+    color: '#FFFFFF',
   },
   metaSection: {
     flex: 1,
@@ -146,7 +149,7 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
+    color: COLORS.textHeading,
     maxWidth: 140,
   },
   colorChip: {
@@ -160,8 +163,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   blackChip: {
-    backgroundColor: COLORS.white,
-    borderColor: COLORS.border,
+    backgroundColor: '#1E293B',
+    borderColor: '#0F172A',
   },
   colorChipText: {
     fontSize: 10,
@@ -171,38 +174,46 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   blackChipText: {
-    color: COLORS.textHeading,
+    color: '#FFFFFF',
   },
   turnLabel: {
     fontSize: 11,
+    color: '#D97706',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  yourTurnLabel: {
+    fontSize: 11,
     color: COLORS.primary,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 2,
   },
   checkBadge: {
     backgroundColor: '#FEE2E2',
-    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 2,
   },
   checkText: {
-    color: COLORS.textHeading,
+    color: '#B91C1C',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   timeoutBadge: {
-    backgroundColor: '#7F1D1D',
-    paddingHorizontal: 6,
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 2,
   },
   timeoutText: {
-    color: COLORS.textHeading,
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,

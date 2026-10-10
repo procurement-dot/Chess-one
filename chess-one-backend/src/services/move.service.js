@@ -7,6 +7,10 @@ const { AppError } = require("../middleware/error.middleware");
 const aiService = require("./ai.service");
 
 class MoveService {
+  constructor() {
+    this.pendingAIGames = new Map();
+  }
+
   /**
    * Authoritative move execution
    * Validates move legality, clocks, turn order, and persists atomically
@@ -122,8 +126,8 @@ class MoveService {
     const lastMove = game.moves[0];
     const moveNumber = lastMove
       ? playerColor === "WHITE"
-        ? lastMove.moveNumber
-        : lastMove.moveNumber + 1
+        ? lastMove.moveNumber + 1
+        : lastMove.moveNumber
       : 1;
 
     // 9. Atomic database transaction
@@ -222,14 +226,35 @@ class MoveService {
    * Internal scheduler for AI counter-move
    */
   async _scheduleAIMove(gameId, aiDifficulty) {
+    if (!gameId) return;
+
+    // Concurrency guard: Never queue multiple AI calculations for the same game
+    if (this.pendingAIGames.has(gameId)) {
+      return;
+    }
+    this.pendingAIGames.set(gameId, true);
+
     setTimeout(async () => {
+      this.pendingAIGames.delete(gameId);
       try {
         const game = await prisma.game.findUnique({
           where: { id: gameId },
           include: { moves: { orderBy: { id: "desc" }, take: 1 } },
         });
 
-        if (!game || game.status !== "ACTIVE") return;
+        if (!game || game.status !== "ACTIVE" || game.gameType !== "PLAYER_VS_AI") return;
+
+        // CRITICAL CHECK: Ensure it is ACTUALLY the AI's turn!
+        const isAITurn =
+          (game.currentTurn === "WHITE" && game.whitePlayerId === null) ||
+          (game.currentTurn === "BLACK" && game.blackPlayerId === null);
+
+        if (!isAITurn) {
+          // It is the human player's turn! The AI must NEVER make a move!
+          return;
+        }
+
+        const aiColor = game.currentTurn;
 
         const aiMove = await aiService.getBestMove({
           fen: game.fen,
@@ -238,7 +263,20 @@ class MoveService {
 
         if (!aiMove) return;
 
-        const aiColor = game.currentTurn;
+        // Double-check game state after async computation
+        const latestGame = await prisma.game.findUnique({
+          where: { id: gameId },
+        });
+        if (
+          !latestGame ||
+          latestGame.status !== "ACTIVE" ||
+          latestGame.fen !== game.fen ||
+          latestGame.currentTurn !== aiColor
+        ) {
+          // Stale move calculation, discard
+          return;
+        }
+
         const moveValidation = validateAndApplyMove(game.fen, aiMove, game.pgn);
         if (!moveValidation.success) return;
 
@@ -267,8 +305,8 @@ class MoveService {
         const lastMove = game.moves[0];
         const moveNumber = lastMove
           ? aiColor === "WHITE"
-            ? lastMove.moveNumber
-            : lastMove.moveNumber + 1
+            ? lastMove.moveNumber + 1
+            : lastMove.moveNumber
           : 1;
 
         const [savedMove, updatedGame] = await prisma.$transaction([
@@ -343,7 +381,7 @@ class MoveService {
       } catch (err) {
         console.error("AI counter-move error:", err);
       }
-    }, 400); // Small natural delay for AI thought
+    }, 400); // Responsive natural AI move time
   }
 }
 
