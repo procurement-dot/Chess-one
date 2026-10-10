@@ -15,6 +15,10 @@ class RoleStore {
   }
 
   private async loadRole() {
+    if (typeof window === 'undefined') {
+      this.isLoaded = true;
+      return;
+    }
     try {
       const savedRole = await AsyncStorage.getItem(ROLE_STORAGE_KEY);
       if (savedRole && ['Student', 'Parent', 'Coach', 'School', 'Organiser'].includes(savedRole)) {

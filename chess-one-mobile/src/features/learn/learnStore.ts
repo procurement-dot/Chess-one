@@ -27,6 +27,10 @@ class LearnStore {
   }
 
   private async loadState() {
+    if (typeof window === 'undefined') {
+      this.isLoaded = true;
+      return;
+    }
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {

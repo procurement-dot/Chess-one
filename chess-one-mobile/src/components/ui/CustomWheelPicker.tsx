@@ -80,7 +80,7 @@ export const CustomWheelPicker: React.FC<CustomWheelPickerProps> = ({
       </ScrollView>
       
       {/* Center Highlight Overlay */}
-      <View style={[StyleSheet.absoluteFillObject, { pointerEvents: 'none', justifyContent: 'center' }]}>
+      <View style={[StyleSheet.absoluteFill, { pointerEvents: 'none', justifyContent: 'center' }]}>
         <View style={{ height: itemHeight, borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(0,0,0,0.05)' }} />
       </View>
     </View>
