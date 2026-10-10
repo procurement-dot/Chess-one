@@ -184,10 +184,10 @@ export default function LiveGameScreen() {
     if (
       status === 'COMPLETED' &&
       Boolean(result) &&
-      game?.id === gameId
+      String(game?.id) === String(gameId)
     ) {
       setGameOverModalVisible(true);
-    } else {
+    } else if (status === 'ACTIVE') {
       setGameOverModalVisible(false);
     }
   }, [status, result, game?.id, gameId]);
