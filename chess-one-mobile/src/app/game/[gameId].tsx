@@ -536,7 +536,7 @@ export default function LiveGameScreen() {
           gameOverModalVisible &&
           status === 'COMPLETED' &&
           Boolean(result) &&
-          Boolean(game && game.id === gameId)
+          Boolean(game && String(game.id) === String(gameId))
         }
         result={result}
         winnerId={winnerId ?? null}
