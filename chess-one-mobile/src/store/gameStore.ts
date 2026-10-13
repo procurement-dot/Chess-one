@@ -250,6 +250,8 @@ class GameStore {
 
   tickActiveClock(decrementMs: number = 1000) {
     if (this.state.gameStatus !== 'ACTIVE') return;
+    // Do not tick clocks down before the first move of the match is played
+    if (!this.state.moves || this.state.moves.length === 0) return;
 
     if (this.state.currentTurn === 'WHITE' && this.state.whiteTimeMs !== null) {
       const nextTime = Math.max(0, this.state.whiteTimeMs - decrementMs);
@@ -338,7 +340,10 @@ class GameStore {
   }
 
   reset() {
-    this.state = { ...initialState };
+    this.state = {
+      ...initialState,
+      connectionStatus: this.state.connectionStatus,
+    };
     this.notify();
   }
 }

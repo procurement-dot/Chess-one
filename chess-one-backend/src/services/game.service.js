@@ -140,12 +140,17 @@ class GameService {
       gameCode: game.gameCode,
       gameType: game.gameType,
       status: game.status,
+      whitePlayerId: game.whitePlayerId,
+      blackPlayerId: game.blackPlayerId,
       creator: game.creator,
       whitePlayer: game.whitePlayer,
       blackPlayer: game.blackPlayer,
       timeControl: game.timeControl,
       aiDifficulty: game.aiDifficulty,
       currentTurn: game.currentTurn,
+      fen: game.fen,
+      whiteTimeMs: game.whiteTimeMs,
+      blackTimeMs: game.blackTimeMs,
       result: game.result,
       winner: game.winner,
       createdAt: game.createdAt,
@@ -206,7 +211,7 @@ class GameService {
         whiteTimeMs: initialTimeMs,
         blackTimeMs: initialTimeMs,
         startedAt: now,
-        lastMoveAt: now,
+        lastMoveAt: null,
       },
       include: {
         creator: { select: { id: true, name: true, email: true } },
@@ -293,6 +298,8 @@ class GameService {
       moveService._scheduleAIMove(game.id, game.aiDifficulty);
     }
 
+    const moveCount = await prisma.gameMove.count({ where: { gameId: game.id } });
+
     return {
       id: game.id,
       gameId: game.id,
@@ -306,6 +313,7 @@ class GameService {
       result: game.result,
       winnerId: game.winnerId,
       drawOfferFrom: game.drawOfferFrom,
+      moveCount,
     };
   }
 
@@ -646,6 +654,58 @@ class GameService {
         totalPages: Math.ceil(total / take),
       },
     };
+  }
+
+  /**
+   * Save complete final AI match state when played locally on client
+   */
+  async finishAiGame({ gameId, userId, fen, pgn, result, winnerId, whiteTimeMs, blackTimeMs, moves }) {
+    const game = await this.findGameByIdOrCode(gameId);
+
+    if (
+      game.createdBy !== userId &&
+      game.whitePlayerId !== userId &&
+      game.blackPlayerId !== userId
+    ) {
+      throw new AppError("FORBIDDEN", "Only game player can record AI game results", 403);
+    }
+
+    const finishedAt = new Date();
+
+    await prisma.$transaction(async (tx) => {
+      if (moves && Array.isArray(moves) && moves.length > 0) {
+        await tx.gameMove.deleteMany({ where: { gameId: game.id } });
+        await tx.gameMove.createMany({
+          data: moves.map((m, index) => ({
+            gameId: game.id,
+            moveNumber: m.moveNumber || Math.floor(index / 2) + 1,
+            color: m.color || (index % 2 === 0 ? "WHITE" : "BLACK"),
+            from: m.from,
+            to: m.to,
+            promotion: m.promotion || null,
+            san: m.san || "",
+            fenAfter: m.fenAfter || "",
+            createdAt: m.createdAt ? new Date(m.createdAt) : new Date(),
+          })),
+        });
+      }
+
+      await tx.game.update({
+        where: { id: game.id },
+        data: {
+          status: "COMPLETED",
+          fen: fen || game.fen,
+          pgn: pgn || game.pgn,
+          result: result || "RESIGNATION",
+          winnerId: winnerId !== undefined ? winnerId : null,
+          whiteTimeMs: whiteTimeMs !== undefined ? whiteTimeMs : game.whiteTimeMs,
+          blackTimeMs: blackTimeMs !== undefined ? blackTimeMs : game.blackTimeMs,
+          finishedAt,
+        },
+      });
+    });
+
+    return { gameId: game.id, status: "COMPLETED", result, winnerId };
   }
 }
 

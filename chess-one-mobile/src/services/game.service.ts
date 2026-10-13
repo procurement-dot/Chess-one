@@ -241,6 +241,24 @@ class GameService {
     });
     return res.data;
   }
+
+  /**
+   * Save complete final AI match state when played locally on client
+   * POST /api/games/:gameId/finish-ai
+   */
+  async finishAiGame(params: {
+    gameId: number | string;
+    fen: string;
+    pgn: string;
+    result: string;
+    winnerId?: number | null;
+    whiteTimeMs?: number | null;
+    blackTimeMs?: number | null;
+    moves?: GameMove[];
+  }): Promise<any> {
+    const res = await apiClient.post(`/api/games/${params.gameId}/finish-ai`, params);
+    return res.data;
+  }
 }
 
 export const gameService = new GameService();

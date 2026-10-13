@@ -153,7 +153,7 @@ export default function GameResultScreen() {
             <View style={styles.playerInfo}>
               <Text style={styles.playerName}>
                 {game?.gameType === 'PLAYER_VS_AI'
-                  ? `Stockfish AI (${game.aiDifficulty || 'Medium'})`
+                  ? `AI (${game.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
                   : game?.blackPlayer?.name || 'Black Player'}
               </Text>
               <Text style={styles.playerSub}>Black</Text>

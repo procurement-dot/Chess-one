@@ -405,7 +405,7 @@ export default function LoginScreen() {
                         const opponent = isUserWhite ? g.blackPlayer : g.whitePlayer;
                         const opponentName =
                           g.gameType === 'PLAYER_VS_AI'
-                            ? `Stockfish AI (${g.aiDifficulty || 'Medium'})`
+                            ? `AI (${g.aiDifficulty ? g.aiDifficulty.charAt(0).toUpperCase() + g.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
                             : opponent?.name || 'Opponent';
 
                         const isWinner =

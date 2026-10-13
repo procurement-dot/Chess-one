@@ -80,7 +80,7 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
               </View>
               <View>
                 <Text style={styles.headerTitle}>AI Game Review</Text>
-                <Text style={styles.headerSubtitle}>Powered by Gemini & Stockfish</Text>
+                <Text style={styles.headerSubtitle}>Powered by ChessOne AI</Text>
               </View>
             </View>
 
@@ -92,10 +92,10 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
           {/* Loading State */}
           {isLoading && (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="COLORS.primary" />
+              <ActivityIndicator size="large" color={COLORS.primary} />
               <Text style={styles.loadingTitle}>Analyzing Every Move...</Text>
               <Text style={styles.loadingSubtitle}>
-                Stockfish & Gemini AI are evaluating accuracy, tactical opportunities, and blunders.
+                AI Engine is evaluating accuracy, tactical opportunities, and blunders.
               </Text>
             </View>
           )}

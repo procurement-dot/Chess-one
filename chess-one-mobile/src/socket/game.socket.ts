@@ -15,6 +15,7 @@ class GameSocketManager {
    */
   connect(): Socket {
     if (this.socket && this.socket.connected) {
+      gameStore.setConnectionStatus('connected');
       return this.socket;
     }
 
@@ -174,10 +175,13 @@ class GameSocketManager {
     const socket = this.connect();
 
     if (socket.connected) {
+      gameStore.setConnectionStatus('connected');
       socket.emit('game:join', { gameId });
       console.log('[Socket] Joined game room immediately:', gameId);
     } else {
+      gameStore.setConnectionStatus('connecting');
       socket.once('connect', () => {
+        gameStore.setConnectionStatus('connected');
         socket.emit('game:join', { gameId });
         console.log('[Socket] Joined game room upon connection:', gameId);
       });

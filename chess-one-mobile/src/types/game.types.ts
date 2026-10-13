@@ -110,6 +110,7 @@ export interface GameState {
   result?: GameResult | null;
   winnerId?: number | null;
   drawOfferFrom?: PlayerColor | null;
+  moveCount?: number;
 }
 
 export interface CreateGameRequest {

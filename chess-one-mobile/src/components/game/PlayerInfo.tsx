@@ -12,6 +12,7 @@ interface PlayerInfoProps {
   isTurn: boolean;
   isCheck?: boolean;
   isAI?: boolean;
+  isUser?: boolean;
 }
 
 export const PlayerInfo: React.FC<PlayerInfoProps> = ({
@@ -22,6 +23,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isTurn,
   isCheck = false,
   isAI = false,
+  isUser = false,
 }) => {
   const displayName = player?.name || nameFallback;
   const initial = displayName[0]?.toUpperCase() || 'P';
@@ -61,10 +63,14 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
             <View style={styles.timeoutBadge}>
               <Text style={styles.timeoutText}>TIME EXPIRED</Text>
             </View>
-          ) : isAI && isTurn ? (
-            <Text style={styles.turnLabel}>Thinking...</Text>
           ) : isTurn ? (
-            <Text style={styles.yourTurnLabel}>Your Turn</Text>
+            isUser ? (
+              <Text style={styles.yourTurnLabel}>Your Turn</Text>
+            ) : isAI ? (
+              <Text style={styles.turnLabel}>AI Thinking...</Text>
+            ) : (
+              <Text style={styles.opponentTurnLabel}>Opponent's Turn</Text>
+            )
           ) : null}
         </View>
       </View>
@@ -150,7 +156,8 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: COLORS.textHeading,
-    maxWidth: 140,
+    maxWidth: 200,
+    flexShrink: 1,
   },
   colorChip: {
     paddingHorizontal: 6,
@@ -186,6 +193,12 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: COLORS.primary,
     fontWeight: '700',
+    marginTop: 2,
+  },
+  opponentTurnLabel: {
+    fontSize: 11,
+    color: COLORS.textBody,
+    fontWeight: '600',
     marginTop: 2,
   },
   checkBadge: {

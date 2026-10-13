@@ -1,10 +1,39 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Alert } from 'react-native';
 import { Chess, Square } from 'chess.js';
 import { gameStore, useGameStore } from '../store/gameStore';
 import { authStore, useAuthStore } from '../store/authStore';
 import { gameService } from '../services/game.service';
 import { gameSocket } from '../socket/game.socket';
-import { PlayerColor } from '../types/game.types';
+import { localAiService } from '../services/localAi.service';
+import { PlayerColor, GameResult } from '../types/game.types';
+
+function checkLocalGameOver(
+  chess: Chess,
+  lastMoverColor: PlayerColor,
+  userColor: PlayerColor | null,
+  currentUserId: number | null
+): { isOver: boolean; result: GameResult; winnerId: number | null } {
+  if (!chess.isGameOver()) {
+    return { isOver: false, result: 'DRAW', winnerId: null };
+  }
+
+  if (chess.isCheckmate()) {
+    // If user played the checkmating move, user wins; if AI played it, AI wins (null)
+    const winnerId = lastMoverColor === userColor ? currentUserId : null;
+    return { isOver: true, result: 'CHECKMATE', winnerId };
+  }
+
+  if (chess.isStalemate()) {
+    return { isOver: true, result: 'STALEMATE', winnerId: null };
+  }
+
+  if (chess.isThreefoldRepetition() || chess.isInsufficientMaterial() || chess.isDraw()) {
+    return { isOver: true, result: 'DRAW', winnerId: null };
+  }
+
+  return { isOver: true, result: 'DRAW', winnerId: null };
+}
 
 export function useGame(gameId: number | string) {
   const store = useGameStore();
@@ -17,9 +46,16 @@ export function useGame(gameId: number | string) {
     to: Square;
   } | null>(null);
   const [isSubmittingMove, setIsSubmittingMove] = useState(false);
+  const isSubmittingMoveRef = useRef(false);
 
   // Authoritative local chess.js instance synced with store.fen
   const chessRef = useRef<Chess>(new Chess());
+
+  // Guards to prevent double-execution, re-initialization, or duplicate AI turns
+  const loadedGameIdRef = useRef<string | number | null>(null);
+  const isAiThinkingRef = useRef<boolean>(false);
+  const lastAiFenProcessedRef = useRef<string | null>(null);
+  const turnStartedAtRef = useRef<number>(Date.now());
 
   // Sync chess.js instance whenever FEN updates in the store
   useEffect(() => {
@@ -36,12 +72,13 @@ export function useGame(gameId: number | string) {
     setPendingPromotion(null);
   }, [store.fen]);
 
-  // Initial load of game metadata, initial state, and moves
+  // Initial load of game metadata, initial state, and moves (strictly once per gameId)
   useEffect(() => {
     if (!gameId) return;
+    if (loadedGameIdRef.current === gameId) return;
+    loadedGameIdRef.current = gameId;
 
     let isMounted = true;
-    // Always clear out any prior completed game data
     gameStore.reset();
     gameStore.setLoading(true);
 
@@ -55,14 +92,23 @@ export function useGame(gameId: number | string) {
 
         if (!isMounted) return;
 
-        gameStore.setGame(gameData);
+        gameStore.setGame({
+          ...gameData,
+          ...stateData,
+          whiteTimeMs: stateData?.whiteTimeMs ?? gameData.whiteTimeMs,
+          blackTimeMs: stateData?.blackTimeMs ?? gameData.blackTimeMs,
+        });
         gameStore.updateGameState(stateData);
-        if (movesData.length > 0) {
+        if (movesData && movesData.length > 0) {
           gameStore.setMoves(movesData);
         }
 
-        // Connect socket and join game room
-        gameSocket.joinGame(gameId);
+        turnStartedAtRef.current = Date.now();
+
+        // Connect socket and join game room only for PVP matches
+        if (gameData.gameType !== 'PLAYER_VS_AI') {
+          gameSocket.joinGame(gameId);
+        }
       } catch (err: any) {
         if (!isMounted) return;
         const msg = err.userFriendlyMessage || err.message || 'Unable to load game data';
@@ -78,64 +124,15 @@ export function useGame(gameId: number | string) {
 
     return () => {
       isMounted = false;
-      gameSocket.leaveGame(gameId);
+      loadedGameIdRef.current = null;
+      lastAiFenProcessedRef.current = null;
+      isAiThinkingRef.current = false;
+      if (store.currentGame?.gameType !== 'PLAYER_VS_AI') {
+        gameSocket.leaveGame(gameId);
+      }
       gameStore.reset();
     };
   }, [gameId]);
-
-  // Active clock countdown interval
-  useEffect(() => {
-    if (store.gameStatus !== 'ACTIVE') return;
-
-    const timer = setInterval(() => {
-      gameStore.tickActiveClock(1000);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [store.gameStatus, store.currentTurn]);
-
-  // Authoritative polling fallback: guarantees synchronization even if WebSockets are delayed or lost
-  useEffect(() => {
-    if (!gameId || store.gameStatus !== 'ACTIVE') return;
-
-    let isPolling = false;
-    const interval = setInterval(async () => {
-      if (isPolling) return;
-      isPolling = true;
-      try {
-        const state = await gameService.getGameState(gameId);
-        const currentStoreState = gameStore.getState();
-        if (state && currentStoreState.gameStatus === 'ACTIVE') {
-          // If FEN or turn or status changed on server, synchronize store immediately!
-          if (
-            state.fen !== currentStoreState.fen ||
-            state.currentTurn !== currentStoreState.currentTurn ||
-            state.status !== currentStoreState.gameStatus
-          ) {
-            console.log('[useGame] Polling detected state update:', state.currentTurn, state.fen);
-            gameStore.updateGameState(state);
-            const moves = await gameService.getMoves(gameId).catch(() => []);
-            if (moves && moves.length > 0) {
-              gameStore.setMoves(moves);
-            }
-          }
-        }
-      } catch (err) {
-        // Silent catch for background polling
-      } finally {
-        isPolling = false;
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [gameId, store.gameStatus]);
-
-  // Synchronize timeout state with backend
-  useEffect(() => {
-    if (store.gameStatus === 'COMPLETED' && store.result === 'TIMEOUT' && gameId) {
-      gameService.getGameState(gameId).catch(() => {});
-    }
-  }, [store.gameStatus, store.result, gameId]);
 
   // Determine player color perspective ('WHITE' or 'BLACK')
   const { userColor, currentUserId } = useMemo<{ userColor: PlayerColor | null; currentUserId: number | null }>(() => {
@@ -240,6 +237,127 @@ export function useGame(gameId: number | string) {
     }
   }, [store.gameStatus, isMyTurn]);
 
+  // Handle local timeout for AI games
+  const handleLocalTimeout = useCallback(
+    async (timedOutColor: PlayerColor) => {
+      const currentStore = gameStore.getState();
+      if (currentStore.gameStatus !== 'ACTIVE') return;
+
+      const aiColor: PlayerColor = userColor === 'WHITE' ? 'BLACK' : 'WHITE';
+      const winnerId = timedOutColor === aiColor ? currentUserId : null;
+
+      gameStore.setGameFinished('TIMEOUT', winnerId);
+      gameStore.updateClocks(
+        timedOutColor === 'WHITE' ? 0 : currentStore.whiteTimeMs,
+        timedOutColor === 'BLACK' ? 0 : currentStore.blackTimeMs
+      );
+
+      await gameService
+        .finishAiGame({
+          gameId,
+          fen: chessRef.current.fen(),
+          pgn: chessRef.current.pgn(),
+          result: 'TIMEOUT',
+          winnerId,
+          whiteTimeMs: timedOutColor === 'WHITE' ? 0 : currentStore.whiteTimeMs,
+          blackTimeMs: timedOutColor === 'BLACK' ? 0 : currentStore.blackTimeMs,
+          moves: currentStore.moves,
+        })
+        .catch((err) => console.warn('[useGame] finishAiGame timeout error:', err));
+    },
+    [gameId, userColor, currentUserId]
+  );
+
+  // Active clock countdown interval
+  useEffect(() => {
+    if (store.gameStatus !== 'ACTIVE') return;
+
+    const isAiGame = store.currentGame?.gameType === 'PLAYER_VS_AI';
+
+    const timer = setInterval(() => {
+      if (isAiGame) {
+        const now = Date.now();
+        const elapsed = now - turnStartedAtRef.current;
+        turnStartedAtRef.current = now;
+
+        const currentStore = gameStore.getState();
+        if (currentStore.currentTurn === 'WHITE' && currentStore.whiteTimeMs !== null) {
+          const nextTime = Math.max(0, currentStore.whiteTimeMs - elapsed);
+          if (nextTime === 0) {
+            handleLocalTimeout('WHITE');
+            return;
+          }
+          gameStore.updateClocks(nextTime, currentStore.blackTimeMs);
+        } else if (currentStore.currentTurn === 'BLACK' && currentStore.blackTimeMs !== null) {
+          const nextTime = Math.max(0, currentStore.blackTimeMs - elapsed);
+          if (nextTime === 0) {
+            handleLocalTimeout('BLACK');
+            return;
+          }
+          gameStore.updateClocks(currentStore.whiteTimeMs, nextTime);
+        }
+      } else {
+        gameStore.tickActiveClock(1000);
+      }
+    }, 500);
+
+    return () => clearInterval(timer);
+  }, [store.gameStatus, store.currentTurn, handleLocalTimeout]);
+
+  // Polling fallback: PVP only! Never poll during local AI games!
+  useEffect(() => {
+    if (!gameId || store.gameStatus !== 'ACTIVE') return;
+    if (store.currentGame?.gameType === 'PLAYER_VS_AI') return;
+
+    let isPolling = false;
+    const interval = setInterval(async () => {
+      if (isPolling) return;
+      isPolling = true;
+      try {
+        const state = await gameService.getGameState(gameId);
+        const currentStoreState = gameStore.getState();
+        if (state && currentStoreState.gameStatus === 'ACTIVE') {
+          if (isSubmittingMoveRef.current) return;
+
+          if (
+            currentStoreState.moves.length > 0 &&
+            state.moveCount !== undefined &&
+            state.moveCount < currentStoreState.moves.length
+          ) {
+            return;
+          }
+
+          if (
+            state.fen !== currentStoreState.fen ||
+            state.currentTurn !== currentStoreState.currentTurn ||
+            state.status !== currentStoreState.gameStatus
+          ) {
+            gameStore.updateGameState(state);
+            const moves = await gameService.getMoves(gameId).catch(() => []);
+            if (moves && moves.length > 0) {
+              gameStore.setMoves(moves);
+            }
+          }
+        }
+      } catch (err) {
+        // Silent catch for background polling
+      } finally {
+        isPolling = false;
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [gameId, store.gameStatus]);
+
+  // Synchronize timeout state with backend for PVP
+  useEffect(() => {
+    if (store.gameStatus === 'COMPLETED' && store.result === 'TIMEOUT' && gameId) {
+      if (store.currentGame?.gameType !== 'PLAYER_VS_AI') {
+        gameService.getGameState(gameId).catch(() => {});
+      }
+    }
+  }, [store.gameStatus, store.result, gameId]);
+
   // In check square
   const inCheckSquare = useMemo<Square | null>(() => {
     const chess = chessRef.current;
@@ -261,32 +379,128 @@ export function useGame(gameId: number | string) {
     return null;
   }, [store.fen]);
 
+  // Trigger local AI move computation and apply when complete
+  const triggerAiMove = useCallback(async () => {
+    if (isAiThinkingRef.current) return;
+    const currentStore = gameStore.getState();
+    const game = currentStore.currentGame;
+    if (!game || game.gameType !== 'PLAYER_VS_AI' || currentStore.gameStatus !== 'ACTIVE') return;
+
+    const aiColor: PlayerColor = userColor === 'WHITE' ? 'BLACK' : 'WHITE';
+    if (currentStore.currentTurn !== aiColor) return;
+
+    const chess = chessRef.current;
+    if (currentStore.fen && chess.fen() !== currentStore.fen) {
+      try {
+        chess.load(currentStore.fen);
+      } catch {}
+    }
+
+    const currentFen = chess.fen();
+    if (lastAiFenProcessedRef.current === currentFen) return;
+    lastAiFenProcessedRef.current = currentFen;
+    isAiThinkingRef.current = true;
+
+    try {
+      const difficulty = (game.aiDifficulty as any) || 'MEDIUM';
+      const bestMove = await localAiService.getBestMove(currentFen, difficulty);
+      if (!bestMove) return;
+
+      // Ensure match is still active and it is still AI's turn
+      const latestStore = gameStore.getState();
+      if (latestStore.gameStatus !== 'ACTIVE' || latestStore.currentTurn !== aiColor) return;
+      if (chessRef.current.fen() !== currentFen) return;
+
+      const aiChessMove = chessRef.current.move({
+        from: bestMove.from,
+        to: bestMove.to,
+        promotion: (bestMove.promotion as any) || 'q',
+      });
+      if (!aiChessMove) return;
+
+      const now = Date.now();
+      const elapsed = Math.max(0, now - turnStartedAtRef.current);
+      turnStartedAtRef.current = now;
+
+      const storeNow = gameStore.getState();
+      const prevWhite = storeNow.whiteTimeMs;
+      const prevBlack = storeNow.blackTimeMs;
+      const newWhite =
+        aiColor === 'WHITE' && prevWhite !== null
+          ? Math.max(0, prevWhite - elapsed)
+          : prevWhite;
+      const newBlack =
+        aiColor === 'BLACK' && prevBlack !== null
+          ? Math.max(0, prevBlack - elapsed)
+          : prevBlack;
+
+      const nextFen = chessRef.current.fen();
+      gameStore.applyLiveMove({
+        from: bestMove.from,
+        to: bestMove.to,
+        promotion: bestMove.promotion,
+        san: aiChessMove.san,
+        fen: nextFen,
+        nextTurn: userColor || 'WHITE',
+        color: aiColor,
+        whiteTimeMs: newWhite,
+        blackTimeMs: newBlack,
+      });
+
+      if (chessRef.current.isGameOver()) {
+        const overInfo = checkLocalGameOver(chessRef.current, aiColor, userColor, currentUserId);
+        gameStore.setGameFinished(overInfo.result, overInfo.winnerId);
+        const finalMoves = gameStore.getState().moves;
+        await gameService
+          .finishAiGame({
+            gameId,
+            fen: nextFen,
+            pgn: chessRef.current.pgn(),
+            result: overInfo.result,
+            winnerId: overInfo.winnerId,
+            whiteTimeMs: newWhite,
+            blackTimeMs: newBlack,
+            moves: finalMoves,
+          })
+          .catch((err) => console.warn('[useGame] finishAiGame error:', err));
+      }
+    } catch (err) {
+      console.error('[useGame] triggerAiMove failed:', err);
+    } finally {
+      isAiThinkingRef.current = false;
+    }
+  }, [gameId, userColor, currentUserId]);
+
+  // Automatically trigger AI move whenever it becomes AI's turn
+  useEffect(() => {
+    if (store.gameStatus !== 'ACTIVE') return;
+    if (store.currentGame?.gameType !== 'PLAYER_VS_AI') return;
+
+    const aiColor: PlayerColor = userColor === 'WHITE' ? 'BLACK' : 'WHITE';
+    if (store.currentTurn === aiColor) {
+      const timer = setTimeout(() => {
+        triggerAiMove();
+      }, 250);
+      return () => clearTimeout(timer);
+    }
+  }, [store.currentTurn, store.gameStatus, userColor, triggerAiMove]);
+
   // Handle board square click
   const handleSquarePress = useCallback(
     async (square: Square) => {
-      console.log(
-        `[useGame] Square pressed: ${square} | myTurn: ${isMyTurn} | myColor: ${userColor} | turn: ${store.currentTurn} | status: ${store.gameStatus}`
-      );
-
       if (store.gameStatus !== 'ACTIVE') {
-        console.warn(`[useGame] Cannot move: match status is ${store.gameStatus}`);
         return;
       }
 
       if (!isMyTurn) {
-        console.warn(
-          `[useGame] Cannot move: not your turn (your color: ${userColor}, active turn: ${store.currentTurn})`
-        );
         return;
       }
 
       if (isSubmittingMove) {
-        console.warn('[useGame] Move is already submitting, please wait');
         return;
       }
 
       const chess = chessRef.current;
-      // Ensure local chess.js is strictly synchronized with store.fen
       if (store.fen && chess.fen() !== store.fen) {
         try {
           chess.load(store.fen);
@@ -302,7 +516,6 @@ export function useGame(gameId: number | string) {
 
       // 2. If a piece was selected and clicking a valid move square
       if (selectedSquare && possibleMoves.includes(square)) {
-        // Check if pawn promotion
         const piece = chess.get(selectedSquare);
         const isPromotion =
           piece?.type === 'p' &&
@@ -314,7 +527,6 @@ export function useGame(gameId: number | string) {
           return;
         }
 
-        // Execute regular move
         await executeMove(selectedSquare, square);
         return;
       }
@@ -335,18 +547,19 @@ export function useGame(gameId: number | string) {
     [selectedSquare, possibleMoves, store.gameStatus, isMyTurn, isSubmittingMove, userColor]
   );
 
-  // Dispatch move with optimistic local execution (0ms instant response)
+  // Dispatch move with optimistic local execution
   const executeMove = async (from: Square, to: Square, promotion?: string) => {
     setSelectedSquare(null);
     setPossibleMoves([]);
     setPendingPromotion(null);
 
     const chess = chessRef.current;
+    const isAiGame = store.currentGame?.gameType === 'PLAYER_VS_AI';
     const previousFen = store.fen;
     const previousTurn = store.currentTurn;
     const previousMoves = [...store.moves];
 
-    // 1. Optimistically execute move on local chess.js instance immediately
+    // 1. Validate and execute move on local chess.js instance immediately
     let localMove = null;
     try {
       localMove = chess.move({
@@ -361,7 +574,65 @@ export function useGame(gameId: number | string) {
 
     if (!localMove) return;
 
-    // 2. Immediately update the UI store with the new board position (0ms latency!)
+    // 2. If Playing vs AI: 100% local phone execution (0ms latency, zero DB round-trips)
+    if (isAiGame) {
+      const now = Date.now();
+      const elapsed = Math.max(0, now - turnStartedAtRef.current);
+      turnStartedAtRef.current = now;
+
+      const storeState = gameStore.getState();
+      const prevWhite = storeState.whiteTimeMs;
+      const prevBlack = storeState.blackTimeMs;
+      const newWhite =
+        userColor === 'WHITE' && prevWhite !== null
+          ? Math.max(0, prevWhite - elapsed)
+          : prevWhite;
+      const newBlack =
+        userColor === 'BLACK' && prevBlack !== null
+          ? Math.max(0, prevBlack - elapsed)
+          : prevBlack;
+
+      const optimisticFen = chess.fen();
+      const nextTurn: PlayerColor = userColor === 'WHITE' ? 'BLACK' : 'WHITE';
+      const moveColor: PlayerColor = userColor || 'WHITE';
+
+      gameStore.applyLiveMove({
+        from,
+        to,
+        promotion,
+        san: localMove.san,
+        fen: optimisticFen,
+        nextTurn,
+        color: moveColor,
+        whiteTimeMs: newWhite,
+        blackTimeMs: newBlack,
+      });
+
+      if (chess.isGameOver()) {
+        const overInfo = checkLocalGameOver(chess, userColor || 'WHITE', userColor, currentUserId);
+        gameStore.setGameFinished(overInfo.result, overInfo.winnerId);
+        const finalMoves = gameStore.getState().moves;
+        gameService
+          .finishAiGame({
+            gameId,
+            fen: optimisticFen,
+            pgn: chess.pgn(),
+            result: overInfo.result,
+            winnerId: overInfo.winnerId,
+            whiteTimeMs: newWhite,
+            blackTimeMs: newBlack,
+            moves: finalMoves,
+          })
+          .catch((err) => console.warn('[useGame] finishAiGame error:', err));
+        return;
+      }
+
+      // Schedule AI turn immediately
+      triggerAiMove();
+      return;
+    }
+
+    // 3. Multiplayer PVP: optimistic board update + backend synchronization
     const optimisticFen = chess.fen();
     const nextTurn: PlayerColor = chess.turn() === 'w' ? 'WHITE' : 'BLACK';
     const moveColor: PlayerColor = localMove.color === 'w' ? 'WHITE' : 'BLACK';
@@ -376,9 +647,9 @@ export function useGame(gameId: number | string) {
       color: moveColor,
     });
 
+    isSubmittingMoveRef.current = true;
     setIsSubmittingMove(true);
 
-    // 3. Send move to backend in background
     try {
       const response = await gameService.makeMove(gameId, {
         from,
@@ -386,7 +657,6 @@ export function useGame(gameId: number | string) {
         promotion,
       });
 
-      // Synchronize authoritative clocks & verified status
       if (response) {
         if (response.whiteTimeMs !== undefined && response.blackTimeMs !== undefined) {
           gameStore.updateClocks(response.whiteTimeMs, response.blackTimeMs);
@@ -397,7 +667,6 @@ export function useGame(gameId: number | string) {
       }
     } catch (err: any) {
       console.warn('[useGame] Move rejected by server, rolling back:', err);
-      // Revert optimistic move on failure
       chess.load(previousFen);
       gameStore.updateGameState({
         fen: previousFen,
@@ -405,6 +674,7 @@ export function useGame(gameId: number | string) {
       });
       gameStore.setMoves(previousMoves);
     } finally {
+      isSubmittingMoveRef.current = false;
       setIsSubmittingMove(false);
     }
   };
@@ -423,6 +693,24 @@ export function useGame(gameId: number | string) {
   // Actions
   const resign = async () => {
     try {
+      if (store.currentGame?.gameType === 'PLAYER_VS_AI') {
+        const chess = chessRef.current;
+        gameStore.setGameFinished('RESIGNATION', null);
+        const finalMoves = gameStore.getState().moves;
+        await gameService
+          .finishAiGame({
+            gameId,
+            fen: chess.fen(),
+            pgn: chess.pgn(),
+            result: 'RESIGNATION',
+            winnerId: null,
+            whiteTimeMs: store.whiteTimeMs,
+            blackTimeMs: store.blackTimeMs,
+            moves: finalMoves,
+          })
+          .catch((err) => console.warn('[useGame] finishAiGame resign error:', err));
+        return;
+      }
       await gameService.resignGame(gameId);
     } catch (err: any) {
       console.warn('[useGame] Resign failed:', err);
@@ -431,6 +719,29 @@ export function useGame(gameId: number | string) {
 
   const offerDraw = async () => {
     try {
+      if (store.currentGame?.gameType === 'PLAYER_VS_AI') {
+        const chess = chessRef.current;
+        const moveCount = store.moves.length;
+        if (moveCount >= 10 && !chess.isCheck()) {
+          gameStore.setGameFinished('DRAW', null);
+          const finalMoves = gameStore.getState().moves;
+          await gameService
+            .finishAiGame({
+              gameId,
+              fen: chess.fen(),
+              pgn: chess.pgn(),
+              result: 'DRAW',
+              winnerId: null,
+              whiteTimeMs: store.whiteTimeMs,
+              blackTimeMs: store.blackTimeMs,
+              moves: finalMoves,
+            })
+            .catch((err) => console.warn('[useGame] finishAiGame draw error:', err));
+        } else {
+          Alert.alert('Draw Declined', 'The AI declined the draw offer in this position.');
+        }
+        return;
+      }
       await gameService.offerDraw(gameId);
     } catch (err: any) {
       console.warn('[useGame] Offer draw failed:', err);

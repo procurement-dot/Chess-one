@@ -279,7 +279,7 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
         />
       )}
 
-      <AppFooter activeTab="home" />
+      <AppFooter activeTab="play" />
     </SafeAreaView>
   );
 }
