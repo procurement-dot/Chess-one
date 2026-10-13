@@ -8,6 +8,7 @@ import {
 } from '../services/auth.service';
 import { GoogleAuthResult } from '../types/auth.types';
 import { authStore } from '../store/authStore';
+import { roleStore } from '../features/roles/roleStore';
 
 export interface UseGoogleAuthReturn {
   signInWithGoogle: () => Promise<GoogleAuthResult | null>;
@@ -51,15 +52,28 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     try {
       const backendAuth = await exchangeGoogleTokenWithBackend(processed.idToken);
       if (backendAuth) {
+        const fullUser = {
+          id: String(backendAuth.user.id),
+          name: backendAuth.user.name,
+          email: backendAuth.user.email,
+          photo: backendAuth.user.avatarUrl || processed.user?.photo,
+          role: backendAuth.user.role,
+          rating: backendAuth.user.rating,
+          gamesPlayed: backendAuth.user.gamesPlayed,
+          onboardingDone: backendAuth.user.onboardingDone,
+        };
         authStore.setChessOneToken(backendAuth.token);
         authStore.setGoogleAuth({
-          user: {
-            id: String(backendAuth.user.id),
-            name: backendAuth.user.name,
-            email: backendAuth.user.email,
-            photo: backendAuth.user.avatarUrl || processed.user?.photo,
-          },
+          user: fullUser,
           idToken: backendAuth.token,
+          chessOneToken: backendAuth.token,
+        });
+        if (backendAuth.user.role) {
+          roleStore.syncFromServer(backendAuth.user.role);
+        }
+        setResult({
+          ...processed,
+          user: fullUser,
           chessOneToken: backendAuth.token,
         });
       } else {
@@ -181,25 +195,28 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     try {
       const backendData = await devLoginWithBackend(userId);
       if (backendData) {
+        const fullDevUser = {
+          id: String(backendData.user.id),
+          name: backendData.user.name,
+          email: backendData.user.email,
+          photo: backendData.user.avatarUrl || undefined,
+          role: backendData.user.role,
+          rating: backendData.user.rating,
+          gamesPlayed: backendData.user.gamesPlayed,
+          onboardingDone: backendData.user.onboardingDone,
+        };
         authStore.setChessOneToken(backendData.token);
         authStore.setGoogleAuth({
-          user: {
-            id: String(backendData.user.id),
-            name: backendData.user.name,
-            email: backendData.user.email,
-            photo: backendData.user.avatarUrl || undefined,
-          },
+          user: fullDevUser,
           idToken: backendData.token,
           chessOneToken: backendData.token,
         });
+        if (backendData.user.role) {
+          roleStore.syncFromServer(backendData.user.role);
+        }
         setResult({
           success: true,
-          user: {
-            id: String(backendData.user.id),
-            name: backendData.user.name,
-            email: backendData.user.email,
-            photo: backendData.user.avatarUrl || undefined,
-          },
+          user: fullDevUser,
           idToken: backendData.token,
         });
         return true;

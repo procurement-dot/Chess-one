@@ -1,5 +1,7 @@
 import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BackendRole } from '../../types/auth.types';
+import { toAppRole } from '../../utils/role.utils';
 
 export type UserRole = 'Student' | 'Parent' | 'Coach' | 'School' | 'Organiser';
 
@@ -48,6 +50,10 @@ class RoleStore {
     } catch (e) {
       console.warn('Failed to save role:', e);
     }
+  }
+
+  syncFromServer(role: BackendRole) {
+    this.setRole(toAppRole(role));
   }
 
   subscribe(listener: () => void): () => void {

@@ -1,3 +1,31 @@
+export type BackendRole = 'STUDENT' | 'PARENT' | 'COACH' | 'SCHOOL' | 'ORGANISER' | 'ADMIN';
+
+export interface UserProfile {
+  id: number;
+  name: string;
+  email: string;
+  avatarUrl?: string | null;
+  role: BackendRole;
+  rating: number;
+  gamesPlayed: number;
+  school?: string | null;
+  schoolClass?: string | null;
+  level?: 'Beginner' | 'Developing' | 'Advanced' | null;
+  fideId?: string | null;
+  parentName?: string | null;
+  parentEmail?: string | null;
+  onboardingDone: boolean;
+}
+
+export type UpdateProfileRequest = Partial<
+  Pick<
+    UserProfile,
+    'name' | 'school' | 'schoolClass' | 'level' | 'fideId' | 'parentName' | 'parentEmail'
+  >
+> & {
+  role?: 'STUDENT' | 'PARENT';
+};
+
 /**
  * Google user identity extracted from Google OAuth result or ID token
  */
@@ -8,6 +36,10 @@ export interface GoogleUser {
   photo?: string;
   givenName?: string;
   familyName?: string;
+  role?: BackendRole;
+  rating?: number;
+  gamesPlayed?: number;
+  onboardingDone?: boolean;
 }
 
 /**

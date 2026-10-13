@@ -1,8 +1,27 @@
 const prisma = require("../config/database");
 const { getOnlineUserIds, isUserOnline } = require("../config/socket");
 const { success } = require("../utils/response");
+const userService = require("../services/user.service");
 
 class UserController {
+  async getMe(req, res, next) {
+    try {
+      const user = await userService.getProfile(req.user.id);
+      return success(res, { user });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async updateMe(req, res, next) {
+    try {
+      const user = await userService.updateProfile(req.user.id, req.validatedBody);
+      return success(res, { user });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getUsers(req, res, next) {
     try {
       const currentUserId = req.user?.id ? parseInt(req.user.id, 10) : null;

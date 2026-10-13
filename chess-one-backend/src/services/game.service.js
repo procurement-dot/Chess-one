@@ -3,6 +3,7 @@ const { generateGameCode } = require("../utils/game-code");
 const { STARTING_FEN } = require("../utils/chess");
 const { parseTimeControl, getLiveTimes } = require("./clock.service");
 const { determineResult } = require("./result.service");
+const { applyRating } = require("./rating.service");
 const { emitToGame } = require("../config/socket");
 const { AppError } = require("../middleware/error.middleware");
 
@@ -19,10 +20,10 @@ class GameService {
     const game = await prisma.game.findFirst({
       where,
       include: {
-        creator: { select: { id: true, name: true, email: true } },
-        whitePlayer: { select: { id: true, name: true, email: true } },
-        blackPlayer: { select: { id: true, name: true, email: true } },
-        winner: { select: { id: true, name: true, email: true } },
+        creator: { select: { id: true, name: true, email: true, rating: true } },
+        whitePlayer: { select: { id: true, name: true, email: true, rating: true } },
+        blackPlayer: { select: { id: true, name: true, email: true, rating: true } },
+        winner: { select: { id: true, name: true, email: true, rating: true } },
         ...include,
       },
     });
@@ -214,9 +215,9 @@ class GameService {
         lastMoveAt: null,
       },
       include: {
-        creator: { select: { id: true, name: true, email: true } },
-        whitePlayer: { select: { id: true, name: true, email: true } },
-        blackPlayer: { select: { id: true, name: true, email: true } },
+        creator: { select: { id: true, name: true, email: true, rating: true } },
+        whitePlayer: { select: { id: true, name: true, email: true, rating: true } },
+        blackPlayer: { select: { id: true, name: true, email: true, rating: true } },
       },
     });
 
@@ -265,11 +266,17 @@ class GameService {
         },
       });
 
+      const ratingResult = await applyRating(game.id);
+
       emitToGame(game.id, "game:finished", {
         gameId: game.id,
         gameCode: game.gameCode,
         result: updated.result,
         winnerId: updated.winnerId,
+        whiteRatingChange: ratingResult?.whiteRatingChange ?? null,
+        blackRatingChange: ratingResult?.blackRatingChange ?? null,
+        whiteRating: ratingResult?.whiteRating ?? null,
+        blackRating: ratingResult?.blackRating ?? null,
       });
 
       return {
@@ -284,6 +291,8 @@ class GameService {
         result: updated.result,
         winnerId: updated.winnerId,
         drawOfferFrom: updated.drawOfferFrom,
+        whiteRatingChange: ratingResult?.whiteRatingChange ?? updated.whiteRatingChange ?? null,
+        blackRatingChange: ratingResult?.blackRatingChange ?? updated.blackRatingChange ?? null,
       };
     }
 
@@ -313,6 +322,8 @@ class GameService {
       result: game.result,
       winnerId: game.winnerId,
       drawOfferFrom: game.drawOfferFrom,
+      whiteRatingChange: game.whiteRatingChange,
+      blackRatingChange: game.blackRatingChange,
       moveCount,
     };
   }
@@ -413,12 +424,18 @@ class GameService {
       },
     });
 
+    const ratingResult = await applyRating(game.id);
+
     const payload = {
       gameId: game.id,
       gameCode: game.gameCode,
       result: updated.result,
       resignedBy: userId,
       winnerId: updated.winnerId,
+      whiteRatingChange: ratingResult?.whiteRatingChange ?? null,
+      blackRatingChange: ratingResult?.blackRatingChange ?? null,
+      whiteRating: ratingResult?.whiteRating ?? null,
+      blackRating: ratingResult?.blackRating ?? null,
     };
 
     emitToGame(game.id, "game:resigned", payload);
@@ -504,11 +521,17 @@ class GameService {
         },
       });
 
+      const ratingResult = await applyRating(game.id);
+
       const payload = {
         gameId: game.id,
         gameCode: game.gameCode,
         result: "DRAW",
         winnerId: null,
+        whiteRatingChange: ratingResult?.whiteRatingChange ?? null,
+        blackRatingChange: ratingResult?.blackRatingChange ?? null,
+        whiteRating: ratingResult?.whiteRating ?? null,
+        blackRating: ratingResult?.blackRating ?? null,
       };
 
       emitToGame(game.id, "game:draw-accepted", payload);
@@ -601,6 +624,11 @@ class GameService {
       result: game.result,
       winner,
       loser,
+      rating: {
+        applied: game.ratingApplied,
+        whiteRatingChange: game.whiteRatingChange,
+        blackRatingChange: game.blackRatingChange,
+      },
       finalFen: game.fen,
       pgn: game.pgn,
       finishedAt: game.finishedAt,
@@ -638,9 +666,9 @@ class GameService {
         skip,
         orderBy: { createdAt: "desc" },
         include: {
-          whitePlayer: { select: { id: true, name: true } },
-          blackPlayer: { select: { id: true, name: true } },
-          winner: { select: { id: true, name: true } },
+          whitePlayer: { select: { id: true, name: true, rating: true } },
+          blackPlayer: { select: { id: true, name: true, rating: true } },
+          winner: { select: { id: true, name: true, rating: true } },
         },
       }),
     ]);

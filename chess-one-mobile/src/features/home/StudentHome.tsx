@@ -42,9 +42,9 @@ export const StudentHome = () => {
       {/* Stats Row */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>{SAMPLE_STUDENT_STATS.learningRating}</Text>
-          <Text style={styles.statLabel}>Learning rating</Text>
-          <Text style={styles.statSub}>ChessOne · not FIDE</Text>
+          <Text style={styles.statValue}>{user?.rating ?? 1200}</Text>
+          <Text style={styles.statLabel}>Rating</Text>
+          <Text style={styles.statSub}>{user?.gamesPlayed ?? 0} games played</Text>
         </View>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>{SAMPLE_STUDENT_STATS.lessonsFinished} / {SAMPLE_STUDENT_STATS.totalLessons}</Text>

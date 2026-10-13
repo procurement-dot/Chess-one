@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthState, GoogleUser } from '../types/auth.types';
 
 type Listener = () => void;
@@ -164,6 +165,22 @@ class AuthStore {
       isLoading: false,
       error: null,
     };
+    this.notify();
+  }
+
+  updateUser(partial: Partial<GoogleUser>) {
+    const updated = this.state.user
+      ? { ...this.state.user, ...partial }
+      : (partial as GoogleUser);
+    this.state = {
+      ...this.state,
+      user: updated,
+    };
+    setStoredString(STORAGE_USER_KEY, JSON.stringify(updated));
+    try {
+      AsyncStorage.setItem('@chessone_user', JSON.stringify(updated)).catch(() => {});
+      AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(updated)).catch(() => {});
+    } catch {}
     this.notify();
   }
 

@@ -45,14 +45,33 @@ enum InvitationStatus {
   CANCELLED
 }
 
+enum UserRole {
+  STUDENT
+  PARENT
+  COACH
+  SCHOOL
+  ORGANISER
+  ADMIN
+}
+
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  googleId  String?  @unique
-  avatarUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id             Int      @id @default(autoincrement())
+  name           String
+  email          String   @unique
+  googleId       String?  @unique
+  avatarUrl      String?
+  role           UserRole @default(STUDENT)
+  rating         Int      @default(1200)
+  gamesPlayed    Int      @default(0)
+  school         String?
+  schoolClass    String?
+  level          String?   // "Beginner" | "Developing" | "Advanced"
+  fideId         String?
+  parentName     String?
+  parentEmail    String?
+  onboardingDone Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   createdGames  Game[]           @relation("CreatedBy")
   whiteGames    Game[]           @relation("WhitePlayer")
@@ -61,6 +80,8 @@ model User {
   sentInvites   GameInvitation[] @relation("SentInvitations")
   recvInvites   GameInvitation[] @relation("ReceivedInvitations")
   moves         GameMove[]
+
+  @@index([role])
 }
 
 model Game {
@@ -92,6 +113,10 @@ model Game {
   result        GameResult?
   winnerId      Int?
   winner        User?        @relation("GameWinner", fields: [winnerId], references: [id])
+
+  ratingApplied     Boolean @default(false)
+  whiteRatingChange Int?
+  blackRatingChange Int?
 
   drawOfferFrom PlayerColor?
 

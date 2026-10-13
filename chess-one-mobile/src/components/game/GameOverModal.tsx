@@ -9,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Game, GameResult, PlayerColor } from '../../types/game.types';
+import { RatingChange } from './RatingChange';
 
 interface GameOverModalProps {
   visible: boolean;
@@ -17,6 +18,10 @@ interface GameOverModalProps {
   userColor: PlayerColor | null;
   currentUserId: number | null;
   game: Game | null;
+  ratingChange?: number | null;
+  newRating?: number | null;
+  opponentRatingChange?: number | null;
+  isPvP?: boolean;
   onViewResults: () => void;
   onPlayAgain: () => void;
   onGoHome: () => void;
@@ -31,6 +36,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   userColor,
   currentUserId,
   game,
+  ratingChange,
+  newRating,
+  opponentRatingChange,
+  isPvP = false,
   onViewResults,
   onPlayAgain,
   onGoHome,
@@ -178,6 +187,19 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               </Text>
             </View>
           </View>
+
+          {/* Rating Change Box (PvP games with rated outcome) */}
+          {isPvP && ratingChange != null && (
+            <View style={styles.ratingBox}>
+              <Text style={styles.ratingBoxLabel}>Rating</Text>
+              <View style={styles.ratingRow}>
+                {newRating != null && (
+                  <Text style={styles.ratingValue}>{newRating}</Text>
+                )}
+                <RatingChange change={ratingChange} />
+              </View>
+            </View>
+          )}
 
           {/* Action Buttons */}
           <View style={styles.buttonGroup}>
@@ -397,5 +419,33 @@ const styles = StyleSheet.create({
     color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
+  },
+  ratingBox: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+  },
+  ratingBoxLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textBody,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  ratingValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: COLORS.textHeading,
   },
 });

@@ -8,6 +8,7 @@
     "seed": "node src/seed.js",
     "test:game": "node src/test-live-match.js",
     "test:auth": "node src/test-auth-and-games.js",
+    "test:rating": "node src/test-rating.js",
     "test": "node src/test-live-match.js && node src/test-auth-and-games.js"
   },
   "keywords": [],

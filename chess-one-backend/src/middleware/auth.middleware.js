@@ -76,6 +76,8 @@ async function requireAuth(req, res, next) {
         name: true,
         email: true,
         avatarUrl: true,
+        role: true,
+        rating: true,
       },
     });
 
@@ -101,8 +103,30 @@ async function requireAuth(req, res, next) {
   }
 }
 
+/**
+ * Reusable RBAC guard middleware
+ */
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        error: { code: "UNAUTHORIZED", message: "Authentication required" },
+      });
+    }
+    if (!roles.includes(req.user.role)) {
+      return res.status(403).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "You do not have permission to do this" },
+      });
+    }
+    next();
+  };
+}
+
 module.exports = {
   requireAuth,
   authenticate: requireAuth, // Backward-compatibility
   generateToken, // Backward-compatibility
+  requireRole,
 };

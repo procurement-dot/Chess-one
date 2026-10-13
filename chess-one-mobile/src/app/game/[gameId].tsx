@@ -1,4 +1,4 @@
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
+import { COLORS } from '../../constants/chessone-theme';
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -24,9 +24,8 @@ import { ResignConfirmModal } from '../../components/game/ResignConfirmModal';
 import { GameOverModal } from '../../components/game/GameOverModal';
 import { GameAbortModal } from '../../components/game/GameAbortModal';
 import { AiReviewModal } from '../../components/game/AiReviewModal';
-import { useAuthStore } from '../../store/authStore';
+import { authStore, useAuthStore } from '../../store/authStore';
 import { gameSocket } from '../../socket/game.socket';
-import { gameService } from '../../services/game.service';
 import { PieceSymbol } from 'chess.js';
 
 export default function LiveGameScreen() {
@@ -77,6 +76,8 @@ export default function LiveGameScreen() {
   // Abort modal states (triggered exclusively by server events or authoritative cancellation)
   const [abortModalVisible, setAbortModalVisible] = useState(false);
   const [abortModalReason, setAbortModalReason] = useState<string>('FIRST_MOVE_TIMEOUT');
+  const [userRatingChange, setUserRatingChange] = useState<number | null>(null);
+  const [userNewRating, setUserNewRating] = useState<number | null>(null);
 
   // Socket listener for game:aborted event
   useEffect(() => {
@@ -91,6 +92,29 @@ export default function LiveGameScreen() {
     };
   }, []);
 
+  // Socket listener for game:finished to capture rating change
+  useEffect(() => {
+    const unsubFinished = gameSocket.onGameFinished((payload) => {
+      console.log('[LiveGameScreen] Game finished socket event:', payload);
+      if (payload && String(payload.gameId) === String(gameId)) {
+        const isWhite = userColor === 'WHITE';
+        const change = isWhite ? payload.whiteRatingChange : payload.blackRatingChange;
+        const newRating = isWhite ? payload.whiteRating : payload.blackRating;
+        if (change !== undefined && change !== null) {
+          setUserRatingChange(change);
+        }
+        if (newRating !== undefined && newRating !== null) {
+          setUserNewRating(newRating);
+          authStore.updateUser({ rating: newRating });
+        }
+      }
+    });
+
+    return () => {
+      unsubFinished();
+    };
+  }, [gameId, userColor]);
+
   // If status is CANCELLED (e.g. from polling), display abort modal
   useEffect(() => {
     if (status === 'CANCELLED' && !gameOverModalVisible) {
@@ -98,11 +122,13 @@ export default function LiveGameScreen() {
     }
   }, [status, gameOverModalVisible]);
 
-  // Reset GameOver modal whenever switching gameId
+  // Reset GameOver modal and rating states whenever switching gameId
   useEffect(() => {
     setGameOverModalVisible(false);
     setAbortModalVisible(false);
     setDrawFeedbackText(null);
+    setUserRatingChange(null);
+    setUserNewRating(null);
   }, [gameId]);
 
   // Show GameOver modal ONLY when this match is finished / completed
@@ -220,6 +246,13 @@ export default function LiveGameScreen() {
 
   const isCheckForTop = Boolean(inCheckSquare && topPlayerIsTurn);
   const isCheckForBottom = Boolean(inCheckSquare && bottomPlayerIsTurn);
+
+  const effectiveUserRatingChange =
+    userRatingChange !== null
+      ? userRatingChange
+      : (game && status === 'COMPLETED'
+          ? (isUserWhite ? game.whiteRatingChange : game.blackRatingChange) ?? null
+          : null);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
@@ -470,6 +503,14 @@ export default function LiveGameScreen() {
         userColor={userColor}
         currentUserId={currentUserId || (user?.id ? parseInt(String(user.id), 10) : null)}
         game={game}
+        ratingChange={effectiveUserRatingChange}
+        newRating={
+          userNewRating ??
+          (effectiveUserRatingChange != null && user?.rating
+            ? user.rating + effectiveUserRatingChange
+            : user?.rating ?? null)
+        }
+        isPvP={game?.gameType === 'PLAYER_VS_PLAYER'}
         onAiReview={() => {
           setGameOverModalVisible(false);
           setAiReviewModalVisible(true);

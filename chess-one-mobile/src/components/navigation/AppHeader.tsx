@@ -49,6 +49,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   };
 
   const cycleRole = () => {
+    if (!__DEV__) return;
     const nextIdx = (ROLES.indexOf(role) + 1) % ROLES.length;
     roleStore.setRole(ROLES[nextIdx]);
   };
@@ -97,8 +98,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               <View style={styles.profileSection}>
                 <TouchableOpacity
                   style={styles.roleChip}
-                  activeOpacity={0.7}
-                  onPress={cycleRole}
+                  activeOpacity={__DEV__ ? 0.7 : 1}
+                  onPress={__DEV__ ? cycleRole : undefined}
+                  disabled={!__DEV__}
                 >
                   <Text style={styles.roleChipText}>{role}</Text>
                 </TouchableOpacity>

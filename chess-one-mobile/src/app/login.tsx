@@ -20,6 +20,7 @@ import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AppHeader } from '../components/navigation/AppHeader';
 import { AppFooter } from '../components/navigation/AppFooter';
 import { gameService } from '../services/game.service';
+import { roleStore } from '../features/roles/roleStore';
 import { Game } from '../types/game.types';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
 import { Feather } from '@expo/vector-icons';
@@ -113,11 +114,7 @@ export default function LoginScreen() {
     const drawsNum = draws.length;
 
     const rate = total > 0 ? Math.round((winsNum / total) * 100) : 0;
-    // Standard chess rating calculation starting at 1200
-    const calculatedRating = Math.max(
-      800,
-      1200 + winsNum * 25 - lossesNum * 20 + drawsNum * 5
-    );
+    const currentRating = user?.rating ?? 1200;
 
     let displayList = games;
     if (historyFilter === 'wins') {
@@ -136,23 +133,22 @@ export default function LoginScreen() {
       lossCount: lossesNum,
       drawCount: drawsNum,
       winRate: rate,
-      rating: calculatedRating,
+      rating: currentRating,
       filteredGames: displayList,
     };
-  }, [games, currentUserId, historyFilter]);
+  }, [games, currentUserId, historyFilter, user?.rating]);
 
   const handleGoogleSignIn = async () => {
     const res = await signInWithGoogle();
     if (res?.success) {
-      try {
-        const AsyncStorage = require('@react-native-async-storage/async-storage').default;
-        const done = await AsyncStorage.getItem('@chessone_onboardingDone');
-        if (!done) {
-          router.replace('/onboarding' as any);
-          return;
-        }
-      } catch (e) {}
-      router.replace('/' as any);
+      if (res.user?.role) {
+        roleStore.syncFromServer(res.user.role);
+      }
+      if (res.user?.onboardingDone === true) {
+        router.replace('/' as any);
+      } else {
+        router.replace('/onboarding' as any);
+      }
     }
   };
 

@@ -31,6 +31,7 @@ export interface GamePlayer {
   name: string;
   email: string;
   avatarUrl?: string | null;
+  rating?: number;
 }
 
 export interface GameInvitation {
@@ -89,6 +90,9 @@ export interface Game {
   result?: GameResult | null;
   winnerId?: number | null;
   winner?: GamePlayer | null;
+  ratingApplied?: boolean;
+  whiteRatingChange?: number | null;
+  blackRatingChange?: number | null;
   drawOfferFrom?: PlayerColor | null;
   lastMoveAt?: string | null;
   createdAt: string;
@@ -109,6 +113,9 @@ export interface GameState {
   lastMoveAt?: string | null;
   result?: GameResult | null;
   winnerId?: number | null;
+  ratingApplied?: boolean;
+  whiteRatingChange?: number | null;
+  blackRatingChange?: number | null;
   drawOfferFrom?: PlayerColor | null;
   moveCount?: number;
 }
@@ -166,12 +173,34 @@ export interface MakeMoveResponse {
 export interface GameResultResponse {
   gameId: number;
   gameCode: string;
+  gameType?: GameType;
+  aiDifficulty?: AIDifficulty | null;
   status: GameStatus;
   result: GameResult | null;
   winnerId: number | null;
   winner?: GamePlayer | null;
+  whitePlayer?: GamePlayer | null;
+  blackPlayer?: GamePlayer | null;
+  whitePlayerId?: number | null;
+  blackPlayerId?: number | null;
   finishedAt?: string | null;
   pgn?: string;
+  rating?: {
+    applied: boolean;
+    whiteRatingChange: number | null;
+    blackRatingChange: number | null;
+  };
+}
+
+export interface GameFinishedPayload {
+  gameId: number | string;
+  gameCode?: string;
+  result?: GameResult | string | null;
+  winnerId?: number | null;
+  whiteRatingChange?: number | null;
+  blackRatingChange?: number | null;
+  whiteRating?: number | null;
+  blackRating?: number | null;
 }
 
 export interface MyGamesResponse {

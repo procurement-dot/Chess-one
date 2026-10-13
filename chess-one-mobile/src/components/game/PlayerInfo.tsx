@@ -47,6 +47,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
           <View style={styles.nameRow}>
             <Text style={styles.playerName} numberOfLines={1}>
               {displayName}
+              {!isAI && player?.rating ? ` (${player.rating})` : ''}
             </Text>
             <View style={[styles.colorChip, isWhite ? styles.whiteChip : styles.blackChip]}>
               <Text style={[styles.colorChipText, isWhite ? styles.whiteChipText : styles.blackChipText]}>
@@ -69,7 +70,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
             ) : isAI ? (
               <Text style={styles.turnLabel}>AI Thinking...</Text>
             ) : (
-              <Text style={styles.opponentTurnLabel}>Opponent's Turn</Text>
+              <Text style={styles.opponentTurnLabel}>Opponent&apos;s Turn</Text>
             )
           ) : null}
         </View>

@@ -1,4 +1,4 @@
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../../constants/chessone-theme';
+import { COLORS, SIZES } from '../../../constants/chessone-theme';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -13,10 +13,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { gameService } from '../../../services/game.service';
 import { useAuthStore } from '../../../store/authStore';
-import { Game } from '../../../types/game.types';
+import { Game, GameResultResponse } from '../../../types/game.types';
 import { AppHeader } from '../../../components/navigation/AppHeader';
 import { AppFooter } from '../../../components/navigation/AppFooter';
 import { AiReviewModal } from '../../../components/game/AiReviewModal';
+import { RatingChange } from '../../../components/game/RatingChange';
 
 export default function GameResultScreen() {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function GameResultScreen() {
   const { user } = useAuthStore();
 
   const [game, setGame] = useState<Game | null>(null);
+  const [resultInfo, setResultInfo] = useState<GameResultResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [aiReviewVisible, setAiReviewVisible] = useState(false);
 
@@ -34,9 +36,24 @@ export default function GameResultScreen() {
     let isMounted = true;
     async function loadResult() {
       try {
-        const gameData = await gameService.getGame(gameId);
+        const [gameData, resultData] = await Promise.all([
+          gameService.getGame(gameId).catch(() => null),
+          gameService.getGameResult(gameId).catch(() => null),
+        ]);
         if (isMounted) {
-          setGame(gameData);
+          if (gameData) {
+            setGame({
+              ...gameData,
+              ratingApplied: resultData?.rating?.applied ?? gameData.ratingApplied,
+              whiteRatingChange:
+                resultData?.rating?.whiteRatingChange ?? gameData.whiteRatingChange,
+              blackRatingChange:
+                resultData?.rating?.blackRatingChange ?? gameData.blackRatingChange,
+            });
+          }
+          if (resultData) {
+            setResultInfo(resultData);
+          }
         }
       } catch (err) {
         console.warn('Failed to load result:', err);
@@ -55,7 +72,7 @@ export default function GameResultScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="COLORS.primary" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Finalizing match result...</Text>
         </View>
       </SafeAreaView>
@@ -67,6 +84,17 @@ export default function GameResultScreen() {
   const isDraw = game?.result === 'DRAW';
   const isWinner = winnerId && currentUserId && winnerId === currentUserId;
   const isLoser = winnerId && currentUserId && winnerId !== currentUserId;
+
+  const isPvP = game?.gameType === 'PLAYER_VS_PLAYER';
+  const isRatingApplied = resultInfo?.rating?.applied ?? Boolean(game?.ratingApplied);
+  const whiteChange =
+    resultInfo?.rating?.whiteRatingChange ?? game?.whiteRatingChange ?? null;
+  const blackChange =
+    resultInfo?.rating?.blackRatingChange ?? game?.blackRatingChange ?? null;
+
+  const isUserWhite = Boolean(currentUserId && game?.whitePlayerId === currentUserId);
+  const isUserBlack = Boolean(currentUserId && game?.blackPlayerId === currentUserId);
+  const myChange = isUserWhite ? whiteChange : isUserBlack ? blackChange : null;
 
   const titleText = isDraw
     ? 'Draw'
@@ -123,6 +151,14 @@ export default function GameResultScreen() {
           <Text style={styles.outcomeReason}>{formatEndReason()}</Text>
         </View>
 
+        {/* Rating Summary Card for User */}
+        {isPvP && isRatingApplied && myChange !== null && (
+          <View style={styles.ratingSummaryCard}>
+            <Text style={styles.ratingSummaryLabel}>Your Rating Change</Text>
+            <RatingChange change={myChange} />
+          </View>
+        )}
+
         {/* Players Card */}
         <View style={styles.playersCard}>
           {/* White Player */}
@@ -131,9 +167,15 @@ export default function GameResultScreen() {
               <Text style={styles.pieceSym}>♔</Text>
             </View>
             <View style={styles.playerInfo}>
-              <Text style={styles.playerName}>
-                {game?.whitePlayer?.name || 'White Player'}
-              </Text>
+              <View style={styles.playerNameRow}>
+                <Text style={styles.playerName}>
+                  {game?.whitePlayer?.name || 'White Player'}
+                  {game?.whitePlayer?.rating ? ` (${game.whitePlayer.rating})` : ''}
+                </Text>
+                {isPvP && isRatingApplied && whiteChange !== null && (
+                  <RatingChange change={whiteChange} />
+                )}
+              </View>
               <Text style={styles.playerSub}>White</Text>
             </View>
             <View style={styles.playerScore}>
@@ -151,11 +193,16 @@ export default function GameResultScreen() {
               <Text style={[styles.pieceSym, styles.blackPieceSym]}>♚</Text>
             </View>
             <View style={styles.playerInfo}>
-              <Text style={styles.playerName}>
-                {game?.gameType === 'PLAYER_VS_AI'
-                  ? `AI (${game.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
-                  : game?.blackPlayer?.name || 'Black Player'}
-              </Text>
+              <View style={styles.playerNameRow}>
+                <Text style={styles.playerName}>
+                  {game?.gameType === 'PLAYER_VS_AI'
+                    ? `AI (${game.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
+                    : `${game?.blackPlayer?.name || 'Black Player'}${game?.blackPlayer?.rating ? ` (${game.blackPlayer.rating})` : ''}`}
+                </Text>
+                {isPvP && isRatingApplied && blackChange !== null && (
+                  <RatingChange change={blackChange} />
+                )}
+              </View>
               <Text style={styles.playerSub}>Black</Text>
             </View>
             <View style={styles.playerScore}>
@@ -403,5 +450,28 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.textBody,
     marginTop: 14,
+  },
+  playerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  ratingSummaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: SIZES.radiusCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+  },
+  ratingSummaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textHeading,
   },
 });

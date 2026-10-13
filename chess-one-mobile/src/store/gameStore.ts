@@ -315,7 +315,16 @@ class GameStore {
     this.notify();
   }
 
-  setGameFinished(result: GameResult, winnerId: number | null) {
+  setGameFinished(
+    result: GameResult,
+    winnerId: number | null,
+    ratingData?: {
+      whiteRatingChange?: number | null;
+      blackRatingChange?: number | null;
+      whiteRating?: number | null;
+      blackRating?: number | null;
+    }
+  ) {
     this.state = {
       ...this.state,
       gameStatus: 'COMPLETED',
@@ -328,6 +337,14 @@ class GameStore {
             status: 'COMPLETED',
             result,
             winnerId,
+            whiteRatingChange:
+              ratingData?.whiteRatingChange !== undefined
+                ? ratingData.whiteRatingChange
+                : this.state.currentGame.whiteRatingChange,
+            blackRatingChange:
+              ratingData?.blackRatingChange !== undefined
+                ? ratingData.blackRatingChange
+                : this.state.currentGame.blackRatingChange,
           }
         : null,
     };

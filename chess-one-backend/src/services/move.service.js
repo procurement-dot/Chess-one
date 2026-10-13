@@ -2,6 +2,7 @@ const prisma = require("../config/database");
 const { validateAndApplyMove } = require("../utils/chess");
 const { processMoveClock } = require("./clock.service");
 const { determineResult } = require("./result.service");
+const { applyRating } = require("./rating.service");
 const { emitToGame } = require("../config/socket");
 const { AppError } = require("../middleware/error.middleware");
 const aiService = require("./ai.service");
@@ -78,11 +79,17 @@ class MoveService {
         },
       });
 
+      const ratingResult = await applyRating(game.id);
+
       emitToGame(game.id, "game:finished", {
         gameId: game.id,
         gameCode: game.gameCode,
         result: updated.result,
         winnerId: updated.winnerId,
+        whiteRatingChange: ratingResult?.whiteRatingChange ?? null,
+        blackRatingChange: ratingResult?.blackRatingChange ?? null,
+        whiteRating: ratingResult?.whiteRating ?? null,
+        blackRating: ratingResult?.blackRating ?? null,
       });
 
       throw new AppError("TIMEOUT", "Time expired before move was received", 400);
@@ -196,11 +203,17 @@ class MoveService {
 
     // If game ended, broadcast finished event
     if (gameStatus === "COMPLETED") {
+      const ratingResult = await applyRating(updatedGame.id);
+
       emitToGame(updatedGame.id, "game:finished", {
         gameId: updatedGame.id,
         gameCode: updatedGame.gameCode,
         result: updatedGame.result,
         winnerId: updatedGame.winnerId,
+        whiteRatingChange: ratingResult?.whiteRatingChange ?? null,
+        blackRatingChange: ratingResult?.blackRatingChange ?? null,
+        whiteRating: ratingResult?.whiteRating ?? null,
+        blackRating: ratingResult?.blackRating ?? null,
       });
     }
 
