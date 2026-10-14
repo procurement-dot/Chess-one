@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,11 +6,12 @@ import {
   TouchableOpacity,
   Platform,
   Image,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
-import { useRoleStore, roleStore, UserRole } from '../../features/roles/roleStore';
-import { COLORS, SIZES, FONTS } from '../../constants/chessone-theme';
+import { useRoleStore, roleStore, UserRole, ALLOWED_ROLES } from '../../features/roles/roleStore';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { Feather } from '@expo/vector-icons';
 
 interface AppHeaderProps {
@@ -20,8 +21,6 @@ interface AppHeaderProps {
   onBack?: () => void;
   rightAction?: 'profile' | 'none';
 }
-
-const ROLES: UserRole[] = ['Student', 'Parent', 'Coach', 'School', 'Organiser'];
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
   title = 'ChessOne',
@@ -33,6 +32,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
   const role = useRoleStore();
+  const [roleModalVisible, setRoleModalVisible] = useState(false);
 
   const handleBack = () => {
     if (onBack) {
@@ -48,10 +48,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
     router.push('/login' as any);
   };
 
-  const cycleRole = () => {
-    if (!__DEV__) return;
-    const nextIdx = (ROLES.indexOf(role) + 1) % ROLES.length;
-    roleStore.setRole(ROLES[nextIdx]);
+  const handleSelectRole = (selectedRole: UserRole) => {
+    roleStore.setRole(selectedRole);
+    setRoleModalVisible(false);
   };
 
   return (
@@ -94,27 +93,27 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Right: Authenticated User Chip or Sign In */}
         {rightAction === 'profile' && (
           <View style={styles.rightSection}>
-            {isAuthenticated && user ? (
-              <View style={styles.profileSection}>
-                <TouchableOpacity
-                  style={styles.roleChip}
-                  activeOpacity={__DEV__ ? 0.7 : 1}
-                  onPress={__DEV__ ? cycleRole : undefined}
-                  disabled={!__DEV__}
-                >
-                  <Text style={styles.roleChipText}>{role}</Text>
-                </TouchableOpacity>
+            {/* Interactive Role Switcher Dropdown (Top Right) */}
+            <TouchableOpacity
+              style={styles.roleChip}
+              activeOpacity={0.75}
+              onPress={() => setRoleModalVisible(true)}
+            >
+              <Text style={styles.roleChipText}>{role}</Text>
+              <Feather name="chevron-down" size={14} color={COLORS.primary} style={{ marginLeft: 4 }} />
+            </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={styles.userAvatar}
-                  activeOpacity={0.75}
-                  onPress={handleProfilePress}
-                >
-                  <Text style={styles.userInitial}>
-                    {(user.name || user.email || 'P')[0].toUpperCase()}
-                  </Text>
-                </TouchableOpacity>
-              </View>
+            {isAuthenticated && user ? (
+              <TouchableOpacity
+                style={styles.userAvatar}
+                activeOpacity={0.75}
+                onPress={handleProfilePress}
+                accessibilityLabel="Open profile"
+              >
+                <Text style={styles.userInitial}>
+                  {(user.name || user.email || 'P')[0].toUpperCase()}
+                </Text>
+              </TouchableOpacity>
             ) : (
               <TouchableOpacity
                 style={styles.signInBtn}
@@ -127,6 +126,40 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
           </View>
         )}
       </View>
+
+      {/* Role Picker Modal: 4 exact options (Student · Coach · School · Organizer) */}
+      <Modal
+        visible={roleModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setRoleModalVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalBackdrop}
+          activeOpacity={1}
+          onPress={() => setRoleModalVisible(false)}
+        >
+          <View style={styles.roleMenuCard}>
+            <Text style={styles.roleMenuTitle}>Switch View / Role</Text>
+            {ALLOWED_ROLES.map((r) => {
+              const isCurrent = role === r;
+              return (
+                <TouchableOpacity
+                  key={r}
+                  style={[styles.roleMenuItem, isCurrent && styles.roleMenuItemActive]}
+                  onPress={() => handleSelectRole(r)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.roleMenuItemText, isCurrent && styles.roleMenuItemTextActive]}>
+                    {r}
+                  </Text>
+                  {isCurrent && <Feather name="check" size={16} color={COLORS.primary} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </View>
   );
 };
@@ -193,40 +226,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
   },
-  logoSquare: {
-    width: 30,
-    height: 30,
-    borderRadius: SIZES.radiusChip,
-    backgroundColor: COLORS.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 4,
-  },
-  logoKnight: {
-    fontSize: 18,
-    color: COLORS.white,
-    lineHeight: 22,
-  },
-  brandTitle: {
-    fontSize: 20,
-    fontWeight: FONTS.headingWeight,
-    color: COLORS.textHeading,
-    letterSpacing: 0.3,
-  },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  profileSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   roleChip: {
     backgroundColor: COLORS.hero,
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: SIZES.radiusChip,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   roleChipText: {
     fontSize: 12,
@@ -237,7 +250,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: COLORS.accentPeach,
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -256,5 +269,51 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 13,
     fontWeight: '700',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    paddingTop: 65,
+    paddingRight: 20,
+  },
+  roleMenuCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    padding: 8,
+    width: 170,
+    ...SHADOWS.soft,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  roleMenuTitle: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.textBody,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  roleMenuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 10,
+  },
+  roleMenuItemActive: {
+    backgroundColor: COLORS.hero,
+  },
+  roleMenuItemText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.textHeading,
+  },
+  roleMenuItemTextActive: {
+    color: COLORS.primary,
+    fontWeight: '800',
   },
 });

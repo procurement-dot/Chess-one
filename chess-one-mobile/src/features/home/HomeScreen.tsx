@@ -3,7 +3,6 @@ import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoleStore } from '../roles/roleStore';
 import { StudentHome } from './StudentHome';
-import { ParentHome } from './ParentHome';
 import { CoachHome } from './CoachHome';
 import { SchoolHome } from './SchoolHome';
 import { OrganiserHome } from './OrganiserHome';
@@ -18,12 +17,11 @@ export const HomeScreen = () => {
     switch (role) {
       case 'Student':
         return <StudentHome />;
-      case 'Parent':
-        return <ParentHome />;
       case 'Coach':
         return <CoachHome />;
       case 'School':
         return <SchoolHome />;
+      case 'Organizer':
       case 'Organiser':
         return <OrganiserHome />;
       default:

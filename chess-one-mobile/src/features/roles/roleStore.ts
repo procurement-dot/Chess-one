@@ -3,9 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BackendRole } from '../../types/auth.types';
 import { toAppRole } from '../../utils/role.utils';
 
-export type UserRole = 'Student' | 'Parent' | 'Coach' | 'School' | 'Organiser';
+export type UserRole = 'Student' | 'Coach' | 'School' | 'Organizer' | 'Organiser';
 
-const ROLE_STORAGE_KEY = '@chessone_user_role';
+export const ALLOWED_ROLES: UserRole[] = ['Student', 'Coach', 'School', 'Organizer'];
+
+const ROLE_STORAGE_KEY = 'chess_one_role';
 
 class RoleStore {
   private role: UserRole = 'Student';
@@ -23,18 +25,23 @@ class RoleStore {
     }
     try {
       const savedRole = await AsyncStorage.getItem(ROLE_STORAGE_KEY);
-      if (savedRole && ['Student', 'Parent', 'Coach', 'School', 'Organiser'].includes(savedRole)) {
+      if (savedRole && ALLOWED_ROLES.includes(savedRole as UserRole)) {
         this.role = savedRole as UserRole;
+      } else {
+        this.role = 'Student';
       }
     } catch (e) {
       console.warn('Failed to load role:', e);
+      this.role = 'Student';
     } finally {
       this.isLoaded = true;
       this.notify();
     }
   }
 
-  getRole() {
+  getRole(): UserRole {
+    // Normalise Organiser -> Organizer for consistency
+    if (this.role === 'Organiser') return 'Organizer';
     return this.role;
   }
 
@@ -43,17 +50,23 @@ class RoleStore {
   }
 
   async setRole(newRole: UserRole) {
-    this.role = newRole;
+    const normalised = (newRole === 'Organiser' ? 'Organizer' : newRole);
+    if (!ALLOWED_ROLES.includes(normalised)) {
+      this.role = 'Student';
+    } else {
+      this.role = normalised;
+    }
     this.notify();
     try {
-      await AsyncStorage.setItem(ROLE_STORAGE_KEY, newRole);
+      await AsyncStorage.setItem(ROLE_STORAGE_KEY, this.role);
     } catch (e) {
       console.warn('Failed to save role:', e);
     }
   }
 
   syncFromServer(role: BackendRole) {
-    this.setRole(toAppRole(role));
+    const mapped = toAppRole(role);
+    this.setRole(mapped);
   }
 
   subscribe(listener: () => void): () => void {
