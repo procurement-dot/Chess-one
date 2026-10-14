@@ -32,14 +32,6 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
     badgeCount?: number;
   }[] = [
     {
-      id: 'home',
-      highlightIds: ['home'],
-      label: 'Home',
-      icon: 'home',
-      route: '/',
-      badgeCount: pendingCount,
-    },
-    {
       id: 'learn',
       highlightIds: ['learn'],
       label: 'Learn',
@@ -52,6 +44,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
       label: 'Play',
       icon: 'play-circle',
       route: '/play',
+      badgeCount: pendingCount,
     },
     {
       id: 'tournaments',
