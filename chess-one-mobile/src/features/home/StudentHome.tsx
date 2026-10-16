@@ -10,33 +10,12 @@ import { StudentProgressReportModal } from '../../components/modals/StudentProgr
 export const StudentHome = () => {
   const { user } = useAuthStore();
   const router = useRouter();
-  const [reportModalVisible, setReportModalVisible] = useState(false);
   
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aarav';
 
   return (
     <View style={styles.container}>
-      {/* 1. Open My Progress Report Banner */}
-      <View style={styles.reportBannerCard}>
-        <View style={styles.reportBannerLeft}>
-          <View style={styles.reportIconCircle}>
-            <Text style={{ fontSize: 16 }}>📊</Text>
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.reportBannerTitle}>Student progress report</Text>
-            <Text style={styles.reportBannerSub}>Learning observations, weekly practice & school tasks</Text>
-          </View>
-        </View>
-        <TouchableOpacity
-          style={styles.openReportBtn}
-          activeOpacity={0.8}
-          onPress={() => setReportModalVisible(true)}
-        >
-          <Text style={styles.openReportBtnText}>Open my progress report</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 2. YOUR CHESS WORLD Section */}
+      {/* 1. YOUR CHESS WORLD Section */}
       <View style={styles.whiteCard}>
         <View style={styles.worldHeader}>
           <View>
@@ -290,13 +269,6 @@ export const StudentHome = () => {
           <Text style={styles.quickBtnSub}>PvP room match</Text>
         </TouchableOpacity>
       </View>
-
-      {/* Student Progress Report Modal */}
-      <StudentProgressReportModal
-        visible={reportModalVisible}
-        onClose={() => setReportModalVisible(false)}
-        studentName={firstName}
-      />
     </View>
   );
 };

@@ -24,6 +24,7 @@ import { roleStore } from '../features/roles/roleStore';
 import { Game } from '../types/game.types';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
 import { Feather } from '@expo/vector-icons';
+import { StudentProgressReportModal } from '../components/modals/StudentProgressReportModal';
 
 // AI Coach contextual advice for losses
 const getAiCoachSuggestion = (game: Game, isUserWhite: boolean): string => {
@@ -60,6 +61,7 @@ export default function LoginScreen() {
   const [historyFilter, setHistoryFilter] = useState<'all' | 'wins' | 'losses'>('all');
   const [historyExpanded, setHistoryExpanded] = useState(true);
   const [showAllHistory, setShowAllHistory] = useState(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
 
   const currentUserId = user?.id ? parseInt(String(user.id), 10) : null;
 
@@ -223,6 +225,28 @@ export default function LoginScreen() {
                   {chessOneToken ? 'Connected & Ready to Play' : 'Signed In'}
                 </Text>
               </View>
+            </View>
+
+            {/* Student Progress Report Banner */}
+            <View style={styles.reportBannerCard}>
+              <View style={styles.reportBannerLeft}>
+                <View style={styles.reportIconCircle}>
+                  <Text style={{ fontSize: 16 }}>📊</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.reportBannerTitle}>Student progress report</Text>
+                  <Text style={styles.reportBannerSub}>
+                    Learning observations, weekly practice & school tasks
+                  </Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={styles.openReportBtn}
+                activeOpacity={0.8}
+                onPress={() => setReportModalVisible(true)}
+              >
+                <Text style={styles.openReportBtnText}>Open my progress report</Text>
+              </TouchableOpacity>
             </View>
 
             {/* 2. Player Career Stats Grid */}
@@ -634,6 +658,13 @@ export default function LoginScreen() {
 
       {/* Persistent Bottom Footer */}
       {isAuthenticated && <AppFooter activeTab="play" />}
+
+      {/* Student Progress Report Modal */}
+      <StudentProgressReportModal
+        visible={reportModalVisible}
+        onClose={() => setReportModalVisible(false)}
+        studentName={user?.name}
+      />
     </SafeAreaView>
   );
 }
@@ -667,6 +698,53 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
     ...SHADOWS.soft,
+  },
+  reportBannerCard: {
+    backgroundColor: '#EBF4EC',
+    borderRadius: SIZES.radiusCard,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#C7E2C9',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    ...SHADOWS.soft,
+  },
+  reportBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  reportIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: COLORS.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reportBannerTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  reportBannerSub: {
+    fontSize: 10,
+    color: COLORS.textBody,
+    marginTop: 2,
+  },
+  openReportBtn: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: SIZES.radiusButton,
+  },
+  openReportBtnText: {
+    color: COLORS.white,
+    fontSize: 11,
+    fontWeight: '700',
   },
   avatarRow: {
     flexDirection: 'row',
