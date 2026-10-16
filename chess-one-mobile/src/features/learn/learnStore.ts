@@ -2,19 +2,25 @@ import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface LearnState {
-  completedLevels: Record<number, number>; // levelId -> stars
-  questProgress: Record<string, number>;
-  collectedRewards: string[];
+  completedLevels: Record<number, number>; // levelId -> stars (1-3)
+  questProgress: Record<string, number>; // questId -> count
+  collectedRewards: string[]; // questIds collected
   coachPersonality: 'Playful' | 'Calm';
+  coachPracticed: boolean;
+  gameReviewed: boolean;
+  totalXp: number;
 }
 
-const STORAGE_KEY = '@chessone_learn_state';
+const STORAGE_KEY = '@chessone_learn_state_v2';
 
 const defaultState: LearnState = {
-  completedLevels: { 1: 3, 2: 3, 3: 2 }, // Sample starting data
+  completedLevels: { 1: 3, 2: 3, 3: 2 }, // sample starter progress (Level 4 unlocked)
   questProgress: { q1: 1, q2: 0, q3: 0 },
   collectedRewards: [],
   coachPersonality: 'Playful',
+  coachPracticed: false,
+  gameReviewed: false,
+  totalXp: 180,
 };
 
 class LearnStore {
@@ -34,7 +40,13 @@ class LearnStore {
     try {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
       if (stored) {
-        this.state = JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        this.state = {
+          ...defaultState,
+          ...parsed,
+          completedLevels: { ...defaultState.completedLevels, ...(parsed.completedLevels || {}) },
+          questProgress: { ...defaultState.questProgress, ...(parsed.questProgress || {}) },
+        };
       }
     } catch (e) {
       console.warn('Failed to load learn state:', e);
@@ -53,31 +65,84 @@ class LearnStore {
     this.notify();
   }
 
-  getState() {
+  getState(): LearnState {
     return this.state;
   }
 
-  getIsLoaded() {
+  getIsLoaded(): boolean {
     return this.isLoaded;
   }
 
-  completeLevel(levelId: number, stars: number) {
-    const existing = this.state.completedLevels[levelId] || 0;
-    if (stars > existing) {
-      this.state.completedLevels = { ...this.state.completedLevels, [levelId]: stars };
-      this.saveState();
-    }
+  getTotalStars(): number {
+    return Object.values(this.state.completedLevels).reduce((acc, stars) => acc + (stars || 0), 0);
   }
 
-  collectReward(questId: string) {
+  completeLevel(levelId: number, stars: number, xpReward: number = 20) {
+    const existingStars = this.state.completedLevels[levelId] || 0;
+    const isNewCompletion = !this.state.completedLevels[levelId];
+
+    const updatedLevels = {
+      ...this.state.completedLevels,
+      [levelId]: Math.max(existingStars, stars),
+    };
+
+    const newXp = isNewCompletion ? this.state.totalXp + xpReward : this.state.totalXp;
+    const updatedQuests = {
+      ...this.state.questProgress,
+      q1: Math.min((this.state.questProgress.q1 || 0) + 1, 1),
+    };
+
+    this.state = {
+      ...this.state,
+      completedLevels: updatedLevels,
+      totalXp: newXp,
+      questProgress: updatedQuests,
+    };
+    this.saveState();
+  }
+
+  recordCoachPractice() {
+    this.state = {
+      ...this.state,
+      coachPracticed: true,
+      questProgress: {
+        ...this.state.questProgress,
+        q2: 1,
+      },
+      totalXp: this.state.totalXp + 15,
+    };
+    this.saveState();
+  }
+
+  recordGameReview() {
+    this.state = {
+      ...this.state,
+      gameReviewed: true,
+      questProgress: {
+        ...this.state.questProgress,
+        q3: 1,
+      },
+      totalXp: this.state.totalXp + 25,
+    };
+    this.saveState();
+  }
+
+  collectReward(questId: string, xpBonus: number = 50) {
     if (!this.state.collectedRewards.includes(questId)) {
-      this.state.collectedRewards = [...this.state.collectedRewards, questId];
+      this.state = {
+        ...this.state,
+        collectedRewards: [...this.state.collectedRewards, questId],
+        totalXp: this.state.totalXp + xpBonus,
+      };
       this.saveState();
     }
   }
 
   setCoachPersonality(p: 'Playful' | 'Calm') {
-    this.state.coachPersonality = p;
+    this.state = {
+      ...this.state,
+      coachPersonality: p,
+    };
     this.saveState();
   }
 
@@ -99,6 +164,6 @@ export function useLearnStore(): LearnState {
   return useSyncExternalStore(
     (callback) => learnStore.subscribe(callback),
     () => learnStore.getState(),
-    () => learnStore.getState()
+    () => defaultState
   );
 }
