@@ -8,18 +8,20 @@ export interface LearnState {
   coachPersonality: 'Playful' | 'Calm';
   coachPracticed: boolean;
   gameReviewed: boolean;
+  solvedPuzzles: string[]; // puzzleIds solved
   totalXp: number;
 }
 
-const STORAGE_KEY = '@chessone_learn_state_v2';
+const STORAGE_KEY = '@chessone_learn_state_v3';
 
 const defaultState: LearnState = {
   completedLevels: { 1: 3, 2: 3, 3: 2 }, // sample starter progress (Level 4 unlocked)
-  questProgress: { q1: 1, q2: 0, q3: 0 },
+  questProgress: { q1: 1, q2: 0, q3: 0, q4: 0 },
   collectedRewards: [],
   coachPersonality: 'Playful',
   coachPracticed: false,
   gameReviewed: false,
+  solvedPuzzles: [],
   totalXp: 180,
 };
 
@@ -46,6 +48,7 @@ class LearnStore {
           ...parsed,
           completedLevels: { ...defaultState.completedLevels, ...(parsed.completedLevels || {}) },
           questProgress: { ...defaultState.questProgress, ...(parsed.questProgress || {}) },
+          solvedPuzzles: Array.isArray(parsed.solvedPuzzles) ? parsed.solvedPuzzles : [],
         };
       }
     } catch (e) {
@@ -123,6 +126,23 @@ class LearnStore {
         q3: 1,
       },
       totalXp: this.state.totalXp + 25,
+    };
+    this.saveState();
+  }
+
+  recordPuzzleSolved(puzzleId: string, xpReward: number = 30) {
+    const isNew = !this.state.solvedPuzzles.includes(puzzleId);
+    const updatedList = isNew ? [...this.state.solvedPuzzles, puzzleId] : this.state.solvedPuzzles;
+    const newXp = isNew ? this.state.totalXp + xpReward : this.state.totalXp;
+
+    this.state = {
+      ...this.state,
+      solvedPuzzles: updatedList,
+      totalXp: newXp,
+      questProgress: {
+        ...this.state.questProgress,
+        q4: 1,
+      },
     };
     this.saveState();
   }

@@ -4,16 +4,16 @@ import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { useLearnStore, learnStore } from '../../features/learn/learnStore';
-import { LEARN_LEVELS, WEEKLY_QUESTS, BADGES_DATA } from '../../data/learn';
+import { LEARN_LEVELS, WEEKLY_QUESTS, BADGES_DATA, CHESS_PUZZLES } from '../../data/learn';
 import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
-const CHIPS = ['Level journey', 'Foundation', 'Developing', 'Advanced', 'Learn by game'];
+const CHIPS = ['Level journey', 'Tactics & Puzzles', 'Foundation', 'Developing', 'Advanced', 'Learn by game'];
 
 export default function LearnScreen() {
   const router = useRouter();
   const [activeChip, setActiveChip] = useState(CHIPS[0]);
-  const { completedLevels, questProgress, collectedRewards, coachPracticed, gameReviewed, totalXp } = useLearnStore();
+  const { completedLevels, questProgress, collectedRewards, coachPracticed, gameReviewed, solvedPuzzles, totalXp } = useLearnStore();
 
   // Compute total stars earned
   const totalStars = useMemo(() => {
@@ -52,6 +52,10 @@ export default function LearnScreen() {
           <Text style={styles.statIcon}>⚡</Text>
           <Text style={[styles.statText, { color: COLORS.primary }]}>{totalXp} XP</Text>
         </View>
+        <View style={[styles.statBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+          <Text style={styles.statIcon}>🧩</Text>
+          <Text style={[styles.statText, { color: '#92400E' }]}>{solvedPuzzles.length}/{CHESS_PUZZLES.length} Puzzles</Text>
+        </View>
         <View style={[styles.statBadge, { backgroundColor: '#F0F3EE', borderColor: '#E3E8DE' }]}>
           <Text style={styles.statIcon}>🏆</Text>
           <Text style={[styles.statText, { color: COLORS.textHeading }]}>{completedCount}/{LEARN_LEVELS.length} Done</Text>
@@ -64,10 +68,22 @@ export default function LearnScreen() {
           {CHIPS.map((chip) => (
             <TouchableOpacity
               key={chip}
-              style={[styles.chip, activeChip === chip && styles.activeChip]}
+              style={[
+                styles.chip,
+                activeChip === chip && styles.activeChip,
+                chip === 'Tactics & Puzzles' && activeChip !== chip && { borderColor: '#F59E0B', borderWidth: 1, backgroundColor: '#FEF3C7' },
+              ]}
               onPress={() => setActiveChip(chip)}
             >
-              <Text style={[styles.chipText, activeChip === chip && styles.activeChipText]}>{chip}</Text>
+              <Text
+                style={[
+                  styles.chipText,
+                  activeChip === chip && styles.activeChipText,
+                  chip === 'Tactics & Puzzles' && activeChip !== chip && { color: '#92400E', fontWeight: '700' },
+                ]}
+              >
+                {chip === 'Tactics & Puzzles' ? '🧩 ' + chip : chip}
+              </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -79,17 +95,28 @@ export default function LearnScreen() {
         {/* ======================================================== */}
         {activeChip === 'Level journey' && (
           <View style={styles.tabContent}>
-            {/* World 1 Banner */}
-            <View style={styles.worldSelector}>
-              <View>
-                <Text style={styles.eyebrow}>WORLD 1 OF 3</Text>
-                <Text style={styles.worldTitle}>Piece Explorers</Text>
-                <Text style={styles.worldDesc}>Master the movement and power of every piece</Text>
+            
+            {/* NEW: DAILY PUZZLE HIGHLIGHT CARD */}
+            <TouchableOpacity
+              style={styles.dailyPuzzleBanner}
+              onPress={() => router.push('/learn/puzzle' as any)}
+              activeOpacity={0.85}
+            >
+              <View style={{ flex: 1, gap: 2 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.dailyPuzzleTag}>DAILY TACTIC</Text>
+                  <Text style={styles.dailyPuzzleSolvedTag}>
+                    {solvedPuzzles.length > 0 ? `${solvedPuzzles.length} Solved ✓` : '10 Available'}
+                  </Text>
+                </View>
+                <Text style={styles.dailyPuzzleTitle}>White to move · Mate in 1</Text>
+                <Text style={styles.dailyPuzzleSub}>Spot the winning Queen checkmate! · <Text style={{ fontWeight: '800', color: '#1E4B3A' }}>+30 XP</Text></Text>
               </View>
-              <View style={styles.worldIconBox}>
-                <Text style={styles.worldIconText}>🗺️</Text>
+
+              <View style={styles.dailyPuzzleIconBox}>
+                <Text style={{ fontSize: 24 }}>🧩</Text>
               </View>
-            </View>
+            </TouchableOpacity>
 
             {/* Quick Action Cards: Coach Practice & Game Review */}
             <View style={styles.quickGrid}>
@@ -120,6 +147,18 @@ export default function LearnScreen() {
               </TouchableOpacity>
             </View>
 
+            {/* World 1 Banner */}
+            <View style={styles.worldSelector}>
+              <View>
+                <Text style={styles.eyebrow}>WORLD 1 OF 3</Text>
+                <Text style={styles.worldTitle}>Piece Explorers</Text>
+                <Text style={styles.worldDesc}>Master the movement and power of every piece</Text>
+              </View>
+              <View style={styles.worldIconBox}>
+                <Text style={styles.worldIconText}>🗺️</Text>
+              </View>
+            </View>
+
             {/* Zig-Zag Level Journey Nodes */}
             <View style={styles.whiteCard}>
               <View style={styles.sectionHeaderRow}>
@@ -135,8 +174,6 @@ export default function LearnScreen() {
                   const stars = completedLevels[lvl.id] || 0;
                   const isUnlocked = lvl.id === 1 || !!completedLevels[lvl.id - 1];
                   const isCurrent = isUnlocked && !isCompleted;
-
-                  // Alternate alignment for zig-zag feel
                   const isEven = index % 2 === 0;
 
                   return (
@@ -231,7 +268,9 @@ export default function LearnScreen() {
                     ? Math.min(completedCount, quest.target)
                     : quest.id === 'q2'
                     ? coachPracticed ? 1 : 0
-                    : gameReviewed ? 1 : 0;
+                    : quest.id === 'q3'
+                    ? gameReviewed ? 1 : 0
+                    : Math.min(solvedPuzzles.length, quest.target);
                 const isDone = currentVal >= quest.target;
 
                 return (
@@ -285,6 +324,7 @@ export default function LearnScreen() {
                     coachPracticed,
                     gameReviewed,
                     totalStars,
+                    puzzlesSolvedCount: solvedPuzzles.length,
                   });
 
                   return (
@@ -303,11 +343,11 @@ export default function LearnScreen() {
                       >
                         <Feather
                           name={isUnlocked ? badge.icon : 'lock'}
-                          size={22}
+                          size={20}
                           color={isUnlocked ? COLORS.white : COLORS.border}
                         />
                       </View>
-                      <Text style={styles.badgeLabel}>{badge.title}</Text>
+                      <Text style={styles.badgeLabel} numberOfLines={1}>{badge.title}</Text>
                       <Text
                         style={[
                           styles.badgeStatus,
@@ -325,7 +365,72 @@ export default function LearnScreen() {
         )}
 
         {/* ======================================================== */}
-        {/* TAB 2: LEARN BY GAME                                     */}
+        {/* TAB 2: TACTICS & PUZZLES (ALL 10 PUZZLES LIST)          */}
+        {/* ======================================================== */}
+        {activeChip === 'Tactics & Puzzles' && (
+          <View style={styles.tabContent}>
+            <View style={styles.worldSelector}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.eyebrow}>TACTICS ARENA · 10 PUZZLES</Text>
+                <Text style={styles.worldTitle}>Master Tactical Motifs</Text>
+                <Text style={styles.worldDesc}>Checkmates, knight forks, pins, and skewers.</Text>
+              </View>
+              <TouchableOpacity
+                style={styles.randomLaunchBtn}
+                onPress={() => router.push('/learn/puzzle' as any)}
+              >
+                <Text style={styles.randomLaunchText}>Play 🎲</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ gap: 10 }}>
+              {CHESS_PUZZLES.map((puz) => {
+                const isSolved = solvedPuzzles.includes(puz.id);
+
+                return (
+                  <TouchableOpacity
+                    key={puz.id}
+                    style={[
+                      styles.whiteCard,
+                      styles.puzzleListItem,
+                      isSolved && { borderColor: COLORS.progressFill, backgroundColor: '#F0FFF4' },
+                    ]}
+                    onPress={() => router.push(`/learn/puzzle?id=${puz.id}` as any)}
+                  >
+                    <View style={styles.puzzleNumberBox}>
+                      <Text style={styles.puzzleNumberText}>#{puz.number}</Text>
+                    </View>
+
+                    <View style={{ flex: 1 }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={styles.puzzleThemePill}>{puz.theme}</Text>
+                        <Text style={styles.puzzleRatingPill}>{puz.rating} ELO</Text>
+                      </View>
+                      <Text style={styles.puzzleListTitle}>{puz.title}</Text>
+                      <Text style={styles.puzzleListSub} numberOfLines={1}>{puz.subtitle}</Text>
+                    </View>
+
+                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                      <Text style={styles.puzzleXpText}>+{puz.xpReward} XP</Text>
+                      {isSolved ? (
+                        <View style={styles.solvedBadge}>
+                          <Text style={styles.solvedBadgeText}>Solved ✓</Text>
+                        </View>
+                      ) : (
+                        <View style={styles.playBadge}>
+                          <Text style={styles.playBadgeText}>Play ›</Text>
+                        </View>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+        )}
+
+        {/* ======================================================== */}
+        {/* TAB 3: LEARN BY GAME                                     */}
         {/* ======================================================== */}
         {activeChip === 'Learn by game' && (
           <View style={styles.tabContent}>
@@ -346,7 +451,7 @@ export default function LearnScreen() {
         )}
 
         {/* ======================================================== */}
-        {/* TABS 3, 4, 5: FOUNDATION / DEVELOPING / ADVANCED         */}
+        {/* TABS 4, 5, 6: FOUNDATION / DEVELOPING / ADVANCED         */}
         {/* ======================================================== */}
         {['Foundation', 'Developing', 'Advanced'].includes(activeChip) && (
           <View style={styles.tabContent}>
@@ -388,9 +493,10 @@ const styles = StyleSheet.create({
   statsBar: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 8,
+    flexWrap: 'wrap',
+    gap: 6,
     paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
     backgroundColor: COLORS.white,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
@@ -399,15 +505,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 16,
     backgroundColor: '#FEF3C7',
     borderWidth: 1,
     borderColor: '#FDE68A',
   },
-  statIcon: { fontSize: 12 },
-  statText: { fontSize: 12, fontWeight: '700', color: '#92400E' },
+  statIcon: { fontSize: 11 },
+  statText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
   chipScrollWrapper: {
     backgroundColor: COLORS.white,
     paddingVertical: 8,
@@ -431,6 +537,42 @@ const styles = StyleSheet.create({
     fontWeight: FONTS.eyebrowWeight,
     letterSpacing: FONTS.eyebrowSpacing,
     color: COLORS.primary,
+  },
+  dailyPuzzleBanner: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FCD34D',
+    borderWidth: 1.5,
+    borderRadius: SIZES.radiusCard,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...SHADOWS.soft,
+  },
+  dailyPuzzleTag: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: COLORS.white,
+    backgroundColor: '#D97706',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    letterSpacing: 0.5,
+  },
+  dailyPuzzleSolvedTag: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  dailyPuzzleTitle: { fontSize: 15, fontWeight: '800', color: '#78350F' },
+  dailyPuzzleSub: { fontSize: 11, color: '#92400E' },
+  dailyPuzzleIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#FDE68A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   worldSelector: {
     backgroundColor: COLORS.primary,
@@ -562,19 +704,19 @@ const styles = StyleSheet.create({
   badgesGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
   },
   badgeItem: { flex: 1, alignItems: 'center', gap: 4 },
   badgeCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
     ...SHADOWS.soft,
   },
-  badgeLabel: { fontSize: 10, fontWeight: '700', color: COLORS.textHeading, textAlign: 'center' },
-  badgeStatus: { fontSize: 9, color: COLORS.textBody },
+  badgeLabel: { fontSize: 9, fontWeight: '700', color: COLORS.textHeading, textAlign: 'center' },
+  badgeStatus: { fontSize: 8, color: COLORS.textBody },
   taskTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textHeading },
   subtitle: { fontSize: 13, color: COLORS.textBody, marginTop: 2 },
   reviewLaunchBtn: {
@@ -599,4 +741,57 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  randomLaunchBtn: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  randomLaunchText: { fontSize: 12, fontWeight: '800', color: '#92400E' },
+  puzzleListItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+  },
+  puzzleNumberBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F0F3EE',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  puzzleNumberText: { fontSize: 12, fontWeight: '800', color: COLORS.textHeading },
+  puzzleThemePill: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#92400E',
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 4,
+  },
+  puzzleRatingPill: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: COLORS.textBody,
+  },
+  puzzleListTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textHeading, marginTop: 2 },
+  puzzleListSub: { fontSize: 11, color: COLORS.textBody },
+  puzzleXpText: { fontSize: 11, fontWeight: '800', color: COLORS.primary },
+  solvedBadge: {
+    backgroundColor: '#E4EEDB',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  solvedBadgeText: { fontSize: 10, fontWeight: '800', color: COLORS.primary },
+  playBadge: {
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  playBadgeText: { fontSize: 10, fontWeight: '800', color: COLORS.white },
 });

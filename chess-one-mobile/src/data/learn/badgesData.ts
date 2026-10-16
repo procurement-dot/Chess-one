@@ -9,6 +9,7 @@ export interface BadgeItem {
     coachPracticed: boolean;
     gameReviewed: boolean;
     totalStars: number;
+    puzzlesSolvedCount?: number;
   }) => boolean;
 }
 
@@ -37,6 +38,14 @@ export const BADGES_DATA: BadgeItem[] = [
     checkUnlocked: ({ coachPracticed }) => coachPracticed,
   },
   {
+    id: 'tactics_wizard',
+    title: 'Tactics Wizard',
+    description: 'Solve your first chess tactic puzzle.',
+    icon: 'zap',
+    bgColor: '#F59E0B', // amber
+    checkUnlocked: ({ puzzlesSolvedCount }) => (puzzlesSolvedCount || 0) >= 1,
+  },
+  {
     id: 'piece_explorer',
     title: 'Piece explorer',
     description: 'Master all 6 basic piece movement lessons.',
@@ -49,7 +58,7 @@ export const BADGES_DATA: BadgeItem[] = [
     title: 'Game analyst',
     description: 'Step through an annotated master opening game.',
     icon: 'star',
-    bgColor: '#EAB308', // amber
+    bgColor: '#EAB308', // yellow
     checkUnlocked: ({ gameReviewed }) => gameReviewed,
   },
 ];

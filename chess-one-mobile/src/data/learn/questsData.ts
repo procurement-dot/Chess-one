@@ -35,4 +35,11 @@ export const WEEKLY_QUESTS: QuestItem[] = [
     target: 1,
     xpReward: 75,
   },
+  {
+    id: 'q4',
+    title: 'Solve a daily tactic puzzle',
+    subtitle: 'Tactics & pattern mastery',
+    target: 1,
+    xpReward: 50,
+  },
 ];

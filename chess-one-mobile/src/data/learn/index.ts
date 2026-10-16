@@ -3,3 +3,4 @@ export * from './questsData';
 export * from './badgesData';
 export * from './coachData';
 export * from './gameReviewsData';
+export * from './puzzlesData';
