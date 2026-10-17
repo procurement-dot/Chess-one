@@ -48,13 +48,12 @@ export default function JoinMatchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
+      {/* Top Header - Fixed & Branded with ChessOne Logo */}
       <AppHeader
-        title="Join Match"
-        subtitle="Connect with 6-digit room code"
-        showBack={true}
+        showLogo={true}
+        showBack={false}
       />
 
       <KeyboardAvoidingView

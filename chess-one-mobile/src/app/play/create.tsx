@@ -220,13 +220,12 @@ export default function CreateMatchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
-      {/* Top Header */}
+      {/* Top Header - Fixed & Branded with ChessOne Logo */}
       <AppHeader
-        title="Match Setup"
-        subtitle={gameType === 'PLAYER_VS_AI' ? 'Play vs Computer' : 'Multiplayer Match'}
-        showBack={true}
+        showLogo={true}
+        showBack={false}
       />
 
       <ScrollView

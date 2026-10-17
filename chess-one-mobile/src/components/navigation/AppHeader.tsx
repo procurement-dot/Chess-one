@@ -20,6 +20,7 @@ interface AppHeaderProps {
   showBack?: boolean;
   onBack?: () => void;
   rightAction?: 'profile' | 'none';
+  showLogo?: boolean;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -28,6 +29,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   showBack = false,
   onBack,
   rightAction = 'profile',
+  showLogo,
 }) => {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -58,7 +60,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
       <View style={styles.contentRow}>
         {/* Left: Back button OR Brand Icon */}
         <View style={styles.leftSection}>
-          {showBack ? (
+          {showLogo || !showBack ? (
+            <TouchableOpacity
+              style={styles.brandContainer}
+              activeOpacity={0.8}
+              onPress={() => router.replace('/' as any)}
+            >
+              <Image 
+                source={require('../../../assets/images/chessone-logo.png')} 
+                style={{ width: 140, height: 40, resizeMode: 'contain' }}
+              />
+            </TouchableOpacity>
+          ) : (
             <TouchableOpacity
               style={styles.backButton}
               activeOpacity={0.7}
@@ -75,17 +88,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                   </Text>
                 ) : null}
               </View>
-            </TouchableOpacity>
-          ) : (
-            <TouchableOpacity
-              style={styles.brandContainer}
-              activeOpacity={0.8}
-              onPress={() => router.replace('/' as any)}
-            >
-              <Image 
-                source={require('../../../assets/images/chessone-logo.png')} 
-                style={{ width: 140, height: 40, resizeMode: 'contain' }}
-              />
             </TouchableOpacity>
           )}
         </View>
@@ -171,6 +173,7 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 10,
+    zIndex: 100,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -179,12 +182,12 @@ const styles = StyleSheet.create({
         shadowRadius: 4,
       },
       android: {
-        elevation: 3,
+        elevation: 4,
       },
       web: {
         position: 'sticky' as any,
         top: 0,
-        zIndex: 50,
+        zIndex: 100,
       },
     }),
   },

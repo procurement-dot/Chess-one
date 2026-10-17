@@ -166,11 +166,10 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Top Consistent Header */}
+      {/* Top Consistent Header - Fixed & Branded with ChessOne Logo */}
       <AppHeader
-        title={isAuthenticated ? 'Career Records' : 'Sign In'}
-        subtitle={isAuthenticated ? 'Match Insights & Stats' : 'Join ChessOne'}
-        showBack={true}
+        showLogo={true}
+        showBack={false}
       />
 
       <ScrollView

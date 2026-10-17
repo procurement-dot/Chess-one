@@ -8,7 +8,9 @@ import {
   ScrollView,
   StatusBar,
   RefreshControl,
+  Modal,
 } from 'react-native';
+import { Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { authStore, useAuthStore } from '../../store/authStore';
@@ -18,6 +20,7 @@ import { gameSocket } from '../../socket/game.socket';
 import { GameInvitation } from '../../types/game.types';
 import { IncomingChallengeModal } from '../../components/game/IncomingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
+import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
 
 export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
@@ -48,6 +51,9 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
     blackPlayerAvatar?: string | null;
     timeControl?: string;
   } | null>(null);
+
+  // Fair-Play modal state
+  const [fairPlayModalVisible, setFairPlayModalVisible] = useState(false);
 
   // Connect socket and listen for live incoming challenge notifications
   useEffect(() => {
@@ -156,39 +162,13 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
-      {/* Top Header */}
-      <View style={styles.header}>
-        <View style={styles.userProfileRow}>
-          <View style={styles.avatarCircle}>
-            <Text style={styles.avatarLetter}>
-              {(user?.name || user?.email || 'U')[0].toUpperCase()}
-            </Text>
-          </View>
-          <View style={styles.titleCol}>
-            <View style={styles.nameAndIdRow}>
-              <Text style={styles.playerName} numberOfLines={1}>
-                {user?.name || user?.email || 'Chess Player'}
-              </Text>
-              {user?.id && (
-                <View style={styles.idChip}>
-                  <Text style={styles.idChipText}>ID: #{user.id}</Text>
-                </View>
-              )}
-            </View>
-            <Text style={styles.subtitle}>Select a game mode to begin playing</Text>
-          </View>
-        </View>
-
-        <TouchableOpacity
-          style={styles.switchAccountButton}
-          activeOpacity={0.7}
-          onPress={handleSignOut}
-        >
-          <Text style={styles.switchAccountText}>Sign Out</Text>
-        </TouchableOpacity>
-      </View>
+      {/* Header - Fixed & Branded with ChessOne Logo */}
+      <AppHeader
+        showLogo={true}
+        showBack={false}
+      />
 
       <ScrollView
         style={styles.content}
@@ -204,48 +184,198 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
           ) : undefined
         }
       >
-        {/* Section Heading: Game Modes */}
-        <Text style={styles.sectionTitle}>Game Modes</Text>
+        {/* Play World Header */}
+        <View style={styles.heroSection}>
+          <Text style={styles.eyebrow}>YOUR CHESS WORLD</Text>
+          <Text style={styles.heroTitle}>Choose How You Want to Play</Text>
+          <Text style={styles.heroSub}>
+            Friendly practice with Coach One, games with school classmates, or fair-play competitive matches.
+          </Text>
+        </View>
 
-        {/* Primary Action Cards */}
-        <View style={styles.actionsGrid}>
-          {/* Play vs AI */}
-          <TouchableOpacity
-            style={[styles.actionCard, styles.aiCard]}
-            activeOpacity={0.8}
-            onPress={() => router.push('/play/create?mode=ai' as any)}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>🤖</Text>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>Instant Play</Text>
+        {/* 3 Core Interactive Play Cards */}
+        <View style={styles.playCardsList}>
+          {/* CARD 1: ♞ Play with Coach One (Computer AI & Guided Practice) */}
+          <View style={[styles.playCard, styles.coachOneCard]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBoxCoach}>
+                <Text style={styles.cardIconEmoji}>♞</Text>
+              </View>
+              <View style={styles.badgeCoach}>
+                <Text style={styles.badgeCoachText}>Guided Practice • AI</Text>
               </View>
             </View>
-            <Text style={styles.cardTitle}>Play vs Computer (AI)</Text>
-            <Text style={styles.cardDesc}>
-              Practice against AI engine with Easy (~800), Medium (~1400), or Hard (~2000) levels.
-            </Text>
-          </TouchableOpacity>
 
-          {/* Create Match (PvP) */}
-          <TouchableOpacity
-            style={[styles.actionCard, styles.pvpCard]}
-            activeOpacity={0.8}
-            onPress={() => router.push('/play/create?mode=pvp' as any)}
-          >
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardIcon}>⚔️</Text>
-              <View style={[styles.badge, styles.pvpBadge]}>
-                <Text style={styles.badgeText}>Custom Match</Text>
+            <Text style={styles.cardTitle}>Play with Coach One</Text>
+            <Text style={styles.cardDesc}>
+              Practice against AI engine with gentle guidance, hints, and undo. Choose Easy (~800), Medium (~1400), or Hard (~2000).
+            </Text>
+
+            <View style={styles.cardActionRow}>
+              <TouchableOpacity
+                style={styles.primaryActionBtn}
+                activeOpacity={0.8}
+                onPress={() => router.push('/learn/practice' as any)}
+              >
+                <Feather name="play-circle" size={15} color={COLORS.white} />
+                <Text style={styles.primaryActionBtnText}>Coach One Practice</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryActionBtn}
+                activeOpacity={0.8}
+                onPress={() => router.push('/play/create?mode=ai' as any)}
+              >
+                <Feather name="settings" size={14} color={COLORS.primary} />
+                <Text style={styles.secondaryActionBtnText}>Custom AI Match</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* CARD 2: ♧ Play with Classmates (School Multiplayer & Rooms) */}
+          <View style={[styles.playCard, styles.classmatesCard]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBoxClassmates}>
+                <Text style={styles.cardIconEmoji}>♧</Text>
+              </View>
+              <View style={styles.badgeClassmates}>
+                <Text style={styles.badgeClassmatesText}>School Club • Unrated</Text>
               </View>
             </View>
-            <Text style={styles.cardTitle}>Custom Match Setup</Text>
+
+            <Text style={styles.cardTitle}>Play with Classmates</Text>
             <Text style={styles.cardDesc}>
-              Choose time control, invite online friends, or create a room code.
+              Challenge friends from Greenwood School in private, safe unrated rooms. Share a 6-digit match code or browse online classmates.
             </Text>
-          </TouchableOpacity>
+
+            <View style={styles.cardActionRow}>
+              <TouchableOpacity
+                style={[styles.primaryActionBtn, { backgroundColor: '#194E40' }]}
+                activeOpacity={0.8}
+                onPress={() => router.push('/community' as any)}
+              >
+                <Feather name="users" size={15} color={COLORS.white} />
+                <Text style={styles.primaryActionBtnText}>Classmates Circle</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryActionBtn}
+                activeOpacity={0.8}
+                onPress={() => router.push('/play/create?mode=pvp' as any)}
+              >
+                <Feather name="plus-circle" size={14} color={COLORS.primary} />
+                <Text style={styles.secondaryActionBtnText}>Create Room</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryActionBtn}
+                activeOpacity={0.8}
+                onPress={() => router.push('/play/join' as any)}
+              >
+                <Feather name="key" size={14} color={COLORS.primary} />
+                <Text style={styles.secondaryActionBtnText}>Join Code</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* CARD 3: ♜ Competitive Matchmaking (Fair-Play Rated Space) */}
+          <View style={[styles.playCard, styles.competitiveCard]}>
+            <View style={styles.cardHeaderRow}>
+              <View style={styles.cardIconBoxCompetitive}>
+                <Text style={styles.cardIconEmoji}>♜</Text>
+              </View>
+              <View style={styles.badgeCompetitive}>
+                <Text style={styles.badgeCompetitiveText}>Rated • Fair-Play</Text>
+              </View>
+            </View>
+
+            <Text style={styles.cardTitle}>Competitive Matchmaking</Text>
+            <Text style={styles.cardDesc}>
+              Official rated matchmaking and school tournaments. Fair-play space: Coach hints and engine assistance are strictly disabled.
+            </Text>
+
+            <View style={styles.cardActionRow}>
+              <TouchableOpacity
+                style={[styles.primaryActionBtn, { backgroundColor: '#D9532F' }]}
+                activeOpacity={0.8}
+                onPress={() => setFairPlayModalVisible(true)}
+              >
+                <Feather name="shield" size={15} color={COLORS.white} />
+                <Text style={styles.primaryActionBtnText}>Fair-Play Match</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.secondaryActionBtn}
+                activeOpacity={0.8}
+                onPress={() => router.push('/tournaments' as any)}
+              >
+                <Feather name="award" size={14} color="#D9532F" />
+                <Text style={[styles.secondaryActionBtnText, { color: '#D9532F' }]}>Tournaments</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
       </ScrollView>
+
+      {/* Fair-Play Space Modal (Matching HTML Prototype) */}
+      <Modal
+        visible={fairPlayModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setFairPlayModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Competition is a fair-play space</Text>
+              <TouchableOpacity
+                onPress={() => setFairPlayModalVisible(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Feather name="x" size={20} color="#94A3B8" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.modalDesc}>
+              Coach hints and live engine assistance are strictly disabled during rated games and official tournaments to maintain fair play.
+            </Text>
+
+            <View style={styles.fairPlayBadgesRow}>
+              <View style={styles.fairPlayItem}>
+                <Text style={styles.fairPlayItemVal}>10 + 5</Text>
+                <Text style={styles.fairPlayItemSub}>Rapid format</Text>
+              </View>
+              <View style={styles.fairPlayItem}>
+                <Text style={styles.fairPlayItemVal}>School</Text>
+                <Text style={styles.fairPlayItemSub}>Group rating</Text>
+              </View>
+              <View style={styles.fairPlayItem}>
+                <Text style={[styles.fairPlayItemVal, { color: '#D9532F' }]}>Off</Text>
+                <Text style={styles.fairPlayItemSub}>Live hints</Text>
+              </View>
+            </View>
+
+            <View style={styles.modalActionsRow}>
+              <TouchableOpacity
+                style={styles.modalCancelBtn}
+                onPress={() => setFairPlayModalVisible(false)}
+              >
+                <Text style={styles.modalCancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmBtn}
+                onPress={() => {
+                  setFairPlayModalVisible(false);
+                  router.push('/play/create?mode=pvp' as any);
+                }}
+              >
+                <Text style={styles.modalConfirmBtnText}>Start Rated Match</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
 
       {/* Interactive Incoming Challenge Popup Modal (Alerts user when challenged) */}
       <IncomingChallengeModal
@@ -370,71 +500,252 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 32,
   },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+  heroSection: {
+    marginBottom: 16,
+  },
+  eyebrow: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: COLORS.primary,
+    letterSpacing: 0.8,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
     color: COLORS.textHeading,
-    marginBottom: 14,
-    letterSpacing: 0.2,
+    letterSpacing: -0.3,
+    marginBottom: 4,
   },
-  actionsGrid: {
-    gap: 12,
+  heroSub: {
+    fontSize: 12.5,
+    color: COLORS.textBody,
+    lineHeight: 18,
   },
-  actionCard: {
-    borderRadius: SIZES.radiusCard,
+  playCardsList: {
+    gap: 14,
+  },
+  playCard: {
+    borderRadius: 16,
     padding: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     backgroundColor: COLORS.white,
-    borderColor: COLORS.border,
     ...SHADOWS.soft,
+    gap: 8,
   },
-  aiCard: {
-    backgroundColor: COLORS.white,
+  coachOneCard: {
+    borderColor: '#D5E8CA',
+    backgroundColor: '#FCFEFB',
   },
-  pvpCard: {
-    backgroundColor: COLORS.white,
+  classmatesCard: {
+    borderColor: '#C8DDD7',
+    backgroundColor: '#FAFCFB',
   },
-  joinCard: {
-    backgroundColor: COLORS.white,
+  competitiveCard: {
+    borderColor: '#F5D3C8',
+    backgroundColor: '#FCFAFA',
   },
-  historyCard: {
-    backgroundColor: COLORS.white,
-  },
-  cardHeader: {
+  cardHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 2,
   },
-  cardIcon: {
-    fontSize: 26,
+  cardIconBoxCoach: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EBF3E7',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  badge: {
-    backgroundColor: COLORS.hero,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
+  cardIconBoxClassmates: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#E6F3EF',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  pvpBadge: {
-    backgroundColor: COLORS.hero,
+  cardIconBoxCompetitive: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FDEEE9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  joinBadge: {
-    backgroundColor: COLORS.hero,
-  },
-  badgeText: {
+  cardIconEmoji: {
+    fontSize: 20,
+    fontWeight: '700',
     color: COLORS.primary,
-    fontSize: 11,
+  },
+  badgeCoach: {
+    backgroundColor: '#EBF3E7',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeCoachText: {
+    color: COLORS.primary,
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  badgeClassmates: {
+    backgroundColor: '#E6F3EF',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeClassmatesText: {
+    color: '#194E40',
+    fontSize: 10.5,
+    fontWeight: '700',
+  },
+  badgeCompetitive: {
+    backgroundColor: '#FDEEE9',
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeCompetitiveText: {
+    color: '#D9532F',
+    fontSize: 10.5,
     fontWeight: '700',
   },
   cardTitle: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
     color: COLORS.textHeading,
-    marginBottom: 4,
   },
   cardDesc: {
-    fontSize: 13,
+    fontSize: 12.5,
     color: COLORS.textBody,
     lineHeight: 18,
+  },
+  cardActionRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 6,
+    flexWrap: 'wrap',
+  },
+  primaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  primaryActionBtnText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: COLORS.white,
+  },
+  secondaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 11,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  secondaryActionBtnText: {
+    fontSize: 11.5,
+    fontWeight: '700',
+    color: COLORS.textHeading,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    ...SHADOWS.soft,
+    gap: 14,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+    flex: 1,
+    marginRight: 10,
+  },
+  modalDesc: {
+    fontSize: 13,
+    color: COLORS.textBody,
+    lineHeight: 19,
+  },
+  fairPlayBadgesRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    justifyContent: 'space-between',
+  },
+  fairPlayItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  fairPlayItemVal: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+  },
+  fairPlayItemSub: {
+    fontSize: 10,
+    color: COLORS.textBody,
+    marginTop: 2,
+  },
+  modalActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  modalConfirmBtn: {
+    flex: 1.5,
+    backgroundColor: '#D9532F',
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmBtnText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: COLORS.white,
   },
 });

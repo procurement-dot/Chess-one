@@ -363,11 +363,10 @@ export default function CommunityScreen() {
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
       <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
+      {/* Header - Fixed & Branded with ChessOne Logo */}
       <AppHeader
-        title="Community"
-        subtitle="Real friends. Better moves."
-        showBack={true}
+        showLogo={true}
+        showBack={false}
       />
 
       {/* 4 Main Community Tabs */}
