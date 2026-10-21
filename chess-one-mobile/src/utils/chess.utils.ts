@@ -114,7 +114,17 @@ export const detectOpeningName = (moves: string[]): string => {
   if (m1 === 'Nf3') return 'Réti Opening';
   if (m1 === 'f4') return "Bird's Opening";
   if (m1 === 'b3') return 'Nimzo-Larsen Attack';
-  if (m1 === 'g3') return 'King’s Indian Attack';
+  if (m1 === 'g3') return "King's Indian Attack";
+  if (m1 === 'a4') return 'Ware Opening';
+  if (m1 === 'b4') return 'Sokolsky Opening';
+  if (m1 === 'g4') return 'Grob Opening';
+  if (m1 === 'h4') return 'Kadas Opening';
+  if (m1 === 'c3') return 'Saragossa Opening';
+  if (m1 === 'd3') return 'Mieses Opening';
+  if (m1 === 'e3') return "Van 't Kruijs Opening";
+  if (m1 === 'Nc3') return 'Dunst Opening';
+  if (m1 === 'Na3') return 'Durkin Opening';
+  if (m1 === 'Nh3') return 'Amar Opening';
 
   return 'Classical Opening';
 };

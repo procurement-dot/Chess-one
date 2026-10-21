@@ -208,6 +208,27 @@ class GameController {
       next(err);
     }
   }
+
+  async finishAiGame(req, res, next) {
+    try {
+      const { gameId } = req.params;
+      const { fen, pgn, result, winnerId, whiteTimeMs, blackTimeMs, moves } = req.body;
+      const data = await gameService.finishAiGame({
+        gameId,
+        userId: req.user.id,
+        fen,
+        pgn,
+        result,
+        winnerId,
+        whiteTimeMs,
+        blackTimeMs,
+        moves,
+      });
+      return success(res, data);
+    } catch (err) {
+      next(err);
+    }
+  }
 }
 
 module.exports = new GameController();

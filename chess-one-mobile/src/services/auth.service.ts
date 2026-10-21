@@ -1,6 +1,6 @@
 import * as WebBrowser from 'expo-web-browser';
 import { AuthSessionResult } from 'expo-auth-session';
-import { GoogleAuthResult, GoogleUser } from '../types/auth.types';
+import { BackendRole, GoogleAuthResult, GoogleUser } from '../types/auth.types';
 import { getApiBaseUrl } from './apiClient';
 
 // Complete any pending auth session if redirected back to web/app
@@ -182,12 +182,26 @@ export async function processAuthSessionResponse(
   return result;
 }
 
+export interface BackendAuthResult {
+  token: string;
+  user: {
+    id: number;
+    name: string;
+    email: string;
+    avatarUrl?: string | null;
+    role?: BackendRole;
+    rating?: number;
+    gamesPlayed?: number;
+    onboardingDone?: boolean;
+  };
+}
+
 /**
  * Call backend to exchange Google ID token for ChessOne JWT and user profile
  */
 export async function exchangeGoogleTokenWithBackend(
   idToken: string
-): Promise<{ token: string; user: { id: number; name: string; email: string; avatarUrl?: string | null } } | null> {
+): Promise<BackendAuthResult | null> {
   try {
     const response = await fetch(`${getApiBaseUrl()}/api/auth/google`, {
       method: 'POST',
@@ -223,7 +237,7 @@ export async function exchangeGoogleTokenWithBackend(
  */
 export async function devLoginWithBackend(
   userId: number = 1
-): Promise<{ token: string; user: { id: number; name: string; email: string; avatarUrl?: string | null } } | null> {
+): Promise<BackendAuthResult | null> {
   try {
     const response = await fetch(`${getApiBaseUrl()}/api/auth/dev-login`, {
       method: 'POST',

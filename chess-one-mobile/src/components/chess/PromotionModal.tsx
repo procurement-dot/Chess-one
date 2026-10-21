@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -82,12 +83,12 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.4,
@@ -97,12 +98,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     marginBottom: 18,
     textAlign: 'center',
   },
@@ -116,11 +117,11 @@ const styles = StyleSheet.create({
   pieceButton: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#272E38',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   piecePreview: {
     width: 48,
@@ -132,17 +133,17 @@ const styles = StyleSheet.create({
   pieceLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#D1D5DB',
+    color: COLORS.textHeading,
   },
   cancelButton: {
     width: '100%',
     paddingVertical: 11,
     borderRadius: 10,
-    backgroundColor: '#374151',
+    backgroundColor: COLORS.border,
     alignItems: 'center',
   },
   cancelText: {
-    color: '#E5E7EB',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },

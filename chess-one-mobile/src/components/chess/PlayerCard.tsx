@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Color, PieceSymbol } from 'chess.js';
@@ -38,10 +39,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <View
           style={[
             styles.avatarCircle,
-            { backgroundColor: isWhite ? '#FFFFFF' : '#1E232A' },
+            { backgroundColor: isWhite ? COLORS.textHeading : COLORS.white },
           ]}
         >
-          <Text style={[styles.avatarText, { color: isWhite ? '#111827' : '#FFFFFF' }]}>
+          <Text style={[styles.avatarText, { color: isWhite ? COLORS.white : COLORS.textHeading }]}>
             {isWhite ? '♔' : '♚'}
           </Text>
         </View>
@@ -89,18 +90,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     width: '100%',
   },
   activeContainer: {
-    borderColor: '#3B82F6',
-    backgroundColor: '#1E293B',
-    shadowColor: '#3B82F6',
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.border,
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 1.5,
-    borderColor: '#4B5563',
+    borderColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -140,19 +141,19 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E5E7EB',
+    color: COLORS.textHeading,
   },
   activePlayerName: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   turnIndicatorBadge: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
   },
   turnIndicatorText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -166,7 +167,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   checkText: {
-    color: '#F87171',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },

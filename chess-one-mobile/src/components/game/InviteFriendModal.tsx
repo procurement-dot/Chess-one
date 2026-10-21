@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -137,7 +138,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                         disabled={isInviting}
                       >
                         {isInviting ? (
-                          <ActivityIndicator size="small" color="#FFFFFF" />
+                          <ActivityIndicator size="small" color="COLORS.textHeading" />
                         ) : (
                           <Text style={styles.inviteBtnText}>⚔️ Invite</Text>
                         )}
@@ -161,12 +162,12 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '75%',
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
     paddingBottom: 32,
   },
   header: {
@@ -190,23 +191,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   subtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 2,
   },
   closeBtn: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: '#21262D',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 15,
     fontWeight: '700',
   },
@@ -221,7 +222,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   loadingText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 14,
   },
   emptyBox: {
@@ -236,18 +237,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     marginBottom: 6,
   },
   emptySubtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 12,
   },
   emptyHint: {
     fontSize: 12,
-    color: '#64748B',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     paddingHorizontal: 16,
@@ -256,13 +257,13 @@ const styles = StyleSheet.create({
   refreshBtn: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#21262D',
+    backgroundColor: COLORS.white,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
   },
   refreshBtnText: {
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },
@@ -279,7 +280,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
   },
   onlineCountText: {
     fontSize: 12,
@@ -289,11 +290,11 @@ const styles = StyleSheet.create({
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#21262D',
+    borderColor: COLORS.border,
     marginBottom: 10,
     gap: 12,
   },
@@ -306,14 +307,14 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   avatarDot: {
     position: 'absolute',
@@ -322,9 +323,9 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: '#0F1318',
+    borderColor: COLORS.background,
   },
   infoCol: {
     flex: 1,
@@ -338,11 +339,11 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
     maxWidth: 140,
   },
   idChip: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -350,7 +351,7 @@ const styles = StyleSheet.create({
   idChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   onlineStatusText: {
     fontSize: 11,
@@ -372,7 +373,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   inviteBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },

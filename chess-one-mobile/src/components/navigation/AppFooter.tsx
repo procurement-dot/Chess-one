@@ -9,8 +9,10 @@ import {
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { useInvitations } from '../../hooks/useInvitations';
+import { Feather } from '@expo/vector-icons';
+import { COLORS } from '../../constants/chessone-theme';
 
-export type FooterTab = 'home' | 'create' | 'community' | 'history' | 'account' | 'join';
+export type FooterTab = 'home' | 'create' | 'community' | 'history' | 'account' | 'join' | 'learn' | 'tournaments' | 'classes' | 'play';
 
 interface AppFooterProps {
   activeTab?: FooterTab;
@@ -23,35 +25,47 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
 
   const tabs: {
     id: FooterTab;
+    highlightIds: FooterTab[];
     label: string;
-    icon: string;
+    icon: keyof typeof Feather.glyphMap;
     route: string;
     badgeCount?: number;
   }[] = [
     {
-      id: 'home',
-      label: 'Home',
-      icon: '♟️',
-      route: '/',
+      id: 'learn',
+      highlightIds: ['learn'],
+      label: 'Learn',
+      icon: 'book-open',
+      route: '/learn',
+    },
+    {
+      id: 'play',
+      highlightIds: ['play', 'create', 'join'],
+      label: 'Play',
+      icon: 'play-circle',
+      route: '/play',
       badgeCount: pendingCount,
     },
     {
-      id: 'create',
-      label: 'Create',
-      icon: '⚔️',
-      route: '/play/create',
+      id: 'tournaments',
+      highlightIds: ['tournaments'],
+      label: 'Tournaments',
+      icon: 'award',
+      route: '/tournaments',
     },
     {
       id: 'community',
+      highlightIds: ['community'],
       label: 'Community',
-      icon: '👥',
+      icon: 'users',
       route: '/community',
     },
     {
-      id: 'account',
-      label: 'Account',
-      icon: '👤',
-      route: '/login',
+      id: 'classes',
+      highlightIds: ['classes'],
+      label: 'Classes',
+      icon: 'video',
+      route: '/classes',
     },
   ];
 
@@ -63,7 +77,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
     <View style={styles.footerContainer}>
       <View style={styles.innerFooter}>
         {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
+          const isActive = tab.highlightIds.includes(activeTab);
           return (
             <TouchableOpacity
               key={tab.id}
@@ -72,9 +86,11 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
               onPress={() => handleTabPress(tab.route)}
             >
               <View style={styles.iconWrapper}>
-                <Text style={[styles.tabIcon, isActive && styles.activeTabIcon]}>
-                  {tab.icon}
-                </Text>
+                <Feather 
+                  name={tab.icon} 
+                  size={22} 
+                  color={isActive ? COLORS.primary : COLORS.textBody} 
+                />
                 {Boolean(tab.badgeCount && tab.badgeCount > 0) && (
                   <View style={styles.badgePill}>
                     <Text style={styles.badgeText}>
@@ -83,12 +99,9 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
                   </View>
                 )}
               </View>
-
               <Text style={[styles.tabLabel, isActive && styles.activeTabLabel]}>
                 {tab.label}
               </Text>
-
-              {isActive && <View style={styles.activeIndicator} />}
             </TouchableOpacity>
           );
         })}
@@ -99,26 +112,27 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
 
 const styles = StyleSheet.create({
   footerContainer: {
-    backgroundColor: '#12161C',
+    backgroundColor: COLORS.white,
     borderTopWidth: 1,
-    borderTopColor: '#1F2633',
-    paddingBottom: Platform.OS === 'ios' ? 24 : 10,
+    borderTopColor: COLORS.border,
+    paddingBottom: Platform.OS === 'web' ? 18 : (Platform.OS === 'ios' ? 24 : 10),
     paddingTop: 8,
     paddingHorizontal: 8,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: -3 },
-        shadowOpacity: 0.25,
-        shadowRadius: 6,
+        shadowOffset: { width: 0, height: -2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
       },
       android: {
-        elevation: 8,
+        elevation: 10,
       },
       web: {
         position: 'sticky' as any,
         bottom: 0,
-        zIndex: 50,
+        zIndex: 2147483647,
+        boxShadow: '0 -2px 10px rgba(0,0,0,0.06)',
       },
     }),
   },
@@ -134,49 +148,36 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 4,
+    paddingVertical: 6,
+    minHeight: 50,
     borderRadius: 12,
     position: 'relative',
+    cursor: 'pointer' as any,
+    touchAction: 'manipulation' as any,
   },
   activeTabButton: {
-    backgroundColor: '#161D2A',
+    backgroundColor: COLORS.hero,
   },
   iconWrapper: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIcon: {
-    fontSize: 20,
-    opacity: 0.7,
-  },
-  activeTabIcon: {
-    opacity: 1,
-    transform: [{ scale: 1.1 }],
-  },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
-    color: '#64748B',
-    marginTop: 3,
+    color: COLORS.textBody,
+    marginTop: 4,
   },
   activeTabLabel: {
-    color: '#38BDF8',
+    color: COLORS.primary,
     fontWeight: '700',
-  },
-  activeIndicator: {
-    position: 'absolute',
-    bottom: -6,
-    width: 18,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: '#38BDF8',
   },
   badgePill: {
     position: 'absolute',
-    top: -4,
+    top: -6,
     right: -10,
-    backgroundColor: '#EF4444',
+    backgroundColor: COLORS.accentPeach,
     minWidth: 16,
     height: 16,
     borderRadius: 8,
@@ -185,7 +186,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   badgeText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 9,
     fontWeight: '800',
   },

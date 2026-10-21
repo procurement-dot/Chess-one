@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -73,7 +74,7 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
+                <ActivityIndicator size="small" color="COLORS.textHeading" />
               ) : (
                 <Text style={styles.acceptBtnText}>✅ Accept Challenge</Text>
               )}
@@ -105,12 +106,12 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 360,
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#30363D',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
@@ -134,26 +135,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
   },
   challengerBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
     padding: 14,
     borderRadius: 14,
     width: '100%',
     marginBottom: 22,
     borderWidth: 1,
-    borderColor: '#262D38',
+    borderColor: COLORS.border,
     gap: 12,
   },
   avatar: {
@@ -167,7 +168,7 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   challengerInfo: {
     flex: 1,
@@ -175,19 +176,19 @@ const styles = StyleSheet.create({
   challengerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F1F5F9',
+    color: COLORS.textHeading,
     marginBottom: 3,
   },
   challengerDetails: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   buttonCol: {
     width: '100%',
     gap: 10,
   },
   acceptBtn: {
-    backgroundColor: '#059669',
+    backgroundColor: COLORS.white,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -198,20 +199,20 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   acceptBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   declineBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   declineBtnText: {
-    color: '#EF4444',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },

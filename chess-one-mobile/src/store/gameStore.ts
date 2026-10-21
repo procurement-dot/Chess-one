@@ -78,18 +78,22 @@ class GameStore {
   }
 
   setGame(game: Game) {
+    const normalizedGame: Game = {
+      ...game,
+      id: (game as any).id || (game as any).gameId,
+    };
     this.state = {
       ...this.state,
-      currentGame: game,
-      gameStatus: game.status,
-      fen: game.fen || DEFAULT_FEN,
-      currentTurn: game.currentTurn || 'WHITE',
-      whiteTimeMs: game.whiteTimeMs ?? null,
-      blackTimeMs: game.blackTimeMs ?? null,
-      result: game.result ?? null,
-      winnerId: game.winnerId ?? null,
-      drawOfferFrom: game.drawOfferFrom ?? null,
-      moves: game.moves || this.state.moves,
+      currentGame: normalizedGame,
+      gameStatus: normalizedGame.status,
+      fen: normalizedGame.fen || DEFAULT_FEN,
+      currentTurn: normalizedGame.currentTurn || 'WHITE',
+      whiteTimeMs: normalizedGame.whiteTimeMs ?? null,
+      blackTimeMs: normalizedGame.blackTimeMs ?? null,
+      result: normalizedGame.result ?? null,
+      winnerId: normalizedGame.winnerId ?? null,
+      drawOfferFrom: normalizedGame.drawOfferFrom ?? null,
+      moves: normalizedGame.moves || this.state.moves,
       isLoading: false,
       error: null,
     };
@@ -153,36 +157,65 @@ class GameStore {
       ? move.fen
       : (this.state.fen || DEFAULT_FEN);
 
-    const currentTurn = move.nextTurn || (this.state.currentTurn === 'WHITE' ? 'BLACK' : 'WHITE');
-
     const from = move.from || '';
     const to = move.to || '';
     const san = move.san || '';
+    const moveColor: PlayerColor = move.color || (this.state.currentTurn === 'WHITE' ? 'WHITE' : 'BLACK');
+    const currentTurn = move.nextTurn || (moveColor === 'WHITE' ? 'BLACK' : 'WHITE');
 
-    const newMoveRecord: GameMove = {
-      id: Date.now(),
-      gameId: this.state.currentGame?.id || 0,
-      moveNumber: move.moveNumber || this.state.moves.length + 1,
-      color: move.color || (this.state.currentTurn === 'WHITE' ? 'WHITE' : 'BLACK'),
-      from,
-      to,
-      promotion: move.promotion,
-      san,
-      fenAfter: fen,
-      createdAt: new Date().toISOString(),
-    };
+    const existingMoves = [...this.state.moves];
+    const lastMove = existingMoves.length > 0 ? existingMoves[existingMoves.length - 1] : null;
 
-    // Prevent duplicate moves if received via both HTTP response and Socket event
-    const existingMoves = this.state.moves;
-    const isDuplicate = existingMoves.some(
+    // Check if this move is already in the move list
+    const isExactDuplicate = existingMoves.some(
       (m) =>
-        m.moveNumber === newMoveRecord.moveNumber &&
-        m.san === newMoveRecord.san &&
-        m.from === newMoveRecord.from &&
-        m.to === newMoveRecord.to
+        m.san === san &&
+        m.from === from &&
+        m.to === to &&
+        m.fenAfter === fen
     );
 
-    const updatedMoves = isDuplicate ? existingMoves : [...existingMoves, newMoveRecord];
+    let updatedMoves: GameMove[];
+    if (isExactDuplicate) {
+      updatedMoves = existingMoves;
+    } else if (lastMove && lastMove.color === moveColor) {
+      // In chess, moves must strictly alternate White and Black!
+      // If a move arrives for the SAME color without an opposing move (e.g. an AI move update/overwrite),
+      // replace the last move instead of appending an extra move that would offset the entire 2-column table!
+      const newMoveRecord: GameMove = {
+        ...lastMove,
+        id: Date.now(),
+        from,
+        to,
+        promotion: move.promotion,
+        san,
+        fenAfter: fen,
+      };
+      updatedMoves = [...existingMoves.slice(0, -1), newMoveRecord];
+    } else {
+      // Normal sequential alternating move
+      const calculatedMoveNumber =
+        move.moveNumber ||
+        (lastMove
+          ? moveColor === 'WHITE'
+            ? lastMove.moveNumber + 1
+            : lastMove.moveNumber
+          : 1);
+
+      const newMoveRecord: GameMove = {
+        id: Date.now(),
+        gameId: this.state.currentGame?.id || 0,
+        moveNumber: calculatedMoveNumber,
+        color: moveColor,
+        from,
+        to,
+        promotion: move.promotion,
+        san,
+        fenAfter: fen,
+        createdAt: new Date().toISOString(),
+      };
+      updatedMoves = [...existingMoves, newMoveRecord];
+    }
 
     this.state = {
       ...this.state,
@@ -217,6 +250,8 @@ class GameStore {
 
   tickActiveClock(decrementMs: number = 1000) {
     if (this.state.gameStatus !== 'ACTIVE') return;
+    // Do not tick clocks down before the first move of the match is played
+    if (!this.state.moves || this.state.moves.length === 0) return;
 
     if (this.state.currentTurn === 'WHITE' && this.state.whiteTimeMs !== null) {
       const nextTime = Math.max(0, this.state.whiteTimeMs - decrementMs);
@@ -230,6 +265,15 @@ class GameStore {
           result: 'TIMEOUT',
           winnerId,
           drawOfferFrom: null,
+          currentGame: this.state.currentGame
+            ? {
+                ...this.state.currentGame,
+                status: 'COMPLETED',
+                result: 'TIMEOUT',
+                winnerId,
+                whiteTimeMs: 0,
+              }
+            : null,
         };
         this.notify();
         return;
@@ -248,6 +292,15 @@ class GameStore {
           result: 'TIMEOUT',
           winnerId,
           drawOfferFrom: null,
+          currentGame: this.state.currentGame
+            ? {
+                ...this.state.currentGame,
+                status: 'COMPLETED',
+                result: 'TIMEOUT',
+                winnerId,
+                blackTimeMs: 0,
+              }
+            : null,
         };
         this.notify();
         return;
@@ -262,13 +315,38 @@ class GameStore {
     this.notify();
   }
 
-  setGameFinished(result: GameResult, winnerId: number | null) {
+  setGameFinished(
+    result: GameResult,
+    winnerId: number | null,
+    ratingData?: {
+      whiteRatingChange?: number | null;
+      blackRatingChange?: number | null;
+      whiteRating?: number | null;
+      blackRating?: number | null;
+    }
+  ) {
     this.state = {
       ...this.state,
       gameStatus: 'COMPLETED',
       result,
       winnerId,
       drawOfferFrom: null,
+      currentGame: this.state.currentGame
+        ? {
+            ...this.state.currentGame,
+            status: 'COMPLETED',
+            result,
+            winnerId,
+            whiteRatingChange:
+              ratingData?.whiteRatingChange !== undefined
+                ? ratingData.whiteRatingChange
+                : this.state.currentGame.whiteRatingChange,
+            blackRatingChange:
+              ratingData?.blackRatingChange !== undefined
+                ? ratingData.blackRatingChange
+                : this.state.currentGame.blackRatingChange,
+          }
+        : null,
     };
     this.notify();
   }
@@ -279,7 +357,10 @@ class GameStore {
   }
 
   reset() {
-    this.state = { ...initialState };
+    this.state = {
+      ...initialState,
+      connectionStatus: this.state.connectionStatus,
+    };
     this.notify();
   }
 }

@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useRef, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { MovePair } from '../../types/chess.types';
@@ -78,10 +79,10 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({ movePairs }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     overflow: 'hidden',
     height: 120,
     width: '100%',
@@ -91,12 +92,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#2F3642',
-    backgroundColor: '#171B20',
+    backgroundColor: COLORS.white,
   },
   headerText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -107,10 +108,10 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   emptyContainer: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     padding: 16,
     alignItems: 'center',
     justifyContent: 'center',
@@ -118,7 +119,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   emptyText: {
-    color: '#6B7280',
+    color: COLORS.textBody,
     fontSize: 13,
     fontStyle: 'italic',
   },
@@ -136,7 +137,7 @@ const styles = StyleSheet.create({
   },
   moveNumberText: {
     width: 38,
-    color: '#6B7280',
+    color: COLORS.textBody,
     fontSize: 13,
     fontFamily: 'monospace',
     fontWeight: '600',
@@ -146,13 +147,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   moveText: {
-    color: '#E5E7EB',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '500',
     fontFamily: 'monospace',
   },
   activeMoveText: {
-    color: '#60A5FA',
+    color: COLORS.primary,
     fontWeight: '700',
   },
 });

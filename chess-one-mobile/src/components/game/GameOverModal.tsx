@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -8,6 +9,7 @@ import {
   Pressable,
 } from 'react-native';
 import { Game, GameResult, PlayerColor } from '../../types/game.types';
+import { RatingChange } from './RatingChange';
 
 interface GameOverModalProps {
   visible: boolean;
@@ -16,6 +18,10 @@ interface GameOverModalProps {
   userColor: PlayerColor | null;
   currentUserId: number | null;
   game: Game | null;
+  ratingChange?: number | null;
+  newRating?: number | null;
+  opponentRatingChange?: number | null;
+  isPvP?: boolean;
   onViewResults: () => void;
   onPlayAgain: () => void;
   onGoHome: () => void;
@@ -30,6 +36,10 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   userColor,
   currentUserId,
   game,
+  ratingChange,
+  newRating,
+  opponentRatingChange,
+  isPvP = false,
   onViewResults,
   onPlayAgain,
   onGoHome,
@@ -117,7 +127,7 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
   // Outcome banner
   let outcomeText = 'MATCH FINISHED';
-  let outcomeBg = '#374151';
+  let outcomeBg = COLORS.border;
   let outcomeColor = '#9CA3AF';
 
   if (isWinner) {
@@ -167,16 +177,29 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
             <View style={styles.playerRow}>
               <Text style={styles.playerRole}>White: </Text>
               <Text style={styles.playerName} numberOfLines={1}>
-                {game?.whitePlayer?.name || (game?.whitePlayerId ? `Player #${game.whitePlayerId}` : 'Stockfish AI')}
+                {game?.whitePlayer?.name || (game?.whitePlayerId ? `Player #${game.whitePlayerId}` : 'AI')}
               </Text>
             </View>
             <View style={styles.playerRow}>
               <Text style={styles.playerRole}>Black: </Text>
               <Text style={styles.playerName} numberOfLines={1}>
-                {game?.blackPlayer?.name || (game?.blackPlayerId ? `Player #${game.blackPlayerId}` : 'Stockfish AI')}
+                {game?.blackPlayer?.name || (game?.blackPlayerId ? `Player #${game.blackPlayerId}` : 'AI')}
               </Text>
             </View>
           </View>
+
+          {/* Rating Change Box (PvP games with rated outcome) */}
+          {isPvP && ratingChange != null && (
+            <View style={styles.ratingBox}>
+              <Text style={styles.ratingBoxLabel}>Rating</Text>
+              <View style={styles.ratingRow}>
+                {newRating != null && (
+                  <Text style={styles.ratingValue}>{newRating}</Text>
+                )}
+                <RatingChange change={ratingChange} />
+              </View>
+            </View>
+          )}
 
           {/* Action Buttons */}
           <View style={styles.buttonGroup}>
@@ -232,12 +255,12 @@ const styles = StyleSheet.create({
   modalCard: {
     width: '100%',
     maxWidth: 380,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
@@ -258,7 +281,7 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -266,12 +289,12 @@ const styles = StyleSheet.create({
     width: 76,
     height: 76,
     borderRadius: 38,
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
     borderWidth: 2,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   bigIcon: {
     fontSize: 38,
@@ -290,13 +313,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 6,
     textAlign: 'center',
   },
   reason: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 18,
     lineHeight: 20,
@@ -304,12 +327,12 @@ const styles = StyleSheet.create({
   },
   playersSummary: {
     width: '100%',
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 12,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: COLORS.border,
   },
   playerRow: {
     flexDirection: 'row',
@@ -317,13 +340,13 @@ const styles = StyleSheet.create({
     marginVertical: 2,
   },
   playerRole: {
-    color: '#64748B',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
     width: 55,
   },
   playerName: {
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '600',
     flex: 1,
@@ -354,35 +377,35 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   aiReviewBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,
   },
   primaryBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     paddingVertical: 13,
     borderRadius: 12,
     alignItems: 'center',
-    shadowColor: '#3B82F6',
+    shadowColor: COLORS.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   secondaryBtn: {
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
   },
   secondaryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -393,8 +416,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   ghostBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
+  },
+  ratingBox: {
+    width: '100%',
+    backgroundColor: COLORS.white,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+  },
+  ratingBoxLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: COLORS.textBody,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  ratingValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: COLORS.textHeading,
   },
 });

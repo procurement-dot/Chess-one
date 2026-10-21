@@ -3,7 +3,7 @@ import { getSocketBaseUrl } from '../services/apiClient';
 import { authStore } from '../store/authStore';
 import { gameStore } from '../store/gameStore';
 import { gameService } from '../services/game.service';
-import { PlayerColor, GameResult } from '../types/game.types';
+import { PlayerColor, GameResult, GameFinishedPayload } from '../types/game.types';
 
 class GameSocketManager {
   private socket: Socket | null = null;
@@ -15,6 +15,7 @@ class GameSocketManager {
    */
   connect(): Socket {
     if (this.socket && this.socket.connected) {
+      gameStore.setConnectionStatus('connected');
       return this.socket;
     }
 
@@ -143,10 +144,15 @@ class GameSocketManager {
     });
 
     // Game finished
-    this.socket.on('game:finished', (payload) => {
+    this.socket.on('game:finished', (payload: GameFinishedPayload) => {
       console.log('[Socket] Game finished:', payload);
       if (payload) {
-        gameStore.setGameFinished(payload.result as GameResult, payload.winnerId);
+        gameStore.setGameFinished(payload.result as GameResult, payload.winnerId ?? null, {
+          whiteRatingChange: payload.whiteRatingChange,
+          blackRatingChange: payload.blackRatingChange,
+          whiteRating: payload.whiteRating,
+          blackRating: payload.blackRating,
+        });
       }
     });
 
@@ -174,10 +180,13 @@ class GameSocketManager {
     const socket = this.connect();
 
     if (socket.connected) {
+      gameStore.setConnectionStatus('connected');
       socket.emit('game:join', { gameId });
       console.log('[Socket] Joined game room immediately:', gameId);
     } else {
+      gameStore.setConnectionStatus('connecting');
       socket.once('connect', () => {
+        gameStore.setConnectionStatus('connected');
         socket.emit('game:join', { gameId });
         console.log('[Socket] Joined game room upon connection:', gameId);
       });
@@ -236,6 +245,14 @@ class GameSocketManager {
     socket.on('game:started', callback);
     return () => {
       socket.off('game:started', callback);
+    };
+  }
+
+  onGameFinished(callback: (payload: GameFinishedPayload) => void): () => void {
+    const socket = this.connect();
+    socket.on('game:finished', callback);
+    return () => {
+      socket.off('game:finished', callback);
     };
   }
 

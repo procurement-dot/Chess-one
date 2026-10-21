@@ -25,7 +25,7 @@ class AiReviewService {
     const blackName =
       game.blackPlayer?.name ||
       (game.gameType === "PLAYER_VS_AI"
-        ? `Stockfish AI (${game.aiDifficulty || "Standard"})`
+        ? `AI (${game.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : "Medium"})`
         : "Black (Player)");
 
     // Group moves into standard notation

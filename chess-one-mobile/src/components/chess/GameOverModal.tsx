@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -91,12 +92,12 @@ const styles = StyleSheet.create({
   card: {
     width: '100%',
     maxWidth: 340,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     padding: 24,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
@@ -107,12 +108,12 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#2A323D',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 2,
-    borderColor: '#3B82F6',
+    borderColor: COLORS.primary,
   },
   iconText: {
     fontSize: 32,
@@ -120,7 +121,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     letterSpacing: 1.5,
     marginBottom: 6,
     textTransform: 'uppercase',
@@ -128,26 +129,26 @@ const styles = StyleSheet.create({
   winnerSubtitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#60A5FA',
+    color: COLORS.primary,
     marginBottom: 6,
     textAlign: 'center',
   },
   descriptionText: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     marginBottom: 20,
     textAlign: 'center',
   },
   newGameButton: {
     width: '100%',
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     marginTop: 12,
   },
   newGameText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
@@ -158,7 +159,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   reviewText: {
-    color: '#9CA3AF',
+    color: COLORS.textBody,
     fontSize: 13,
     fontWeight: '600',
   },

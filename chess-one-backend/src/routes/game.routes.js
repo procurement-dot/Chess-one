@@ -38,6 +38,7 @@ router.post("/:gameId/moves", validateGame(makeMoveSchema), gameController.makeM
 router.get("/:gameId/moves", gameController.getGameMoves);
 router.get("/:gameId/pgn", gameController.getGamePgn);
 router.get("/:gameId/result", gameController.getGameResult);
+router.post("/:gameId/finish-ai", gameController.finishAiGame);
 router.all("/:gameId/ai-review", gameController.getAiReview);
 
 // End game actions: resign, abort & draws

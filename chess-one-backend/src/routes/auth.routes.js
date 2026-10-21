@@ -56,6 +56,9 @@ router.post("/dev-login", async (req, res, next) => {
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl || null,
+        role: user.role,
+        rating: user.rating,
+        onboardingDone: user.onboardingDone,
       },
     });
   } catch (err) {

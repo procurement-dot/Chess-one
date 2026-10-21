@@ -94,6 +94,9 @@ class AuthService {
         name: user.name,
         email: user.email,
         avatarUrl: user.avatarUrl,
+        role: user.role,
+        rating: user.rating,
+        onboardingDone: user.onboardingDone,
       },
     };
   }
@@ -110,6 +113,9 @@ class AuthService {
         name: true,
         email: true,
         avatarUrl: true,
+        role: true,
+        rating: true,
+        onboardingDone: true,
         createdAt: true,
       },
     });

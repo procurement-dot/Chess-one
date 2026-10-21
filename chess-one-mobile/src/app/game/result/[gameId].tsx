@@ -1,3 +1,4 @@
+import { COLORS, SIZES } from '../../../constants/chessone-theme';
 import React, { useEffect, useState } from 'react';
 import {
   View,
@@ -12,10 +13,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { gameService } from '../../../services/game.service';
 import { useAuthStore } from '../../../store/authStore';
-import { Game } from '../../../types/game.types';
+import { Game, GameResultResponse } from '../../../types/game.types';
 import { AppHeader } from '../../../components/navigation/AppHeader';
 import { AppFooter } from '../../../components/navigation/AppFooter';
 import { AiReviewModal } from '../../../components/game/AiReviewModal';
+import { RatingChange } from '../../../components/game/RatingChange';
 
 export default function GameResultScreen() {
   const router = useRouter();
@@ -24,6 +26,7 @@ export default function GameResultScreen() {
   const { user } = useAuthStore();
 
   const [game, setGame] = useState<Game | null>(null);
+  const [resultInfo, setResultInfo] = useState<GameResultResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [aiReviewVisible, setAiReviewVisible] = useState(false);
 
@@ -33,9 +36,24 @@ export default function GameResultScreen() {
     let isMounted = true;
     async function loadResult() {
       try {
-        const gameData = await gameService.getGame(gameId);
+        const [gameData, resultData] = await Promise.all([
+          gameService.getGame(gameId).catch(() => null),
+          gameService.getGameResult(gameId).catch(() => null),
+        ]);
         if (isMounted) {
-          setGame(gameData);
+          if (gameData) {
+            setGame({
+              ...gameData,
+              ratingApplied: resultData?.rating?.applied ?? gameData.ratingApplied,
+              whiteRatingChange:
+                resultData?.rating?.whiteRatingChange ?? gameData.whiteRatingChange,
+              blackRatingChange:
+                resultData?.rating?.blackRatingChange ?? gameData.blackRatingChange,
+            });
+          }
+          if (resultData) {
+            setResultInfo(resultData);
+          }
         }
       } catch (err) {
         console.warn('Failed to load result:', err);
@@ -54,7 +72,7 @@ export default function GameResultScreen() {
     return (
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.centerBox}>
-          <ActivityIndicator size="large" color="#3B82F6" />
+          <ActivityIndicator size="large" color={COLORS.primary} />
           <Text style={styles.loadingText}>Finalizing match result...</Text>
         </View>
       </SafeAreaView>
@@ -66,6 +84,17 @@ export default function GameResultScreen() {
   const isDraw = game?.result === 'DRAW';
   const isWinner = winnerId && currentUserId && winnerId === currentUserId;
   const isLoser = winnerId && currentUserId && winnerId !== currentUserId;
+
+  const isPvP = game?.gameType === 'PLAYER_VS_PLAYER';
+  const isRatingApplied = resultInfo?.rating?.applied ?? Boolean(game?.ratingApplied);
+  const whiteChange =
+    resultInfo?.rating?.whiteRatingChange ?? game?.whiteRatingChange ?? null;
+  const blackChange =
+    resultInfo?.rating?.blackRatingChange ?? game?.blackRatingChange ?? null;
+
+  const isUserWhite = Boolean(currentUserId && game?.whitePlayerId === currentUserId);
+  const isUserBlack = Boolean(currentUserId && game?.blackPlayerId === currentUserId);
+  const myChange = isUserWhite ? whiteChange : isUserBlack ? blackChange : null;
 
   const titleText = isDraw
     ? 'Draw'
@@ -122,6 +151,14 @@ export default function GameResultScreen() {
           <Text style={styles.outcomeReason}>{formatEndReason()}</Text>
         </View>
 
+        {/* Rating Summary Card for User */}
+        {isPvP && isRatingApplied && myChange !== null && (
+          <View style={styles.ratingSummaryCard}>
+            <Text style={styles.ratingSummaryLabel}>Your Rating Change</Text>
+            <RatingChange change={myChange} />
+          </View>
+        )}
+
         {/* Players Card */}
         <View style={styles.playersCard}>
           {/* White Player */}
@@ -130,9 +167,15 @@ export default function GameResultScreen() {
               <Text style={styles.pieceSym}>♔</Text>
             </View>
             <View style={styles.playerInfo}>
-              <Text style={styles.playerName}>
-                {game?.whitePlayer?.name || 'White Player'}
-              </Text>
+              <View style={styles.playerNameRow}>
+                <Text style={styles.playerName}>
+                  {game?.whitePlayer?.name || 'White Player'}
+                  {game?.whitePlayer?.rating ? ` (${game.whitePlayer.rating})` : ''}
+                </Text>
+                {isPvP && isRatingApplied && whiteChange !== null && (
+                  <RatingChange change={whiteChange} />
+                )}
+              </View>
               <Text style={styles.playerSub}>White</Text>
             </View>
             <View style={styles.playerScore}>
@@ -150,11 +193,16 @@ export default function GameResultScreen() {
               <Text style={[styles.pieceSym, styles.blackPieceSym]}>♚</Text>
             </View>
             <View style={styles.playerInfo}>
-              <Text style={styles.playerName}>
-                {game?.gameType === 'PLAYER_VS_AI'
-                  ? `Stockfish AI (${game.aiDifficulty || 'Medium'})`
-                  : game?.blackPlayer?.name || 'Black Player'}
-              </Text>
+              <View style={styles.playerNameRow}>
+                <Text style={styles.playerName}>
+                  {game?.gameType === 'PLAYER_VS_AI'
+                    ? `AI (${game.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
+                    : `${game?.blackPlayer?.name || 'Black Player'}${game?.blackPlayer?.rating ? ` (${game.blackPlayer.rating})` : ''}`}
+                </Text>
+                {isPvP && isRatingApplied && blackChange !== null && (
+                  <RatingChange change={blackChange} />
+                )}
+              </View>
               <Text style={styles.playerSub}>Black</Text>
             </View>
             <View style={styles.playerScore}>
@@ -209,7 +257,7 @@ export default function GameResultScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -218,25 +266,25 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: COLORS.white,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     lineHeight: 28,
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   spacer: {
     width: 40,
@@ -256,15 +304,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   outcomeWin: {
-    backgroundColor: '#064E3B',
+    backgroundColor: '#ECFDF5',
     borderColor: '#059669',
   },
   outcomeLoss: {
-    backgroundColor: '#451A03',
+    backgroundColor: '#FEF2F2',
     borderColor: '#DC2626',
   },
   outcomeDraw: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderColor: '#475569',
   },
   outcomeIcon: {
@@ -274,16 +322,16 @@ const styles = StyleSheet.create({
   outcomeTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   outcomeReason: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   playersCard: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: COLORS.white,
     borderRadius: 18,
     padding: 18,
     borderWidth: 1,
@@ -304,7 +352,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   blackIconBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
     borderColor: '#334155',
   },
@@ -313,7 +361,7 @@ const styles = StyleSheet.create({
     color: '#0F172A',
   },
   blackPieceSym: {
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   playerInfo: {
     flex: 1,
@@ -321,27 +369,27 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   playerSub: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   playerScore: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.white,
     borderRadius: 8,
   },
   scoreText: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   divider: {
     height: 1,
-    backgroundColor: '#262D38',
+    backgroundColor: COLORS.white,
     marginVertical: 14,
   },
   actionsCol: {
@@ -350,7 +398,7 @@ const styles = StyleSheet.create({
   aiReviewBtn: {
     backgroundColor: '#4F46E5',
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
@@ -362,33 +410,33 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   aiReviewBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
   primaryBtn: {
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
   },
   primaryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '700',
   },
   secondaryBtn: {
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     height: 52,
-    borderRadius: 14,
+    borderRadius: 18,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
   },
   secondaryBtnText: {
-    color: '#CBD5E1',
+    color: COLORS.textBody,
     fontSize: 16,
     fontWeight: '600',
   },
@@ -400,7 +448,30 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 15,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     marginTop: 14,
+  },
+  playerNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flexWrap: 'wrap',
+  },
+  ratingSummaryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: COLORS.white,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: SIZES.radiusCard,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+  },
+  ratingSummaryLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: COLORS.textHeading,
   },
 });

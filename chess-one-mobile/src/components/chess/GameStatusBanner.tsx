@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Color } from 'chess.js';
@@ -47,7 +48,7 @@ export const GameStatusBanner: React.FC<GameStatusBannerProps> = ({
         <View
           style={[
             styles.turnBadgeDot,
-            { backgroundColor: isWhite ? '#FFFFFF' : '#111827' },
+            { backgroundColor: isWhite ? COLORS.textHeading : COLORS.white },
           ]}
         />
         <Text style={styles.turnText}>
@@ -69,17 +70,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#2F3642',
+    borderColor: COLORS.border,
     width: '100%',
   },
   gameOverContainer: {
-    backgroundColor: '#1E293B',
-    borderColor: '#4F46E5',
+    backgroundColor: COLORS.border,
+    borderColor: COLORS.border,
     borderWidth: 1.5,
     paddingVertical: 14,
   },
@@ -90,12 +91,12 @@ const styles = StyleSheet.create({
   gameOverTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F9FAFB',
+    color: COLORS.textHeading,
     marginBottom: 2,
   },
   gameOverSubtitle: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.textBody,
   },
   newGameButton: {
     backgroundColor: '#4F46E5',
@@ -104,7 +105,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   newGameButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontWeight: '700',
     fontSize: 13,
   },
@@ -118,12 +119,12 @@ const styles = StyleSheet.create({
     height: 14,
     borderRadius: 7,
     borderWidth: 1,
-    borderColor: '#4B5563',
+    borderColor: COLORS.border,
   },
   turnText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#F3F4F6',
+    color: COLORS.textHeading,
   },
   checkBadge: {
     backgroundColor: 'rgba(239, 68, 68, 0.2)',
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   checkText: {
-    color: '#F87171',
+    color: COLORS.textHeading,
     fontWeight: '700',
     fontSize: 12,
     letterSpacing: 0.5,

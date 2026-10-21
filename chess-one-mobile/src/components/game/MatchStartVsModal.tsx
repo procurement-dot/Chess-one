@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useEffect, useRef } from 'react';
 import {
   Modal,
@@ -206,10 +207,10 @@ const styles = StyleSheet.create({
   container: {
     width: '100%',
     maxWidth: 520,
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.white,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#374151',
+    borderColor: COLORS.border,
     paddingHorizontal: 16,
     paddingVertical: 18,
     shadowColor: '#4F46E5',
@@ -231,13 +232,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '900',
     letterSpacing: 1.5,
-    color: '#FBBF24',
+    color: COLORS.textHeading,
     textTransform: 'uppercase',
   },
   headerSub: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#9CA3AF',
+    color: COLORS.textBody,
   },
   horizontalArena: {
     flexDirection: 'row',
@@ -254,14 +255,14 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   whiteBox: {
-    backgroundColor: '#1F2937',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#4B5563',
+    borderColor: COLORS.border,
   },
   blackBox: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
     justifyContent: 'flex-end',
   },
   avatarWhite: {
@@ -284,7 +285,7 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#1E1B4B',
+    backgroundColor: COLORS.white,
     borderWidth: 2,
     borderColor: '#818CF8',
     justifyContent: 'center',
@@ -294,7 +295,7 @@ const styles = StyleSheet.create({
   avatarLetterBlack: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#C7D2FE',
+    color: COLORS.textHeading,
   },
   avatarImg: {
     width: '100%',
@@ -322,28 +323,28 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   colorPillBlack: {
-    backgroundColor: '#020617',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
     marginBottom: 4,
     borderWidth: 1,
-    borderColor: '#475569',
+    borderColor: COLORS.border,
   },
   colorPillTextBlack: {
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
     fontSize: 9,
     fontWeight: '900',
     letterSpacing: 0.8,
   },
   playerName: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
     maxWidth: 120,
   },
   playerNameRight: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
     textAlign: 'right',
@@ -369,7 +370,7 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   vsText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 16,
     fontWeight: '900',
     fontStyle: 'italic',

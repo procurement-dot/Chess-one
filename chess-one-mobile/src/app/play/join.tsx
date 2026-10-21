@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import {
   View,
   Text,
@@ -47,13 +48,12 @@ export default function JoinMatchScreen() {
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle="dark-content" />
 
-      {/* Header */}
+      {/* Top Header - Fixed & Branded with ChessOne Logo */}
       <AppHeader
-        title="Join Match"
-        subtitle="Connect with 6-digit room code"
-        showBack={true}
+        showLogo={true}
+        showBack={false}
       />
 
       <KeyboardAvoidingView
@@ -107,7 +107,7 @@ export default function JoinMatchScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#0F1318',
+    backgroundColor: COLORS.background,
   },
   header: {
     flexDirection: 'row',
@@ -116,25 +116,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1A1F26',
+    borderBottomColor: COLORS.border,
+    backgroundColor: COLORS.white,
   },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E232A',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   backText: {
     fontSize: 26,
-    color: '#FFFFFF',
+    color: COLORS.primary,
     lineHeight: 28,
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   spacer: {
     width: 40,
@@ -152,12 +153,12 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.hero,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   iconText: {
     fontSize: 34,
@@ -165,13 +166,13 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 8,
     textAlign: 'center',
   },
   subheading: {
     fontSize: 14,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 32,
@@ -182,36 +183,31 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   codeInput: {
-    backgroundColor: '#1A1F26',
+    backgroundColor: COLORS.white,
     borderWidth: 1.5,
-    borderColor: '#374151',
-    borderRadius: 16,
+    borderColor: COLORS.border,
+    borderRadius: SIZES.radiusCard,
     height: 64,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: 4,
     textAlign: 'center',
+    ...SHADOWS.soft,
   },
   joinButton: {
     width: '100%',
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     height: 52,
-    borderRadius: 14,
+    borderRadius: SIZES.radiusButton,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#2563EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   joinButtonDisabled: {
-    backgroundColor: '#1E293B',
-    shadowOpacity: 0,
+    backgroundColor: COLORS.border,
   },
   joinButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
     fontWeight: '700',
   },

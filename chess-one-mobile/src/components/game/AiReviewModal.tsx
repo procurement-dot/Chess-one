@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React, { useState, useEffect } from 'react';
 import {
   Modal,
@@ -79,7 +80,7 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
               </View>
               <View>
                 <Text style={styles.headerTitle}>AI Game Review</Text>
-                <Text style={styles.headerSubtitle}>Powered by Gemini & Stockfish</Text>
+                <Text style={styles.headerSubtitle}>Powered by ChessOne AI</Text>
               </View>
             </View>
 
@@ -91,10 +92,10 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
           {/* Loading State */}
           {isLoading && (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#3B82F6" />
+              <ActivityIndicator size="large" color={COLORS.primary} />
               <Text style={styles.loadingTitle}>Analyzing Every Move...</Text>
               <Text style={styles.loadingSubtitle}>
-                Stockfish & Gemini AI are evaluating accuracy, tactical opportunities, and blunders.
+                AI Engine is evaluating accuracy, tactical opportunities, and blunders.
               </Text>
             </View>
           )}
@@ -141,7 +142,7 @@ export const AiReviewModal: React.FC<AiReviewModalProps> = ({
                 <View style={styles.accuracyGrid}>
                   <View style={styles.accuracyBox}>
                     <Text style={styles.accuracyLabel}>White Accuracy</Text>
-                    <Text style={[styles.accuracyValue, { color: '#60A5FA' }]}>
+                    <Text style={[styles.accuracyValue, { color: COLORS.primary }]}>
                       {review.accuracyWhite}%
                     </Text>
                   </View>
@@ -269,12 +270,12 @@ const styles = StyleSheet.create({
   sheetCard: {
     width: '100%',
     maxHeight: '90%',
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 18,
     borderWidth: 1,
-    borderColor: '#1E293B',
+    borderColor: COLORS.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -6 },
     shadowOpacity: 0.4,
@@ -288,7 +289,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: COLORS.border,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -299,11 +300,11 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#3B82F6',
+    borderColor: COLORS.primary,
   },
   aiBadgeIcon: {
     fontSize: 20,
@@ -311,23 +312,23 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   headerSubtitle: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontWeight: '500',
   },
   closeBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 14,
     fontWeight: '700',
   },
@@ -340,12 +341,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     fontSize: 17,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   loadingSubtitle: {
     marginTop: 8,
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 18,
     maxWidth: 280,
@@ -357,23 +358,23 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#EF4444',
+    color: COLORS.textHeading,
   },
   errorSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     textAlign: 'center',
     marginBottom: 18,
   },
   retryBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 10,
   },
   retryBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -386,11 +387,11 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   verdictCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   verdictHeader: {
     flexDirection: 'row',
@@ -401,37 +402,37 @@ const styles = StyleSheet.create({
   verdictTag: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#60A5FA',
+    color: COLORS.primary,
     letterSpacing: 1,
   },
   coachRatingPill: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   coachRatingText: {
-    color: '#F59E0B',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '700',
   },
   verdictTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     marginBottom: 8,
   },
   summaryText: {
     fontSize: 14,
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     lineHeight: 20,
     marginBottom: 16,
   },
   accuracyGrid: {
     flexDirection: 'row',
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     borderRadius: 12,
     padding: 12,
     alignItems: 'center',
@@ -447,7 +448,7 @@ const styles = StyleSheet.create({
   },
   accuracyLabel: {
     fontSize: 11,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontWeight: '600',
     marginBottom: 4,
   },
@@ -469,7 +470,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
   },
   bestMoveCard: {
     backgroundColor: 'rgba(16, 185, 129, 0.08)',
@@ -493,7 +494,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   moveBadgeGreen: {
-    backgroundColor: '#065F46',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
@@ -510,19 +511,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   moveBadgeAmberText: {
-    color: '#F87171',
+    color: COLORS.textHeading,
     fontSize: 11,
     fontWeight: '800',
   },
   moveTitleText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#F8FAFC',
+    color: COLORS.textHeading,
     flex: 1,
   },
   moveExplanationText: {
     fontSize: 13,
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     lineHeight: 18,
   },
   betterMoveBox: {
@@ -535,24 +536,24 @@ const styles = StyleSheet.create({
   },
   betterMoveLabel: {
     fontSize: 12,
-    color: '#FBBF24',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   betterMoveValue: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontWeight: '700',
   },
   turningPointCard: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   turningPointText: {
     fontSize: 13,
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     lineHeight: 19,
   },
   tipCard: {
@@ -574,11 +575,11 @@ const styles = StyleSheet.create({
   tipTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#60A5FA',
+    color: COLORS.primary,
   },
   tipText: {
     fontSize: 13,
-    color: '#E2E8F0',
+    color: COLORS.textHeading,
     lineHeight: 19,
   },
   bottomButtonGroup: {
@@ -586,26 +587,26 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   fullResultsBtn: {
-    backgroundColor: '#3B82F6',
+    backgroundColor: COLORS.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
   },
   fullResultsBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 15,
     fontWeight: '700',
   },
   closeDoneBtn: {
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   closeDoneBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontSize: 14,
     fontWeight: '600',
   },

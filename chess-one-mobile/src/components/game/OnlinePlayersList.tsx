@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   View,
@@ -48,7 +49,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator size="small" color="#94A3B8" />
+            <ActivityIndicator size="small" color="COLORS.textBody" />
           ) : (
             <Text style={styles.refreshText}>🔄 Refresh</Text>
           )}
@@ -124,7 +125,7 @@ export const OnlinePlayersList: React.FC<OnlinePlayersListProps> = ({
                   disabled={isThisInviting}
                 >
                   {isThisInviting ? (
-                    <ActivityIndicator size="small" color="#FFFFFF" />
+                    <ActivityIndicator size="small" color="COLORS.textHeading" />
                   ) : (
                     <Text style={styles.inviteBtnText}>⚔️ Invite</Text>
                   )}
@@ -159,22 +160,22 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.border,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   badgeOnline: {
-    backgroundColor: '#064E3B',
-    borderColor: '#059669',
+    backgroundColor: COLORS.white,
+    borderColor: COLORS.border,
   },
   statusDot: {
     width: 6,
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   dotGreen: {
-    backgroundColor: '#10B981',
+    backgroundColor: COLORS.white,
   },
   dotGray: {
     backgroundColor: '#64748B',
@@ -193,28 +194,28 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   refreshBtn: {
     paddingHorizontal: 10,
     paddingVertical: 5,
-    backgroundColor: '#1A202C',
+    backgroundColor: COLORS.white,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#2D3748',
+    borderColor: COLORS.border,
   },
   refreshText: {
     fontSize: 12,
-    color: '#94A3B8',
+    color: COLORS.textBody,
     fontWeight: '600',
   },
   emptyCard: {
-    backgroundColor: '#151921',
+    backgroundColor: COLORS.white,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#1E2530',
+    borderColor: COLORS.border,
   },
   emptyIcon: {
     fontSize: 32,
@@ -223,12 +224,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#CBD5E1',
+    color: COLORS.textHeading,
     marginBottom: 4,
   },
   emptySub: {
     fontSize: 12,
-    color: '#64748B',
+    color: COLORS.textBody,
     textAlign: 'center',
   },
   list: {
@@ -237,12 +238,12 @@ const styles = StyleSheet.create({
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#161B22',
+    backgroundColor: COLORS.white,
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#232A36',
+    borderColor: COLORS.border,
     gap: 12,
   },
   avatarWrap: {
@@ -259,14 +260,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: '#2563EB',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarInitial: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
   },
   avatarStatusDot: {
     position: 'absolute',
@@ -276,7 +277,7 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#161B22',
+    borderColor: COLORS.border,
   },
   infoCol: {
     flex: 1,
@@ -290,21 +291,21 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#F1F5F9',
+    color: COLORS.textHeading,
     maxWidth: 140,
   },
   idChip: {
-    backgroundColor: '#0F172A',
+    backgroundColor: COLORS.white,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: COLORS.border,
   },
   idChipText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#94A3B8',
+    color: COLORS.textBody,
   },
   statusRow: {
     flexDirection: 'row',
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
     color: '#34D399',
   },
   statusOfflineText: {
-    color: '#64748B',
+    color: COLORS.textBody,
   },
   inviteBtn: {
     paddingVertical: 9,
@@ -336,13 +337,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   inviteBtnOffline: {
-    backgroundColor: '#374151',
+    backgroundColor: COLORS.border,
   },
   inviteBtnLoading: {
     opacity: 0.8,
   },
   inviteBtnText: {
-    color: '#FFFFFF',
+    color: COLORS.textHeading,
     fontSize: 13,
     fontWeight: '700',
   },

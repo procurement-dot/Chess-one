@@ -1,3 +1,4 @@
+import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, Image } from 'react-native';
 import { GamePlayer, PlayerColor } from '../../types/game.types';
@@ -11,6 +12,7 @@ interface PlayerInfoProps {
   isTurn: boolean;
   isCheck?: boolean;
   isAI?: boolean;
+  isUser?: boolean;
 }
 
 export const PlayerInfo: React.FC<PlayerInfoProps> = ({
@@ -21,6 +23,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
   isTurn,
   isCheck = false,
   isAI = false,
+  isUser = false,
 }) => {
   const displayName = player?.name || nameFallback;
   const initial = displayName[0]?.toUpperCase() || 'P';
@@ -44,6 +47,7 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
           <View style={styles.nameRow}>
             <Text style={styles.playerName} numberOfLines={1}>
               {displayName}
+              {!isAI && player?.rating ? ` (${player.rating})` : ''}
             </Text>
             <View style={[styles.colorChip, isWhite ? styles.whiteChip : styles.blackChip]}>
               <Text style={[styles.colorChipText, isWhite ? styles.whiteChipText : styles.blackChipText]}>
@@ -61,7 +65,13 @@ export const PlayerInfo: React.FC<PlayerInfoProps> = ({
               <Text style={styles.timeoutText}>TIME EXPIRED</Text>
             </View>
           ) : isTurn ? (
-            <Text style={styles.turnLabel}>Thinking...</Text>
+            isUser ? (
+              <Text style={styles.yourTurnLabel}>Your Turn</Text>
+            ) : isAI ? (
+              <Text style={styles.turnLabel}>AI Thinking...</Text>
+            ) : (
+              <Text style={styles.opponentTurnLabel}>Opponent&apos;s Turn</Text>
+            )
           ) : null}
         </View>
       </View>
@@ -77,22 +87,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.white,
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderRadius: 16,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E8F0',
     width: '100%',
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
-    elevation: 1,
+    elevation: 2,
   },
   activeContainer: {
-    borderColor: '#93C5FD',
-    backgroundColor: '#FAFCFF',
+    borderColor: COLORS.primary,
+    backgroundColor: '#F8FAF7',
+    borderWidth: 2,
   },
   leftSection: {
     flexDirection: 'row',
@@ -117,7 +128,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   whiteBadge: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#F1F5F9',
     borderColor: '#CBD5E1',
   },
   blackBadge: {
@@ -145,8 +156,9 @@ const styles = StyleSheet.create({
   playerName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
-    maxWidth: 140,
+    color: COLORS.textHeading,
+    maxWidth: 200,
+    flexShrink: 1,
   },
   colorChip: {
     paddingHorizontal: 6,
@@ -159,7 +171,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   blackChip: {
-    backgroundColor: '#0F172A',
+    backgroundColor: '#1E293B',
     borderColor: '#0F172A',
   },
   colorChipText: {
@@ -170,38 +182,52 @@ const styles = StyleSheet.create({
     color: '#475569',
   },
   blackChipText: {
-    color: '#F8FAFC',
+    color: '#FFFFFF',
   },
   turnLabel: {
     fontSize: 11,
-    color: '#2563EB',
+    color: '#D97706',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  yourTurnLabel: {
+    fontSize: 11,
+    color: COLORS.primary,
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  opponentTurnLabel: {
+    fontSize: 11,
+    color: COLORS.textBody,
     fontWeight: '600',
     marginTop: 2,
   },
   checkBadge: {
     backgroundColor: '#FEE2E2',
-    paddingHorizontal: 6,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 2,
   },
   checkText: {
-    color: '#DC2626',
+    color: '#B91C1C',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   timeoutBadge: {
-    backgroundColor: '#7F1D1D',
-    paddingHorizontal: 6,
+    backgroundColor: '#DC2626',
+    paddingHorizontal: 7,
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
     marginTop: 2,
   },
   timeoutText: {
-    color: '#F87171',
+    color: '#FFFFFF',
     fontSize: 9,
     fontWeight: '800',
     letterSpacing: 0.5,
