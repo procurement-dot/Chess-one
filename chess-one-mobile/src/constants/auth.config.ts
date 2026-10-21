@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 /**
@@ -27,7 +28,7 @@ export const GOOGLE_AUTH_CONFIG = {
  * Check if the minimum required Google OAuth configuration is present
  */
 export function isGoogleAuthConfigured(): boolean {
-  return Boolean(
-    GOOGLE_AUTH_CONFIG.androidClientId || GOOGLE_AUTH_CONFIG.webClientId
-  );
+  return Platform.OS === 'web'
+    ? Boolean(GOOGLE_AUTH_CONFIG.webClientId)
+    : Boolean(GOOGLE_AUTH_CONFIG.androidClientId || GOOGLE_AUTH_CONFIG.webClientId);
 }

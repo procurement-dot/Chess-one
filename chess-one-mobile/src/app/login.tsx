@@ -46,6 +46,7 @@ export default function LoginScreen() {
     signInWithGoogle,
     signOut,
     isLoading: isAuthLoading,
+    isConfigured: isGoogleAuthConfigured,
     error,
     redirectUri,
   } = useGoogleAuth();
@@ -562,7 +563,7 @@ export default function LoginScreen() {
                   <Text style={styles.errorIcon}>⚠️</Text>
                   <View style={styles.errorTextContainer}>
                     <Text style={styles.errorText}>{error}</Text>
-                    {Platform.OS === 'web' && redirectUri ? (
+                    {isGoogleAuthConfigured && Platform.OS === 'web' && redirectUri ? (
                       <View style={styles.redirectHintBox}>
                         <Text style={styles.redirectHintTitle}>
                           Google Cloud Web Setup Note:
@@ -596,7 +597,7 @@ export default function LoginScreen() {
               <GoogleSignInButton
                 onPress={handleGoogleSignIn}
                 isLoading={isAuthLoading}
-                disabled={isAuthLoading}
+                disabled={isAuthLoading || !isGoogleAuthConfigured}
                 style={styles.googleButton}
               />
 

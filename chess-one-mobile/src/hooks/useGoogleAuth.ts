@@ -14,6 +14,7 @@ export interface UseGoogleAuthReturn {
   signInWithDevAccount: (userId?: number) => Promise<boolean>;
   signOut: () => void;
   isLoading: boolean;
+  isConfigured: boolean;
   result: GoogleAuthResult | null;
   error: string | null;
   redirectUri: string | null;
@@ -23,19 +24,29 @@ export interface UseGoogleAuthReturn {
  * Authoritative hook for Google OAuth & backend JWT flow in ChessOne Mobile
  */
 export function useGoogleAuth(): UseGoogleAuthReturn {
+  const isConfigured = isGoogleAuthConfigured();
   const [isLoading, setIsLoading] = useState(false);
   const [result, setResult] = useState<GoogleAuthResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(() =>
+    isConfigured
+      ? null
+      : 'Google sign-in is not configured. Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in the mobile app .env file and restart Expo.'
+  );
 
   // Prevent duplicate concurrent requests
   const isPromptingRef = useRef(false);
   const lastProcessedTokenRef = useRef<string | null>(null);
 
-  // Initialize Expo AuthSession Google Request
+  // AuthSession requires a client ID while rendering, even when sign-in is disabled.
+  const fallbackClientId =
+    GOOGLE_AUTH_CONFIG.webClientId ||
+    GOOGLE_AUTH_CONFIG.androidClientId ||
+    'google-client-id-not-configured';
+
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    androidClientId: GOOGLE_AUTH_CONFIG.androidClientId || undefined,
-    webClientId: GOOGLE_AUTH_CONFIG.webClientId || undefined,
-    clientId: GOOGLE_AUTH_CONFIG.webClientId || undefined,
+    androidClientId: GOOGLE_AUTH_CONFIG.androidClientId || fallbackClientId,
+    webClientId: GOOGLE_AUTH_CONFIG.webClientId || fallbackClientId,
+    clientId: GOOGLE_AUTH_CONFIG.webClientId || fallbackClientId,
     redirectUri: GOOGLE_AUTH_CONFIG.redirectUri || undefined,
   });
 
@@ -125,8 +136,9 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       return null;
     }
 
-    if (!isGoogleAuthConfigured()) {
-      const msg = 'Google Client IDs are missing. Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in .env';
+    if (!isConfigured) {
+      const msg =
+        'Google sign-in is not configured. Set EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID in the mobile app .env file and restart Expo.';
       setError(msg);
       authStore.setError(msg);
       return { success: false, error: msg };
@@ -167,7 +179,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       authStore.setLoading(false);
       isPromptingRef.current = false;
     }
-  }, [promptAsync, isLoading, handleAuthSuccess]);
+  }, [promptAsync, isLoading, handleAuthSuccess, isConfigured]);
 
   const signOut = useCallback(() => {
     setResult(null);
@@ -233,6 +245,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     signInWithDevAccount,
     signOut,
     isLoading,
+    isConfigured,
     result,
     error,
     redirectUri: request?.redirectUri || null,
