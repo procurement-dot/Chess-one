@@ -9,6 +9,11 @@
     "test:game": "node src/test-live-match.js",
     "test:auth": "node src/test-auth-and-games.js",
     "test:rating": "node src/test-rating.js",
+    "seed:rbac": "node src/scripts/seed-rbac-users.js",
+    "test:rbac": "node src/test-rbac.js",
+    "test:tournaments": "node src/test-tournaments.js",
+    "test:pairing": "node src/test-pairing.js",
+    "test:tournament-start": "node src/test-tournament-start.js",
     "test": "node src/test-live-match.js && node src/test-auth-and-games.js"
   },
   "keywords": [],

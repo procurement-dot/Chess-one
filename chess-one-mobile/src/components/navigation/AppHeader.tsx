@@ -9,7 +9,8 @@ import {
   Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '../../store/authStore';
+import { useAuthStore, authStore } from '../../store/authStore';
+import { toBackendRole } from '../../utils/role.utils';
 import { useRoleStore, roleStore, UserRole, ALLOWED_ROLES } from '../../features/roles/roleStore';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { Feather } from '@expo/vector-icons';
@@ -21,6 +22,7 @@ interface AppHeaderProps {
   onBack?: () => void;
   rightAction?: 'profile' | 'none';
   showLogo?: boolean;
+  extraRightAction?: React.ReactNode;
 }
 
 export const AppHeader: React.FC<AppHeaderProps> = ({
@@ -30,6 +32,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   onBack,
   rightAction = 'profile',
   showLogo,
+  extraRightAction,
 }) => {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
@@ -52,6 +55,9 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
 
   const handleSelectRole = (selectedRole: UserRole) => {
     roleStore.setRole(selectedRole);
+    if (user) {
+      authStore.updateUser({ role: toBackendRole(selectedRole) });
+    }
     setRoleModalVisible(false);
   };
 
@@ -95,6 +101,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
         {/* Right: Authenticated User Chip or Sign In */}
         {rightAction === 'profile' && (
           <View style={styles.rightSection}>
+            {extraRightAction}
             {/* Interactive Role Switcher Dropdown (Top Right) */}
             <TouchableOpacity
               style={styles.roleChip}

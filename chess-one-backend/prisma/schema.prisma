@@ -54,6 +54,24 @@ enum UserRole {
   ADMIN
 }
 
+enum TournamentFormat {
+  ROUND_ROBIN
+  SWISS
+}
+
+enum TournamentStatus {
+  UPCOMING
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum RoundStatus {
+  PENDING
+  ACTIVE
+  COMPLETED
+}
+
 model User {
   id             Int      @id @default(autoincrement())
   name           String
@@ -73,13 +91,15 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  createdGames  Game[]           @relation("CreatedBy")
-  whiteGames    Game[]           @relation("WhitePlayer")
-  blackGames    Game[]           @relation("BlackPlayer")
-  wonGames      Game[]           @relation("GameWinner")
-  sentInvites   GameInvitation[] @relation("SentInvitations")
-  recvInvites   GameInvitation[] @relation("ReceivedInvitations")
-  moves         GameMove[]
+  createdGames       Game[]             @relation("CreatedBy")
+  whiteGames         Game[]             @relation("WhitePlayer")
+  blackGames         Game[]             @relation("BlackPlayer")
+  wonGames           Game[]             @relation("GameWinner")
+  sentInvites        GameInvitation[]   @relation("SentInvitations")
+  recvInvites        GameInvitation[]   @relation("ReceivedInvitations")
+  moves              GameMove[]
+  createdTournaments Tournament[]       @relation("TournamentCreator")
+  tournamentEntries  TournamentPlayer[] @relation("TournamentEntries")
 
   @@index([role])
 }
@@ -126,6 +146,10 @@ model Game {
   startedAt     DateTime?
   finishedAt    DateTime?
 
+  tournamentId      Int?
+  tournament        Tournament?        @relation(fields: [tournamentId], references: [id])
+  pairing           TournamentPairing?
+
   invitations   GameInvitation[]
   moves         GameMove[]
 
@@ -134,6 +158,7 @@ model Game {
   @@index([createdBy])
   @@index([whitePlayerId])
   @@index([blackPlayerId])
+  @@index([tournamentId])
 }
 
 model GameInvitation {
@@ -175,4 +200,73 @@ model GameMove {
   player     User?       @relation(fields: [playerId], references: [id])
 
   @@index([gameId, moveNumber])
+}
+
+model Tournament {
+  id           Int              @id @default(autoincrement())
+  name         String
+  description  String?
+  format       TournamentFormat @default(ROUND_ROBIN)
+  timeControl  String
+  totalRounds  Int?             // ROUND_ROBIN: calculated at start (Phase 2). SWISS: set by organiser.
+  maxPlayers   Int              @default(16)
+  startsAt     DateTime
+  status       TournamentStatus @default(UPCOMING)
+  currentRound Int              @default(0)
+  isRated      Boolean          @default(true)
+  createdBy    Int
+  creator      User             @relation("TournamentCreator", fields: [createdBy], references: [id])
+  players      TournamentPlayer[]
+  rounds       TournamentRound[]
+  games        Game[]
+  cancelledAt  DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([status, startsAt])
+  @@index([createdBy])
+}
+
+model TournamentPlayer {
+  id           Int        @id @default(autoincrement())
+  tournamentId Int
+  userId       Int
+  score        Float      @default(0)
+  tiebreak     Float      @default(0)
+  hadBye       Boolean    @default(false)
+  withdrawn    Boolean    @default(false)
+  joinedAt     DateTime   @default(now())
+  seed         Int?
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user         User       @relation("TournamentEntries", fields: [userId], references: [id])
+
+  @@unique([tournamentId, userId])
+  @@index([userId])
+}
+
+model TournamentRound {
+  id           Int         @id @default(autoincrement())
+  tournamentId Int
+  roundNumber  Int
+  status       RoundStatus @default(PENDING)
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  tournament   Tournament  @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  pairings     TournamentPairing[]
+
+  @@unique([tournamentId, roundNumber])
+}
+
+model TournamentPairing {
+  id          Int             @id @default(autoincrement())
+  roundId     Int
+  boardNumber Int
+  whiteId     Int
+  blackId     Int?
+  gameId      Int?            @unique
+  result      String?
+  round       TournamentRound @relation(fields: [roundId], references: [id], onDelete: Cascade)
+  game        Game?           @relation(fields: [gameId], references: [id])
+
+  @@index([roundId])
 }

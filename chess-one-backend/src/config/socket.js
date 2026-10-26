@@ -84,6 +84,17 @@ function emitToUser(userId, event, payload) {
   io.to(`user:${userId}`).emit(event, payload);
 }
 
+/**
+ * Broadcast an event to a tournament room
+ * @param {string|number} tournamentId
+ * @param {string} event
+ * @param {object} payload
+ */
+function emitToTournament(tournamentId, event, payload) {
+  if (!io) return;
+  io.to(`tournament:${tournamentId}`).emit(event, payload);
+}
+
 module.exports = {
   setIO,
   getIO,
@@ -94,5 +105,5 @@ module.exports = {
   broadcastOnlineUsers,
   emitToGame,
   emitToUser,
+  emitToTournament,
 };
-

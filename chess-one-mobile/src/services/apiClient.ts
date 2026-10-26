@@ -6,6 +6,18 @@ import { authStore } from '../store/authStore';
  * Resolve the backend API base URL based on platform and environment
  */
 export function getApiBaseUrl(): string {
+  // If running in browser on localhost, always target local backend on port 4000
+  if (
+    typeof window !== 'undefined' &&
+    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+  ) {
+    const envUrl = process.env.EXPO_PUBLIC_API_URL;
+    if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
+      return envUrl;
+    }
+    return 'http://localhost:4000';
+  }
+
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
   if (envUrl) {
     if (Platform.OS === 'android' && envUrl.includes('localhost')) {
@@ -63,6 +75,23 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+export interface ForbiddenError extends Error {
+  code: 'FORBIDDEN';
+  status: 403;
+  response?: unknown;
+  userFriendlyMessage?: string;
+  errorCode?: string;
+}
+
+export function isForbiddenError(err: unknown): err is ForbiddenError {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code: unknown }).code === 'FORBIDDEN'
+  );
+}
+
 // Response interceptor for consistent error extraction
 apiClient.interceptors.response.use(
   (response) => response,
@@ -73,9 +102,21 @@ apiClient.interceptors.response.use(
       error.message ||
       'An unexpected network error occurred. Please check your connection.';
 
+    if (error.response?.status === 403 && errorData?.code === 'FORBIDDEN') {
+      const serverMessage = errorData.message || 'You do not have permission to do this';
+      const forbiddenErr = new Error(serverMessage) as ForbiddenError;
+      forbiddenErr.code = 'FORBIDDEN';
+      forbiddenErr.status = 403;
+      forbiddenErr.response = error.response;
+      forbiddenErr.userFriendlyMessage = serverMessage;
+      forbiddenErr.errorCode = 'FORBIDDEN';
+      return Promise.reject(forbiddenErr);
+    }
+
     // Augment error with server message for cleaner UI display
-    (error as any).userFriendlyMessage = errorMessage;
-    (error as any).errorCode = errorData?.code;
+    const augmentedError = error as AxiosError & { userFriendlyMessage?: string; errorCode?: string };
+    augmentedError.userFriendlyMessage = errorMessage;
+    augmentedError.errorCode = errorData?.code;
 
     if (error.response?.status === 401) {
       // Log warning but DO NOT automatically log user out.

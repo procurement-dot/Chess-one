@@ -9,6 +9,22 @@ const { AppError } = require("../middleware/error.middleware");
 
 class GameService {
   /**
+   * Helper to format tournament info on games
+   */
+  _formatTournamentInfo(game) {
+    if (!game.tournamentId) return null;
+    const roundNumber = game.pairing?.round?.roundNumber ?? null;
+    const boardNumber = game.pairing?.boardNumber ?? null;
+    const name = game.tournament?.name || game.pairing?.round?.tournament?.name || null;
+    return {
+      id: game.tournamentId,
+      name,
+      roundNumber,
+      boardNumber,
+    };
+  }
+
+  /**
    * Helper to resolve game by integer ID or string gameCode
    */
   async findGameByIdOrCode(identifier, include = {}) {
@@ -24,6 +40,18 @@ class GameService {
         whitePlayer: { select: { id: true, name: true, email: true, rating: true } },
         blackPlayer: { select: { id: true, name: true, email: true, rating: true } },
         winner: { select: { id: true, name: true, email: true, rating: true } },
+        tournament: { select: { id: true, name: true } },
+        pairing: {
+          select: {
+            boardNumber: true,
+            round: {
+              select: {
+                roundNumber: true,
+                tournament: { select: { id: true, name: true } },
+              },
+            },
+          },
+        },
         ...include,
       },
     });
@@ -157,6 +185,7 @@ class GameService {
       createdAt: game.createdAt,
       startedAt: game.startedAt,
       finishedAt: game.finishedAt,
+      tournament: this._formatTournamentInfo(game),
     };
   }
 
@@ -174,6 +203,10 @@ class GameService {
         status: game.status,
         playerColor: game.whitePlayerId === userId ? "WHITE" : "BLACK",
       };
+    }
+
+    if (game.tournamentId) {
+      throw new AppError("NOT_A_PLAYER", "You are not a player in this tournament game", 403);
     }
 
     if (game.status !== "WAITING") {
@@ -325,6 +358,7 @@ class GameService {
       whiteRatingChange: game.whiteRatingChange,
       blackRatingChange: game.blackRatingChange,
       moveCount,
+      tournament: this._formatTournamentInfo(game),
     };
   }
 
@@ -333,6 +367,10 @@ class GameService {
    */
   async cancelWaitingGame({ gameId, userId }) {
     const game = await this.findGameByIdOrCode(gameId);
+
+    if (game.tournamentId) {
+      throw new AppError("TOURNAMENT_GAME_LOCKED", "Tournament games can't be aborted or cancelled", 403);
+    }
 
     if (game.createdBy !== userId) {
       throw new AppError("FORBIDDEN", "Only the game creator can cancel the game", 403);
@@ -363,6 +401,10 @@ class GameService {
    */
   async abortGame({ gameId, userId, reason = "FIRST_MOVE_TIMEOUT" }) {
     const game = await this.findGameByIdOrCode(gameId);
+
+    if (game.tournamentId) {
+      throw new AppError("TOURNAMENT_GAME_LOCKED", "Tournament games can't be aborted or cancelled", 403);
+    }
 
     if (game.status === "COMPLETED" || game.status === "CANCELLED") {
       return { gameId: game.id, status: game.status, alreadyFinished: true };

@@ -103,22 +103,18 @@ async function requireAuth(req, res, next) {
   }
 }
 
+const { forbidden, unauthorized } = require("./rbac.middleware");
+
 /**
  * Reusable RBAC guard middleware
  */
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        error: { code: "UNAUTHORIZED", message: "Authentication required" },
-      });
+      return unauthorized(res);
     }
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({
-        success: false,
-        error: { code: "FORBIDDEN", message: "You do not have permission to do this" },
-      });
+      return forbidden(res);
     }
     next();
   };

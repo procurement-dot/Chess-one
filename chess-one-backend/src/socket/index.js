@@ -8,6 +8,7 @@ const {
   getOnlineUserIds,
 } = require("../config/socket");
 const { registerGameHandlers } = require("./game.socket");
+const { registerTournamentHandlers } = require("./tournament.socket");
 
 /**
  * Initialize Socket.IO with HTTP server
@@ -77,6 +78,9 @@ function initializeSocket(httpServer) {
 
     // Register live chess game room handlers
     registerGameHandlers(io, socket);
+
+    // Register tournament room handlers
+    registerTournamentHandlers(io, socket);
   });
 
   return io;

@@ -64,10 +64,18 @@ async function applyRating(gameId) {
           blackPlayer: {
             select: { id: true, rating: true, gamesPlayed: true },
           },
+          tournament: {
+            select: { isRated: true },
+          },
         },
       });
 
       if (!game || !game.whitePlayer || !game.blackPlayer) {
+        return null;
+      }
+
+      // If this is an unrated tournament game, do not modify player ratings
+      if (game.tournamentId && game.tournament && game.tournament.isRated === false) {
         return null;
       }
 

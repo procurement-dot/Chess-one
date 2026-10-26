@@ -4,11 +4,17 @@ import { authStore } from '../store/authStore';
 import { gameStore } from '../store/gameStore';
 import { gameService } from '../services/game.service';
 import { PlayerColor, GameResult, GameFinishedPayload } from '../types/game.types';
+import {
+  RoundStartedEvent,
+  YourGameEvent,
+  TournamentUpdatedEvent,
+} from '../types/tournament.types';
 
 class GameSocketManager {
   private socket: Socket | null = null;
   private currentGameId: number | string | null = null;
   private isReconnecting = false;
+  private joinedTournamentIds = new Set<number | string>();
 
   /**
    * Connect to backend Socket.IO server with authentication
@@ -50,6 +56,11 @@ class GameSocketManager {
       if (this.currentGameId) {
         this.socket?.emit('game:join', { gameId: this.currentGameId });
         this.rejoinGameRoom(this.currentGameId);
+      }
+
+      // Rejoin any active tournament rooms
+      for (const tid of this.joinedTournamentIds) {
+        this.socket?.emit('tournament:join', { tournamentId: tid });
       }
     });
 
@@ -329,6 +340,43 @@ class GameSocketManager {
     socket.on('game:player-reconnected', callback);
     return () => {
       socket.off('game:player-reconnected', callback);
+    };
+  }
+
+  joinTournament(tournamentId: number | string) {
+    this.joinedTournamentIds.add(tournamentId);
+    const socket = this.connect();
+    socket.emit('tournament:join', { tournamentId });
+  }
+
+  leaveTournament(tournamentId: number | string) {
+    this.joinedTournamentIds.delete(tournamentId);
+    if (this.socket && this.socket.connected) {
+      this.socket.emit('tournament:leave', { tournamentId });
+    }
+  }
+
+  onRoundStarted(callback: (event: RoundStartedEvent) => void): () => void {
+    const socket = this.connect();
+    socket.on('tournament:round-started', callback);
+    return () => {
+      socket.off('tournament:round-started', callback);
+    };
+  }
+
+  onYourGame(callback: (event: YourGameEvent) => void): () => void {
+    const socket = this.connect();
+    socket.on('tournament:your-game', callback);
+    return () => {
+      socket.off('tournament:your-game', callback);
+    };
+  }
+
+  onTournamentUpdated(callback: (event: TournamentUpdatedEvent) => void): () => void {
+    const socket = this.connect();
+    socket.on('tournament:updated', callback);
+    return () => {
+      socket.off('tournament:updated', callback);
     };
   }
 
