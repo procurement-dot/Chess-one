@@ -304,10 +304,12 @@ export function useGame(gameId: number | string) {
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn, handleLocalTimeout]);
 
-  // Polling fallback: PVP only! Never poll during local AI games!
+  // Polling fallback: PVP only! Only poll when WebSocket is disconnected!
   useEffect(() => {
     if (!gameId || store.gameStatus !== 'ACTIVE') return;
     if (store.currentGame?.gameType === 'PLAYER_VS_AI') return;
+    // When WebSocket is actively connected, do not poll to avoid snapping or race conditions
+    if (store.connectionStatus === 'connected') return;
 
     let isPolling = false;
     const interval = setInterval(async () => {
@@ -344,10 +346,10 @@ export function useGame(gameId: number | string) {
       } finally {
         isPolling = false;
       }
-    }, 2000);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, [gameId, store.gameStatus]);
+  }, [gameId, store.gameStatus, store.connectionStatus]);
 
   // Synchronize timeout state with backend for PVP
   useEffect(() => {
@@ -496,7 +498,7 @@ export function useGame(gameId: number | string) {
         return;
       }
 
-      if (isSubmittingMove) {
+      if (isSubmittingMove || isSubmittingMoveRef.current) {
         return;
       }
 
@@ -627,8 +629,7 @@ export function useGame(gameId: number | string) {
         return;
       }
 
-      // Schedule AI turn immediately
-      triggerAiMove();
+      // AI turn is triggered cleanly and exclusively by useEffect on store.currentTurn
       return;
     }
 

@@ -40,7 +40,7 @@ const AI_RESPONSES = [
   'Well played! Keep your guard up! 🛡️',
 ];
 
-export const MoveHistory: React.FC<MoveHistoryProps> = ({
+const MoveHistoryComponent: React.FC<MoveHistoryProps> = ({
   moves,
   gameId,
   currentUserId,
@@ -454,6 +454,18 @@ export const MoveHistory: React.FC<MoveHistoryProps> = ({
     </View>
   );
 };
+
+export const MoveHistory = React.memo<MoveHistoryProps>(MoveHistoryComponent, (prev, next) => {
+  return (
+    prev.gameId === next.gameId &&
+    prev.isAI === next.isAI &&
+    prev.currentUserId === next.currentUserId &&
+    prev.currentUserName === next.currentUserName &&
+    prev.opponentName === next.opponentName &&
+    prev.moves.length === next.moves.length &&
+    (prev.moves.length === 0 || prev.moves[prev.moves.length - 1]?.id === next.moves[next.moves.length - 1]?.id)
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

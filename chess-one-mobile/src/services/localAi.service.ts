@@ -181,13 +181,17 @@ function minimax(
 
 class LocalAIService {
   /**
-   * Calculate best chess move locally on device with fast, configurable movetime
+   * Calculate best chess move locally on device with fast, non-blocking movetime
    */
   async getBestMove(
     fen: string,
     difficulty: AIDifficulty = 'MEDIUM'
   ): Promise<BestMoveResult | null> {
     const startTime = Date.now();
+
+    // Yield to the JavaScript event loop immediately so the player's move renders with zero dropped frames
+    await new Promise((resolve) => setTimeout(resolve, 80));
+
     const chess = new Chess(fen);
     const legalMoves = chess.moves({ verbose: true });
 
@@ -196,13 +200,12 @@ class LocalAIService {
     const isWhite = chess.turn() === 'w';
 
     // Target thinking delays for smooth, responsive human feel:
-    // In a 1-minute game, Medium answers in 350-500ms (well under 1 second)
     const targetDelayMs =
       difficulty === 'EASY'
-        ? 200 + Math.random() * 150   // 200 - 350ms
+        ? 300 + Math.random() * 150   // 300 - 450ms
         : difficulty === 'HARD'
-        ? 550 + Math.random() * 200   // 550 - 750ms
-        : 350 + Math.random() * 200;  // 350 - 550ms (Medium)
+        ? 600 + Math.random() * 200   // 600 - 800ms
+        : 400 + Math.random() * 200;  // 400 - 600ms (Medium)
 
     let selectedMove = legalMoves[0];
 
@@ -220,7 +223,8 @@ class LocalAIService {
       let bestScore = isWhite ? -Infinity : Infinity;
       const scoredMoves: { move: typeof legalMoves[0]; score: number }[] = [];
 
-      for (const move of legalMoves) {
+      for (let i = 0; i < legalMoves.length; i++) {
+        const move = legalMoves[i];
         chess.move(move);
         const score = minimax(
           chess,
@@ -244,6 +248,11 @@ class LocalAIService {
             selectedMove = move;
           }
         }
+
+        // Periodically yield to event loop every 4 moves so the UI thread remains 100% responsive
+        if (i % 4 === 0) {
+          await new Promise((resolve) => setTimeout(resolve, 0));
+        }
       }
 
       // Medium adds slight randomness among the top 3 best moves to avoid repetitive play
@@ -262,7 +271,7 @@ class LocalAIService {
 
     // Wait remaining delay to fulfill movetime smoothly
     const elapsed = Date.now() - startTime;
-    const remainingDelay = Math.max(50, targetDelayMs - elapsed);
+    const remainingDelay = Math.max(30, targetDelayMs - elapsed);
     await new Promise((resolve) => setTimeout(resolve, remainingDelay));
 
     return {

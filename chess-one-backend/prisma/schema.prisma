@@ -46,6 +46,7 @@ enum InvitationStatus {
 }
 
 enum UserRole {
+  PLAYER
   STUDENT
   PARENT
   COACH
