@@ -64,8 +64,18 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
   return (
     <View style={styles.headerContainer}>
       <View style={styles.contentRow}>
-        {/* Left: Back button OR Brand Icon */}
+        {/* Left: Back button AND Brand Icon */}
         <View style={styles.leftSection}>
+          {showBack && (
+            <TouchableOpacity
+              style={styles.backIconButton}
+              activeOpacity={0.7}
+              onPress={handleBack}
+            >
+              <Feather name="chevron-left" size={24} color={COLORS.primary} style={styles.backIcon} />
+            </TouchableOpacity>
+          )}
+
           {showLogo || !showBack ? (
             <TouchableOpacity
               style={styles.brandContainer}
@@ -74,7 +84,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
             >
               <Image 
                 source={require('../../../assets/images/chessone-logo.png')} 
-                style={{ width: 140, height: 40, resizeMode: 'contain' }}
+                style={{ width: showBack ? 130 : 140, height: 40, resizeMode: 'contain' }}
               />
             </TouchableOpacity>
           ) : (
@@ -83,7 +93,6 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
               activeOpacity={0.7}
               onPress={handleBack}
             >
-              <Feather name="chevron-left" size={24} color={COLORS.primary} style={styles.backIcon} />
               <View style={styles.backTitleCol}>
                 <Text style={styles.backText}>
                   {title !== 'ChessOne' ? title : 'Back'}
@@ -208,6 +217,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+  },
+  backIconButton: {
+    paddingVertical: 6,
+    paddingRight: 6,
+    paddingLeft: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   backButton: {
     flexDirection: 'row',

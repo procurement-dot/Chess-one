@@ -270,3 +270,20 @@ model TournamentPairing {
 
   @@index([roundId])
 }
+
+model Puzzle {
+  id              String   @id
+  fen             String
+  moves           String
+  rating          Int
+  ratingDeviation Int?
+  popularity      Int?
+  nbPlays         Int?
+  themes          String
+  gameUrl         String?
+  openingTags     String?
+  createdAt       DateTime @default(now())
+
+  @@index([rating])
+  @@index([themes])
+}

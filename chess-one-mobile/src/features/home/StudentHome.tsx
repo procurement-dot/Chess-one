@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, ScrollView } from 'react-native';
+import { useLearnStore, learnStore } from '../learn/learnStore';
 import { useRouter } from 'expo-router';
 import { useAuthStore } from '../../store/authStore';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
@@ -12,6 +13,34 @@ export const StudentHome = () => {
   const router = useRouter();
   
   const firstName = user?.name ? user.name.split(' ')[0] : 'Aarav';
+
+  const {
+    isPlacementComplete,
+    placementGamesCompleted,
+    placementTier,
+    tacticalRating,
+    startingLevelId,
+    completedLevels,
+    totalXp,
+  } = useLearnStore();
+
+  const [showPlacementModal, setShowPlacementModal] = useState<boolean>(false);
+  const [showResultModal, setShowResultModal] = useState<boolean>(false);
+
+  const handleSimulateGame = (won: boolean = true) => {
+    const accuracy = won ? Math.floor(Math.random() * 15) + 75 : Math.floor(Math.random() * 20) + 45;
+    const moves = Math.floor(Math.random() * 10) + 14;
+    const nextGame = placementGamesCompleted + 1;
+    
+    learnStore.recordPlacementGame(won, accuracy, moves, won ? 0 : 1);
+    setShowPlacementModal(false);
+
+    if (nextGame >= 5) {
+      setTimeout(() => {
+        setShowResultModal(true);
+      }, 400);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -72,47 +101,136 @@ export const StudentHome = () => {
       <View style={styles.headerRow}>
         <Text style={styles.eyebrow}>MAKE YOUR NEXT MOVE</Text>
         <View style={styles.xpPill}>
-          <Text style={styles.xpText}>✦ {DEMO_STUDENT_REPORT.learningRating ? 240 : 240} XP · Level 4</Text>
+          <Text style={styles.xpText}>
+            ✦ {totalXp} XP · {isPlacementComplete ? `Level ${startingLevelId}` : `Placement ${placementGamesCompleted}/5`}
+          </Text>
         </View>
       </View>
       
       <Text style={styles.greeting}>Hey {firstName}, ready to play?</Text>
       <Text style={styles.subtitle}>A little practice today. A better player tomorrow.</Text>
 
-      {/* 4. Piece Explorers Hero Card */}
-      <View style={styles.heroCard}>
-        <View style={styles.heroTop}>
-          <View style={styles.heroIconSquare}>
-            <Text style={styles.heroIcon}>♞</Text>
+      {/* 4. Dynamic Hero Card: AI Placement Assessment (0/5) vs Calibrated Level */}
+      {!isPlacementComplete ? (
+        <View style={[styles.heroCard, styles.heroAssessmentCard]}>
+          <View style={styles.heroTop}>
+            <View style={[styles.heroIconSquare, { backgroundColor: '#F59E0B' }]}>
+              <Text style={{ fontSize: 16 }}>🎯</Text>
+            </View>
+            <View style={{ flex: 1, marginLeft: 8 }}>
+              <Text style={styles.heroAssessmentEyebrow}>
+                AI PLACEMENT ASSESSMENT · {placementGamesCompleted} / 5
+              </Text>
+            </View>
+            <View style={styles.placementPill}>
+              <Text style={styles.placementPillText}>
+                {Math.round((placementGamesCompleted / 5) * 100)}% Done
+              </Text>
+            </View>
           </View>
-          <Text style={styles.heroEyebrow}>PIECE EXPLORERS · WORLD 1</Text>
-        </View>
-        <Text style={styles.heroTitle}>Your next level. A new possibility.</Text>
-        <Text style={styles.heroDesc}>Level 4 · The knight’s move. Learn, earn stars and unlock your next challenge.</Text>
-        <TouchableOpacity style={styles.heroButton} onPress={() => router.push('/learn' as any)}>
-          <Text style={styles.heroButtonText}>Continue level 4</Text>
-        </TouchableOpacity>
-      </View>
 
-      {/* 5. Stats Row (Reference details) */}
+          <Text style={[styles.heroTitle, { color: COLORS.white }]}>
+            Find Your Chess Skill Level
+          </Text>
+          <Text style={[styles.heroDesc, { color: '#CBD5E1' }]}>
+            Play 5 timed 1.5-min blitz matches with Coach One. Our AI will analyze your tactical speed & accuracy to calibrate your starting level!
+          </Text>
+
+          <View style={styles.placementTrackBar}>
+            <View
+              style={[
+                styles.placementFillBar,
+                { width: `${Math.max(6, (placementGamesCompleted / 5) * 100)}%` },
+              ]}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={styles.placementActionBtn}
+            activeOpacity={0.85}
+            onPress={() => router.push('/learn/placement' as any)}
+          >
+            <Text style={styles.placementActionBtnText}>
+              {placementGamesCompleted === 0
+                ? 'Start Match 1 (1.5 Min Blitz) 🚀'
+                : `Play Match ${placementGamesCompleted + 1} (1.5 Min) ▶`}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <View style={styles.heroCard}>
+          <View style={styles.heroTop}>
+            <View style={styles.heroIconSquare}>
+              <Text style={styles.heroIcon}>♞</Text>
+            </View>
+            <Text style={styles.heroEyebrow}>
+              PIECE EXPLORERS · WORLD {startingLevelId > 10 ? 2 : 1}
+            </Text>
+          </View>
+          <Text style={styles.heroTitle}>Your next level. A new possibility.</Text>
+          <Text style={styles.heroDesc}>
+            Level {startingLevelId} · Master new tactical motifs, earn stars and unlock your next challenge!
+          </Text>
+          <TouchableOpacity
+            style={styles.heroButton}
+            onPress={() => router.push(`/learn/level?id=${startingLevelId}` as any)}
+          >
+            <Text style={styles.heroButtonText}>Continue Level {startingLevelId} ▶</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={{ marginTop: 10, alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 5 }}
+            onPress={() => {
+              learnStore.resetPlacement();
+              router.push('/learn/placement' as any);
+            }}
+            activeOpacity={0.7}
+          >
+            <Feather name="rotate-ccw" size={13} color={COLORS.primary} />
+            <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.primary }}>
+              Retake 1.5-Min Placement Matches
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* 5. Stats Row (Live Placement & Store Progress) */}
       <View style={styles.statsRow}>
         <View style={styles.statCard}>
           <Text style={styles.statValue}>
-            {user?.rating ? user.rating : 640} <Text style={{ fontSize: 13, color: COLORS.progressFill }}>+32</Text>
+            {tacticalRating} <Text style={{ fontSize: 12, color: COLORS.progressFill }}>ELO</Text>
           </Text>
-          <Text style={styles.statLabel}>Learning rating</Text>
-          <Text style={styles.statSub}>ChessOne · not FIDE</Text>
+          <Text style={styles.statLabel}>Skill Rating</Text>
+          <Text style={styles.statSub}>
+            {isPlacementComplete ? (placementTier || 'Calibrated') : 'Evaluating...'}
+          </Text>
         </View>
         <View style={styles.statCard}>
-          <Text style={styles.statValue}>8<Text style={{ fontSize: 13, color: COLORS.textBody }}> / 24</Text></Text>
-          <Text style={styles.statLabel}>Lessons finished</Text>
-          <Text style={styles.statSub}>Foundation pathway</Text>
+          <Text style={styles.statValue}>
+            {Object.keys(completedLevels).filter((k) => completedLevels[Number(k)] > 0).length}
+            <Text style={{ fontSize: 13, color: COLORS.textBody }}> / 30</Text>
+          </Text>
+          <Text style={styles.statLabel}>Lessons Mastered</Text>
+          <Text style={styles.statSub}>Curriculum roadmap</Text>
         </View>
-        <View style={styles.statCard}>
-          <Text style={styles.statValue}>48<Text style={{ fontSize: 13 }}> min</Text></Text>
-          <Text style={styles.statLabel}>Practice this week</Text>
-          <Text style={[styles.statSub, { color: COLORS.progressFill, fontWeight: '700' }]}>12 min to your goal</Text>
-        </View>
+        <TouchableOpacity
+          style={styles.statCard}
+          onPress={() => {
+            if (isPlacementComplete) {
+              learnStore.resetPlacement();
+            }
+            router.push('/learn/placement' as any);
+          }}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.statValue}>
+            {placementGamesCompleted} <Text style={{ fontSize: 13 }}>/ 5</Text>
+          </Text>
+          <Text style={styles.statLabel}>Placement Games</Text>
+          <Text style={[styles.statSub, { color: COLORS.progressFill, fontWeight: '700' }]}>
+            {isPlacementComplete ? 'Retake 1.5-Min ›' : `${5 - placementGamesCompleted} remaining`}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* 6. Your Daily Moves (1 of 3 done) */}
@@ -269,6 +387,134 @@ export const StudentHome = () => {
           <Text style={styles.quickBtnSub}>PvP room match</Text>
         </TouchableOpacity>
       </View>
+      {/* MODAL 1: Placement Game Launcher */}
+      <Modal visible={showPlacementModal} transparent animationType="fade">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.placementModalCard}>
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalBadgeText}>🎯 AI ASSESSMENT · GAME {placementGamesCompleted + 1} OF 5</Text>
+              <TouchableOpacity onPress={() => setShowPlacementModal(false)}>
+                <Feather name="x" size={20} color={COLORS.textBody} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={{ alignItems: 'center', gap: 6, marginVertical: 8 }}>
+              <Text style={{ fontSize: 36 }}>🧙‍♂️</Text>
+              <Text style={styles.modalTitle}>Mission {placementGamesCompleted + 1}: Match Assessment</Text>
+              <Text style={styles.modalDesc}>
+                Play with Coach One! Our AI monitors your opening development, piece protection, and tactical vision.
+              </Text>
+            </View>
+
+            <View style={styles.missionBox}>
+              <Text style={styles.missionTitle}>Game Objective:</Text>
+              <Text style={styles.missionText}>
+                {placementGamesCompleted === 0 && 'Control the center and develop your Knights and Bishops.'}
+                {placementGamesCompleted === 1 && 'Look for safe squares and defend any attacked pieces.'}
+                {placementGamesCompleted === 2 && 'Find double attacks (Forks and Pins) to gain material.'}
+                {placementGamesCompleted === 3 && 'Castle your King to safety and coordinate your Rooks.'}
+                {placementGamesCompleted === 4 && 'Execute clean tactics and hunt for the decisive checkmate!'}
+              </Text>
+            </View>
+
+            <View style={{ gap: 8, marginTop: 8 }}>
+              <TouchableOpacity
+                style={styles.modalPlayBtn}
+                onPress={() => {
+                  setShowPlacementModal(false);
+                  router.push('/learn/placement' as any);
+                }}
+              >
+                <Text style={styles.modalPlayBtnText}>Play Diagnostic Challenge ▶</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalSimBtn}
+                onPress={() => handleSimulateGame(true)}
+              >
+                <Text style={styles.modalSimBtnText}>⚡ Simulate Match Outcome (Win)</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 2: AI Diagnostic Assessment Result Modal */}
+      <Modal visible={showResultModal} transparent animationType="slide">
+        <View style={styles.modalBackdrop}>
+          <View style={styles.resultModalCard}>
+            <View style={styles.resultTrophyBox}>
+              <Text style={{ fontSize: 32 }}>🏆</Text>
+            </View>
+
+            <Text style={styles.resultModalTitle}>Placement Complete!</Text>
+            <Text style={styles.resultModalSub}>
+              Coach One AI analyzed 5 games across your openings, tactics, and endgame decisions:
+            </Text>
+
+            <View style={styles.resultPillBox}>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={styles.resultPillLabel}>SKILL LEVEL</Text>
+                <Text style={styles.resultPillValue}>🛡️ {placementTier || 'Intermediate'}</Text>
+              </View>
+              <View style={{ width: 1, height: 28, backgroundColor: '#86EFAC' }} />
+              <View style={{ alignItems: 'center' }}>
+                <Text style={styles.resultPillLabel}>STARTING ELO</Text>
+                <Text style={styles.resultPillValue}>{tacticalRating} ELO</Text>
+              </View>
+            </View>
+
+            {/* Metrics Breakdown */}
+            <View style={{ gap: 8, marginVertical: 6 }}>
+              <View style={styles.metricRow}>
+                <View style={styles.metricLabelRow}>
+                  <Text style={styles.metricName}>Tactical Vision & Pins</Text>
+                  <Text style={[styles.metricScore, { color: '#059669' }]}>86% (Strong)</Text>
+                </View>
+                <View style={styles.metricTrack}>
+                  <View style={[styles.metricFill, { width: '86%', backgroundColor: '#10B981' }]} />
+                </View>
+              </View>
+
+              <View style={styles.metricRow}>
+                <View style={styles.metricLabelRow}>
+                  <Text style={styles.metricName}>Opening & Piece Development</Text>
+                  <Text style={[styles.metricScore, { color: '#059669' }]}>78% (Solid)</Text>
+                </View>
+                <View style={styles.metricTrack}>
+                  <View style={[styles.metricFill, { width: '78%', backgroundColor: '#10B981' }]} />
+                </View>
+              </View>
+
+              <View style={styles.metricRow}>
+                <View style={styles.metricLabelRow}>
+                  <Text style={styles.metricName}>King Safety & Defense</Text>
+                  <Text style={[styles.metricScore, { color: '#D97706' }]}>64% (Focus Area)</Text>
+                </View>
+                <View style={styles.metricTrack}>
+                  <View style={[styles.metricFill, { width: '64%', backgroundColor: '#F59E0B' }]} />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.verdictBox}>
+              <Text style={styles.verdictText}>
+                💡 <Text style={{ fontWeight: '800' }}>Coach One Verdict:</Text> You possess sharp tactical calculation! We have unlocked Levels 1–{startingLevelId - 1} so you can jump right into Level {startingLevelId}!
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalPlayBtn}
+              onPress={() => {
+                setShowResultModal(false);
+                router.push(`/learn/level?id=${startingLevelId}` as any);
+              }}
+            >
+              <Text style={styles.modalPlayBtnText}>Unlock & Continue Level {startingLevelId} ▶</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -277,6 +523,227 @@ const styles = StyleSheet.create({
   container: {
     gap: 16,
   },
+  heroAssessmentCard: {
+    backgroundColor: '#183D3D',
+    borderWidth: 1.5,
+    borderColor: '#2D6A4F',
+  },
+  heroAssessmentEyebrow: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#F59E0B',
+    letterSpacing: 0.8,
+  },
+  placementPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  placementPillText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+  placementTrackBar: {
+    height: 6,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginVertical: 4,
+  },
+  placementFillBar: {
+    height: '100%',
+    backgroundColor: '#F59E0B',
+    borderRadius: 3,
+  },
+  placementActionBtn: {
+    backgroundColor: '#F59E0B',
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4,
+    ...SHADOWS.soft,
+  },
+  placementActionBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#000000',
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  placementModalCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    width: '100%',
+    maxWidth: 400,
+    gap: 8,
+    ...SHADOWS.soft,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  modalBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: COLORS.primary,
+    letterSpacing: 0.6,
+  },
+  modalTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+    textAlign: 'center',
+  },
+  modalDesc: {
+    fontSize: 12,
+    color: COLORS.textBody,
+    textAlign: 'center',
+    lineHeight: 17,
+  },
+  missionBox: {
+    backgroundColor: '#F8FAF7',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 12,
+    gap: 4,
+  },
+  missionTitle: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  missionText: {
+    fontSize: 12,
+    color: COLORS.textHeading,
+    lineHeight: 16,
+  },
+  modalPlayBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.soft,
+  },
+  modalPlayBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.white,
+  },
+  modalSimBtn: {
+    backgroundColor: '#FEF3C7',
+    borderRadius: 12,
+    paddingVertical: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  modalSimBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  resultModalCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 20,
+    width: '100%',
+    maxWidth: 420,
+    gap: 10,
+    ...SHADOWS.soft,
+  },
+  resultTrophyBox: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#DCFCE7',
+    borderWidth: 2,
+    borderColor: '#86EFAC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+  },
+  resultModalTitle: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+    textAlign: 'center',
+  },
+  resultModalSub: {
+    fontSize: 12,
+    color: COLORS.textBody,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  resultPillBox: {
+    backgroundColor: '#F0FFF4',
+    borderWidth: 1.5,
+    borderColor: '#86EFAC',
+    borderRadius: 14,
+    padding: 12,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  resultPillLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  resultPillValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#064E3B',
+  },
+  metricRow: {
+    gap: 3,
+  },
+  metricLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  metricName: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.textHeading,
+  },
+  metricScore: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  metricTrack: {
+    height: 5,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  metricFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  verdictBox: {
+    backgroundColor: '#F1F5F9',
+    borderRadius: 10,
+    padding: 10,
+  },
+  verdictText: {
+    fontSize: 11,
+    color: COLORS.textHeading,
+    lineHeight: 16,
+  },
+
   reportBannerCard: {
     backgroundColor: COLORS.white,
     borderRadius: SIZES.radiusCard,
