@@ -166,13 +166,17 @@ class GameStore {
     const existingMoves = [...this.state.moves];
     const lastMove = existingMoves.length > 0 ? existingMoves[existingMoves.length - 1] : null;
 
-    // Check if this move is already in the move list
-    const isExactDuplicate = existingMoves.some(
+    // Check if this move is already in the move list or matching the last optimistic move
+    const isExactDuplicate = Boolean(
+      lastMove &&
+      lastMove.from === from &&
+      lastMove.to === to &&
+      (lastMove.san === san || !san || lastMove.color === moveColor)
+    ) || existingMoves.some(
       (m) =>
-        m.san === san &&
         m.from === from &&
         m.to === to &&
-        m.fenAfter === fen
+        (m.san === san || m.fenAfter === fen)
     );
 
     let updatedMoves: GameMove[];
