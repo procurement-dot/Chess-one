@@ -9,13 +9,15 @@ import Chessboard from '@og-nav/expo-chessboard';
 import { Feather } from '@expo/vector-icons';
 
 const QUICK_OPENING_MOVES = [
-  { san: 'e4', label: '1. e4 (King’s Pawn)' },
-  { san: 'd4', label: '1. d4 (Queen’s Pawn)' },
-  { san: 'Nf3', label: '1. Nf3 (Knight)' },
+  { san: 'e4', label: '1. e4 (King’s Pawn)', from: 'e2', to: 'e4' },
+  { san: 'd4', label: '1. d4 (Queen’s Pawn)', from: 'd2', to: 'd4' },
+  { san: 'Nf3', label: '1. Nf3 (Knight)', from: 'g1', to: 'f3' },
 ];
 
 export default function PracticeScreen() {
   const { coachPersonality } = useLearnStore();
+  const chessboardRef = useRef<any>(null);
+  const isProgrammaticMoveRef = useRef<boolean>(false);
   const [chess] = useState(() => new Chess());
   const [fen, setFen] = useState(chess.fen());
   const [feedback, setFeedback] = useState(COACH_DIALOGUES[coachPersonality].initialGreeting);
@@ -29,10 +31,27 @@ export default function PracticeScreen() {
     }
   }, [coachPersonality, moveCount]);
 
-  const executeMove = (moveInput: string | { from: string; to: string; promotion?: string }) => {
+  const executeMove = (
+    moveInput: string | { from: string; to: string; promotion?: string },
+    alreadyMovedOnBoard = false
+  ) => {
     try {
       const result = chess.move(moveInput as any);
       if (result) {
+        if (!alreadyMovedOnBoard && typeof moveInput === 'object' && moveInput.from && moveInput.to) {
+          isProgrammaticMoveRef.current = true;
+          chessboardRef.current?.animateMove(moveInput.from, moveInput.to, moveInput.promotion);
+          setTimeout(() => {
+            isProgrammaticMoveRef.current = false;
+          }, 350);
+        } else if (!alreadyMovedOnBoard && typeof moveInput === 'string') {
+          isProgrammaticMoveRef.current = true;
+          chessboardRef.current?.animateMove(result.from, result.to, result.promotion);
+          setTimeout(() => {
+            isProgrammaticMoveRef.current = false;
+          }, 350);
+        }
+
         setFen(chess.fen());
         const newCount = moveCount + 1;
         setMoveCount(newCount);
@@ -51,9 +70,18 @@ export default function PracticeScreen() {
             try {
               const moves = chess.moves({ verbose: true });
               if (moves.length > 0) {
-                const randomMove = moves[Math.floor(Math.random() * moves.length)];
-                chess.move(randomMove);
+                // Coach One AI selects a smart development or central move
+                const preferred =
+                  moves.find(m => ['e5', 'd5', 'Nf6', 'Nc6', 'c5', 'c6', 'e6', 'd6'].includes(m.san)) ||
+                  moves[Math.floor(Math.random() * moves.length)];
+
+                isProgrammaticMoveRef.current = true;
+                chessboardRef.current?.animateMove(preferred.from, preferred.to, preferred.promotion);
+                chess.move(preferred);
                 setFen(chess.fen());
+                setTimeout(() => {
+                  isProgrammaticMoveRef.current = false;
+                }, 350);
               }
             } catch (err) {
               console.warn('AI move error:', err);
@@ -71,23 +99,28 @@ export default function PracticeScreen() {
   };
 
   const handleBoardMove = (moveInfo: any) => {
-    // expo-chessboard passes { move: { from, to } } or { from, to }
+    if (isProgrammaticMoveRef.current) return;
     const m = moveInfo?.move || moveInfo;
-    if (m && m.from && m.to) {
-      executeMove({ from: m.from, to: m.to, promotion: 'q' });
-    }
+    if (!m || !m.from || !m.to) return;
+    // Ignore Black moves triggered by AI animateMove
+    if (m.color === 'b') return;
+    executeMove({ from: m.from, to: m.to, promotion: 'q' }, true);
   };
 
   const handleUndo = () => {
+    if (isAiThinking) return;
     chess.undo(); // Undo AI move
     chess.undo(); // Undo student move
     setFen(chess.fen());
+    chessboardRef.current?.reset(chess.fen());
     setFeedback(COACH_DIALOGUES[coachPersonality].undoReaction);
   };
 
   const handleReset = () => {
+    if (isAiThinking) return;
     chess.reset();
     setFen(chess.fen());
+    chessboardRef.current?.reset(chess.fen());
     setMoveCount(0);
     setIsAiThinking(false);
     setFeedback(COACH_DIALOGUES[coachPersonality].resetReaction);
@@ -174,8 +207,11 @@ export default function PracticeScreen() {
         <View style={styles.boardCard}>
           <View style={styles.boardWrapper}>
             <Chessboard
+              ref={chessboardRef}
               fen={fen}
               boardSize={320}
+              playerSide="white"
+              gestureEnabled={!isAiThinking}
               onMove={handleBoardMove}
             />
           </View>
@@ -189,7 +225,7 @@ export default function PracticeScreen() {
                   <TouchableOpacity
                     key={item.san}
                     style={styles.quickMoveBtn}
-                    onPress={() => executeMove(item.san)}
+                    onPress={() => executeMove({ from: item.from, to: item.to })}
                   >
                     <Text style={styles.quickMoveBtnText}>{item.label}</Text>
                   </TouchableOpacity>

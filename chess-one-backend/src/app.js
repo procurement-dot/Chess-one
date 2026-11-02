@@ -5,6 +5,7 @@ const invitationRoutes = require("./routes/invitation.routes");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
 const tournamentRoutes = require("./routes/tournament.routes");
+const puzzleRoutes = require("./routes/puzzle.routes");
 const { errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -27,6 +28,8 @@ app.use("/api/games", gameRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/tournaments", tournamentRoutes);
+app.use("/api/puzzles", puzzleRoutes);
+app.use("/puzzles", puzzleRoutes);
 
 // Dev-only routes
 if (process.env.NODE_ENV !== "production") {

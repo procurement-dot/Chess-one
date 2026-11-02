@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { CHESS_PUZZLES, PuzzleItem, getPuzzleById, getNextPuzzleId } from '../../data/learn';
+import { apiClient } from '../../services/apiClient';
+import { puzzleService, formatDbPuzzle } from '../../services/puzzle.service';
 import { learnStore, useLearnStore } from '../../features/learn/learnStore';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Chessboard from '@og-nav/expo-chessboard';
@@ -12,10 +14,10 @@ import { Feather } from '@expo/vector-icons';
 export default function PuzzleScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams();
-  const { solvedPuzzles } = useLearnStore();
+  const { solvedPuzzles, tacticalRating = 1000 } = useLearnStore();
 
   const puzzleId = (typeof id === 'string' && id) ? id : 'puz-01';
-  const puzzle = getPuzzleById(puzzleId) || CHESS_PUZZLES[0];
+  const [puzzle, setPuzzle] = useState<PuzzleItem>(() => getPuzzleById(puzzleId) || CHESS_PUZZLES[0]);
 
   const [chess, setChess] = useState(() => new Chess(puzzle.fen));
   const [fen, setFen] = useState(puzzle.fen);
@@ -24,7 +26,30 @@ export default function PuzzleScreen() {
   const [status, setStatus] = useState<'idle' | 'wrong' | 'success'>('idle');
   const [feedback, setFeedback] = useState<string>(puzzle.coachHint);
 
-  // Re-initialize state when switching to another puzzle
+  // Load from Supabase if not found in local curated list
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPuzzle() {
+      const local = getPuzzleById(puzzleId);
+      if (local) {
+        setPuzzle(local);
+        return;
+      }
+      try {
+        let res; try { res = await apiClient.get(`/api/puzzles/${puzzleId}`); } catch { res = await apiClient.get(`/puzzles/${puzzleId}`); }
+        if (res.data?.data && !cancelled) {
+          const formatted = formatDbPuzzle(res.data.data, 1);
+          if (formatted) setPuzzle(formatted);
+        }
+      } catch (err) {
+        console.warn('Could not load puzzle from Supabase:', err);
+      }
+    }
+    loadPuzzle();
+    return () => { cancelled = true; };
+  }, [puzzleId]);
+
+  // Re-initialize state when puzzle changes
   useEffect(() => {
     const newChess = new Chess(puzzle.fen);
     setChess(newChess);
@@ -32,7 +57,9 @@ export default function PuzzleScreen() {
     setSelectedChoice(null);
     setHintUsed(false);
     setStatus('idle');
-    setFeedback(`Look at Black's King position. Find the decisive tactic for White!`);
+    const oppColor = puzzle.turn === 'w' ? "Black's" : "White's";
+    const myColor = puzzle.turn === 'w' ? 'White' : 'Black';
+    setFeedback(`Look at ${oppColor} King position. Find the decisive tactic for ${myColor}!`);
   }, [puzzle.id, puzzle.fen]);
 
   const handleChoice = (choiceIndex: number) => {
@@ -48,10 +75,27 @@ export default function PuzzleScreen() {
       }
 
       setStatus('success');
-      setFeedback(choice.coachFeedback);
-      learnStore.recordPuzzleSolved(puzzle.id, puzzle.xpReward);
+
+      // Adaptive ELO Logic:
+      // First clean try -> +150 ELO jump!
+      // With hint or retry -> +40 ELO
+      const isFirstCleanTry = !hintUsed && selectedChoice === null;
+      const delta = isFirstCleanTry ? 150 : 40;
+      learnStore.recordPuzzleSolved(puzzle.id, puzzle.xpReward, delta);
+
+      const newRating = tacticalRating + delta;
+      const adaptiveNote = isFirstCleanTry
+        ? `🔥 Brilliant move! First-try accuracy boosted your rating to ${newRating} ELO! Next puzzle will be more challenging.`
+        : `✓ Correct move! Keep training, your tactical rating is now ${newRating} ELO.`;
+
+      setFeedback(`${choice.coachFeedback}
+
+${adaptiveNote}`);
     } else {
       setStatus('wrong');
+      if (selectedChoice === null) {
+        learnStore.updateTacticalRating(-40);
+      }
       setFeedback(choice.coachFeedback);
     }
   };
@@ -74,7 +118,27 @@ export default function PuzzleScreen() {
     router.replace(`/learn/puzzle?id=${targetId}` as any);
   };
 
-  const handleNextPuzzle = () => {
+  const handleNextPuzzle = async () => {
+    // Dynamic Adaptive Next: fetch puzzle matching the student's updated rating!
+    const currentRating = learnStore.getState().tacticalRating;
+    const minR = Math.max(600, currentRating - 80);
+    const maxR = currentRating + 140;
+
+    try {
+      const nextAdaptive = await puzzleService.getPuzzles({
+        minRating: minR,
+        maxRating: maxR,
+        random: true,
+        limit: 1,
+      });
+
+      if (nextAdaptive && nextAdaptive.length > 0 && nextAdaptive[0].id !== puzzle.id) {
+        navigateToPuzzle(nextAdaptive[0].id);
+        return;
+      }
+    } catch (err) {
+      console.warn('Adaptive puzzle fetch fallback:', err);
+    }
     const nextId = getNextPuzzleId(puzzle.id);
     navigateToPuzzle(nextId);
   };
@@ -89,7 +153,7 @@ export default function PuzzleScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Tactics & Puzzles" showBack />
+      <AppHeader title="Tactics & Puzzles" showBack showLogo />
 
       <ScrollView contentContainerStyle={styles.content}>
         {/* Top Stepper & Navigation */}
@@ -138,7 +202,7 @@ export default function PuzzleScreen() {
             <View style={{ flex: 1 }}>
               <View style={styles.themeBadgeRow}>
                 <Text style={styles.themeBadge}>{puzzle.theme.toUpperCase()}</Text>
-                <Text style={styles.xpBadge}>+{puzzle.xpReward} XP</Text>
+                <Text style={styles.xpBadge}>⭐ +{puzzle.rating >= 1500 ? 3 : puzzle.rating >= 1000 ? 2 : 1} Star{puzzle.rating >= 1000 ? 's' : ''}</Text>
               </View>
               <Text style={styles.puzzleTitle}>{puzzle.title}</Text>
               <Text style={styles.puzzleSubtitle}>{puzzle.subtitle}</Text>
@@ -214,7 +278,7 @@ export default function PuzzleScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={styles.successTitle}>Puzzle Solved! Master Move!</Text>
                 <Text style={styles.successDesc}>{puzzle.explanation}</Text>
-                <Text style={styles.successXp}>+{puzzle.xpReward} XP earned · Quest progress recorded!</Text>
+                <Text style={styles.successXp}>⭐ +{puzzle.rating >= 1500 ? 3 : puzzle.rating >= 1000 ? 2 : 1} Star{puzzle.rating >= 1000 ? 's' : ''} earned · Added to your Stars!</Text>
               </View>
 
               <TouchableOpacity style={styles.nextPuzzleBtn} onPress={handleNextPuzzle}>
@@ -305,8 +369,10 @@ const styles = StyleSheet.create({
   xpBadge: {
     fontSize: 10,
     fontWeight: '800',
-    color: COLORS.primary,
-    backgroundColor: '#E4EEDB',
+    color: '#B45309',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,

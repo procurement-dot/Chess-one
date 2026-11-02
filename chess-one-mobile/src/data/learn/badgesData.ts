@@ -61,4 +61,20 @@ export const BADGES_DATA: BadgeItem[] = [
     bgColor: '#EAB308', // yellow
     checkUnlocked: ({ gameReviewed }) => gameReviewed,
   },
+  {
+    id: 'star_collector',
+    title: 'Star Collector',
+    description: 'Earn 8 or more stars across lessons.',
+    icon: 'star',
+    bgColor: '#8B5CF6', // purple
+    checkUnlocked: ({ totalStars }) => totalStars >= 8,
+  },
+  {
+    id: 'castle_guardian',
+    title: 'Castle Guardian',
+    description: 'Unlock Developing lessons on King safety.',
+    icon: 'shield',
+    bgColor: '#10B981', // emerald
+    checkUnlocked: ({ completedCount }) => completedCount >= 7,
+  },
 ];

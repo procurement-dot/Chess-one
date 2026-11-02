@@ -17,7 +17,7 @@ export const WEEKLY_QUESTS: QuestItem[] = [
   {
     id: 'q1',
     title: 'Complete a new level',
-    subtitle: 'Foundation pathway',
+    subtitle: 'Foundation or Developing pathway',
     target: 1,
     xpReward: 50,
   },
@@ -41,5 +41,19 @@ export const WEEKLY_QUESTS: QuestItem[] = [
     subtitle: 'Tactics & pattern mastery',
     target: 1,
     xpReward: 50,
+  },
+  {
+    id: 'q5',
+    title: 'Earn 6 lesson stars',
+    subtitle: 'Ace your quizzes with 3 stars',
+    target: 6,
+    xpReward: 100,
+  },
+  {
+    id: 'q6',
+    title: 'Solve 3 tactical puzzles',
+    subtitle: 'Checkmates & knight fork mastery',
+    target: 3,
+    xpReward: 100,
   },
 ];
