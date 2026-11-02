@@ -86,18 +86,11 @@ class AuthService {
 
     // 5. Generate ChessOne JWT
     const token = generateToken(user);
+    const { toPublicUser } = require("../utils/user");
 
     return {
       token,
-      user: {
-        id: parseInt(user.id, 10),
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-        role: user.role,
-        rating: user.rating,
-        onboardingDone: user.onboardingDone,
-      },
+      user: toPublicUser(user),
     };
   }
 
@@ -124,10 +117,8 @@ class AuthService {
       throw new AppError("USER_NOT_FOUND", "Authenticated user not found", 404);
     }
 
-    return {
-      ...user,
-      id: parseInt(user.id, 10),
-    };
+    const { toPublicUser } = require("../utils/user");
+    return toPublicUser(user);
   }
 }
 

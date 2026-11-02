@@ -1,4 +1,5 @@
 const authService = require("../services/auth.service");
+const { toPublicUser } = require("../utils/user");
 
 class AuthController {
   /**
@@ -9,14 +10,15 @@ class AuthController {
     try {
       const { idToken } = req.validatedBody || req.body;
       const result = await authService.authenticateWithGoogle(idToken);
+      const publicUser = toPublicUser(result.user);
 
       return res.status(200).json({
         success: true,
         token: result.token,
-        user: result.user,
+        user: publicUser,
         data: {
           token: result.token,
-          user: result.user,
+          user: publicUser,
         },
       });
     } catch (err) {
@@ -35,7 +37,7 @@ class AuthController {
       return res.status(200).json({
         success: true,
         data: {
-          user,
+          user: toPublicUser(user),
         },
       });
     } catch (err) {

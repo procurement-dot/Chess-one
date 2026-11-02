@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const { verifyToken } = require("../utils/jwt");
+const prisma = require("../config/database");
 const {
   setIO,
   trackUserConnected,
@@ -26,39 +27,59 @@ function initializeSocket(httpServer) {
   // Store global IO reference for services
   setIO(io);
 
-  // Socket authentication middleware using ChessOne JWT
-  io.use((socket, next) => {
+  // Socket authentication middleware using ChessOne JWT [Security fix S2]
+  io.use(async (socket, next) => {
     try {
-      const token =
-        socket.handshake.auth?.token ||
-        socket.handshake.headers?.authorization?.replace("Bearer ", "");
-
-      if (token) {
-        try {
-          const decoded = verifyToken(token);
-          const userId = decoded.userId || decoded.id;
-          socket.data.user = { id: userId, email: decoded.email };
-          socket.userId = userId;
-        } catch (err) {
-          // Token invalid, still allow connection with guest/fallback
+      let token = socket.handshake.auth?.token;
+      if (!token) {
+        const authHeader = socket.handshake.headers?.authorization;
+        if (authHeader && authHeader.startsWith("Bearer ")) {
+          token = authHeader.replace("Bearer ", "").trim();
         }
       }
 
-      // Check fallback userId in handshake
-      if (!socket.userId && socket.handshake.auth?.userId) {
-        const fallbackId = parseInt(socket.handshake.auth.userId, 10);
-        socket.data.user = { id: fallbackId };
-        socket.userId = fallbackId;
+      if (!token) {
+        return next(new Error("UNAUTHORIZED"));
       }
+
+      let decoded;
+      try {
+        decoded = verifyToken(token);
+      } catch (err) {
+        return next(new Error("UNAUTHORIZED"));
+      }
+
+      const userId = decoded.userId || decoded.id;
+      if (!userId) {
+        return next(new Error("UNAUTHORIZED"));
+      }
+
+      // Load user from database by token userId
+      const user = await prisma.user.findUnique({
+        where: { id: parseInt(userId, 10) },
+        select: { id: true, name: true, role: true },
+      });
+
+      if (!user) {
+        return next(new Error("UNAUTHORIZED"));
+      }
+
+      // Set socket.data properties
+      socket.data.userId = user.id;
+      socket.data.user = {
+        id: user.id,
+        name: user.name,
+        role: user.role,
+      };
 
       next();
     } catch (err) {
-      next();
+      next(new Error("UNAUTHORIZED"));
     }
   });
 
   io.on("connection", (socket) => {
-    const userId = socket.userId || socket.data?.user?.id;
+    const userId = socket.data?.userId;
 
     // Join private user room for notifications and track online state
     if (userId) {

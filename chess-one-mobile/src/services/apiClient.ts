@@ -2,6 +2,17 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 import { Platform } from 'react-native';
 import { authStore } from '../store/authStore';
 
+let onUnauthorizedCallback: (() => void) | null = null;
+let isLoggingOut = false;
+
+/**
+ * Register a global unauthorized callback (e.g. from _layout.tsx)
+ * Used to avoid circular imports between apiClient, authStore, and router.
+ */
+export function setOnUnauthorized(cb: () => void) {
+  onUnauthorizedCallback = cb;
+}
+
 /**
  * Resolve the backend API base URL based on platform and environment
  */
@@ -43,7 +54,6 @@ export const apiClient: AxiosInstance = axios.create({
 // Request interceptor to attach Authorization Bearer token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Dynamically update baseURL if changed
     config.baseURL = getApiBaseUrl();
 
     let token = authStore.getState().chessOneToken;
@@ -63,24 +73,43 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for consistent error extraction
+// Response interceptor for 401 Unauthorized handling and error extraction
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ success?: boolean; error?: { code?: string; message?: string } }>) => {
+  (error: AxiosError<{ success?: boolean; error?: { code?: string; message?: string; details?: any } }>) => {
     const errorData = error.response?.data?.error;
     const errorMessage =
       errorData?.message ||
       error.message ||
       'An unexpected network error occurred. Please check your connection.';
 
-    // Augment error with server message for cleaner UI display
     (error as any).userFriendlyMessage = errorMessage;
     (error as any).errorCode = errorData?.code;
 
-    if (error.response?.status === 401) {
-      // Log warning but DO NOT automatically log user out.
-      // User stays logged in and is ONLY logged out when clicking the sign out button.
-      console.warn('[apiClient] 401 Unauthorized response for:', error.config?.url);
+    const status = error.response?.status;
+    const url = error.config?.url || '';
+
+    // Do NOT auto-logout on 401 from /api/auth/google or /api/auth/dev-login
+    const isAuthLoginRoute = url.includes('/api/auth/google') || url.includes('/api/auth/dev-login');
+
+    if (status === 401 && !isAuthLoginRoute) {
+      const code = errorData?.code;
+      if (!code || code === 'UNAUTHORIZED' || code === 'TOKEN_EXPIRED') {
+        if (!isLoggingOut) {
+          isLoggingOut = true;
+          try {
+            if (onUnauthorizedCallback) {
+              onUnauthorizedCallback();
+            } else {
+              authStore.clearAuth();
+            }
+          } finally {
+            setTimeout(() => {
+              isLoggingOut = false;
+            }, 3000);
+          }
+        }
+      }
     }
 
     return Promise.reject(error);

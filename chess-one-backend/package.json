@@ -9,6 +9,7 @@
     "test:game": "node src/test-live-match.js",
     "test:auth": "node src/test-auth-and-games.js",
     "test:rating": "node src/test-rating.js",
+    "test:phase0": "node tests/phase0.test.js",
     "test": "node src/test-live-match.js && node src/test-auth-and-games.js"
   },
   "keywords": [],

@@ -1,9 +1,17 @@
 import { io, Socket } from 'socket.io-client';
 import { getSocketBaseUrl } from '../services/apiClient';
-import { authStore } from '../store/authStore';
+import { authStore, setOnLogout } from '../store/authStore';
 import { gameStore } from '../store/gameStore';
 import { gameService } from '../services/game.service';
 import { PlayerColor, GameResult, GameFinishedPayload } from '../types/game.types';
+
+function getToken(): string | undefined {
+  let token = authStore.getState().chessOneToken;
+  if (!token && typeof window !== 'undefined') {
+    token = window.localStorage?.getItem('chess_one_token') || window.sessionStorage?.getItem('chess_one_token') || null;
+  }
+  return token || undefined;
+}
 
 class GameSocketManager {
   private socket: Socket | null = null;
@@ -11,7 +19,7 @@ class GameSocketManager {
   private isReconnecting = false;
 
   /**
-   * Connect to backend Socket.IO server with authentication
+   * Connect to backend Socket.IO server with lazy authentication
    */
   connect(): Socket {
     if (this.socket && this.socket.connected) {
@@ -19,14 +27,12 @@ class GameSocketManager {
       return this.socket;
     }
 
-    let token = authStore.getState().chessOneToken;
-    if (!token && typeof window !== 'undefined') {
-      token = window.localStorage?.getItem('chess_one_token') || window.sessionStorage?.getItem('chess_one_token');
-    }
     const url = getSocketBaseUrl();
 
     this.socket = io(url, {
-      auth: { token: token || undefined },
+      auth: (cb: (data: object) => void) => {
+        cb({ token: getToken() });
+      },
       transports: ['websocket', 'polling'],
       reconnection: true,
       reconnectionAttempts: 10,
@@ -60,7 +66,12 @@ class GameSocketManager {
 
     this.socket.on('connect_error', (err) => {
       console.warn('[Socket] Connection error:', err.message);
-      gameStore.setConnectionStatus('connecting');
+      if (err.message && err.message.includes('UNAUTHORIZED')) {
+        this.disconnect();
+        authStore.clearAuth();
+      } else {
+        gameStore.setConnectionStatus('connecting');
+      }
     });
 
     this.socket.on('game:joined', (payload) => {
@@ -338,3 +349,8 @@ class GameSocketManager {
 }
 
 export const gameSocket = new GameSocketManager();
+
+// Automatically disconnect socket on logout
+setOnLogout(() => {
+  gameSocket.disconnect();
+});

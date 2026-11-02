@@ -359,13 +359,24 @@ class GameService {
   }
 
   /**
-   * Abort game (first move timeout or disconnect)
+   * Abort game (first move timeout or disconnect) [Security fix S3]
    */
   async abortGame({ gameId, userId, reason = "FIRST_MOVE_TIMEOUT" }) {
     const game = await this.findGameByIdOrCode(gameId);
 
     if (game.status === "COMPLETED" || game.status === "CANCELLED") {
       return { gameId: game.id, status: game.status, alreadyFinished: true };
+    }
+
+    const numericUserId = userId ? parseInt(userId, 10) : null;
+    const isPlayer =
+      numericUserId &&
+      (game.whitePlayerId === numericUserId ||
+        game.blackPlayerId === numericUserId ||
+        game.createdBy === numericUserId);
+
+    if (!isPlayer) {
+      throw new AppError("NOT_A_PLAYER", "Only players of this game can abort it", 403);
     }
 
     const updated = await prisma.game.update({
@@ -380,7 +391,7 @@ class GameService {
       gameId: game.id,
       gameCode: game.gameCode,
       status: "CANCELLED",
-      abortedBy: userId || null,
+      abortedBy: numericUserId,
       reason,
     };
 

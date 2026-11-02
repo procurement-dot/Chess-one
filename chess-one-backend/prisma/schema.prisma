@@ -46,12 +46,52 @@ enum InvitationStatus {
 }
 
 enum UserRole {
-  STUDENT
-  PARENT
+  PLAYER
   COACH
-  SCHOOL
-  ORGANISER
   ADMIN
+}
+
+enum ClassStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum ClassMemberRole {
+  OWNER
+  COACH
+  STUDENT
+}
+
+enum MemberStatus {
+  ACTIVE
+  REMOVED
+  LEFT
+}
+
+enum SessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum PositionType {
+  DEMO
+  PUZZLE
+}
+
+enum SubmissionStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
 }
 
 model User {
@@ -60,12 +100,12 @@ model User {
   email          String   @unique
   googleId       String?  @unique
   avatarUrl      String?
-  role           UserRole @default(STUDENT)
+  role           UserRole @default(PLAYER)
   rating         Int      @default(1200)
   gamesPlayed    Int      @default(0)
   school         String?
   schoolClass    String?
-  level          String?   // "Beginner" | "Developing" | "Advanced"
+  level          String? // "Beginner" | "Developing" | "Advanced"
   fideId         String?
   parentName     String?
   parentEmail    String?
@@ -73,46 +113,247 @@ model User {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  createdGames  Game[]           @relation("CreatedBy")
-  whiteGames    Game[]           @relation("WhitePlayer")
-  blackGames    Game[]           @relation("BlackPlayer")
-  wonGames      Game[]           @relation("GameWinner")
-  sentInvites   GameInvitation[] @relation("SentInvitations")
-  recvInvites   GameInvitation[] @relation("ReceivedInvitations")
-  moves         GameMove[]
+  createdGames Game[]           @relation("CreatedBy")
+  whiteGames   Game[]           @relation("WhitePlayer")
+  blackGames   Game[]           @relation("BlackPlayer")
+  wonGames     Game[]           @relation("GameWinner")
+  sentInvites  GameInvitation[] @relation("SentInvitations")
+  recvInvites  GameInvitation[] @relation("ReceivedInvitations")
+  moves        GameMove[]
+
+  // Class module back-relations (no cascading deletes from User)
+  ownedClasses      Class[]         @relation("ClassOwner")
+  classMemberships  ClassMember[]
+  attendances       Attendance[]    @relation("UserAttendance")
+  markedAttendances Attendance[]    @relation("AttendanceMarker")
+  classMessages     ClassMessage[]
+  submissions       Submission[]
+  puzzleAttempts    PuzzleAttempt[]
 
   @@index([role])
 }
 
-model Game {
-  id            Int          @id @default(autoincrement())
-  gameCode      String       @unique
-  gameType      GameType     @default(PLAYER_VS_PLAYER)
-  status        GameStatus   @default(WAITING)
+model Class {
+  id          Int         @id @default(autoincrement())
+  name        String
+  description String?
+  level       String?
+  joinCode    String      @unique
+  ownerId     Int
+  owner       User        @relation("ClassOwner", fields: [ownerId], references: [id])
+  status      ClassStatus @default(ACTIVE)
+  maxStudents Int?
+  timezone    String      @default("Asia/Kolkata")
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
-  createdBy     Int
-  creator       User         @relation("CreatedBy", fields: [createdBy], references: [id])
+  members     ClassMember[]
+  sessions    ClassSession[]
+  lessons     Lesson[]
+  assignments Assignment[]
+
+  @@index([ownerId])
+  @@index([status])
+}
+
+model ClassMember {
+  id       Int             @id @default(autoincrement())
+  classId  Int
+  class    Class           @relation(fields: [classId], references: [id], onDelete: Cascade)
+  userId   Int
+  user     User            @relation(fields: [userId], references: [id])
+  role     ClassMemberRole @default(STUDENT)
+  status   MemberStatus    @default(ACTIVE)
+  joinedAt DateTime        @default(now())
+
+  @@unique([classId, userId])
+  @@index([userId])
+}
+
+model ClassSession {
+  id          Int           @id @default(autoincrement())
+  classId     Int
+  class       Class         @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  startsAt    DateTime
+  durationMin Int           @default(60)
+  status      SessionStatus @default(SCHEDULED)
+  meetingUrl  String?
+  liveFen     String?
+  livePgn     String?
+  startedAt   DateTime?
+  endedAt     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  attendances Attendance[]
+  messages    ClassMessage[]
+
+  @@index([classId, startsAt])
+}
+
+model Attendance {
+  id           Int              @id @default(autoincrement())
+  sessionId    Int
+  session      ClassSession     @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId       Int
+  user         User             @relation("UserAttendance", fields: [userId], references: [id])
+  status       AttendanceStatus
+  joinedLiveAt DateTime?
+  markedById   Int?
+  markedBy     User?            @relation("AttendanceMarker", fields: [markedById], references: [id])
+  note         String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([sessionId, userId])
+}
+
+model ClassMessage {
+  id        Int          @id @default(autoincrement())
+  sessionId Int
+  session   ClassSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User         @relation(fields: [userId], references: [id])
+  text      String
+  createdAt DateTime     @default(now())
+
+  @@index([sessionId])
+}
+
+model Lesson {
+  id          Int       @id @default(autoincrement())
+  classId     Int
+  class       Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  title       String
+  content     String?
+  orderIndex  Int       @default(0)
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  positions   LessonPosition[]
+  assignments Assignment[]
+
+  @@index([classId, orderIndex])
+}
+
+model LessonPosition {
+  id         Int          @id @default(autoincrement())
+  lessonId   Int
+  lesson     Lesson       @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  fen        String
+  type       PositionType @default(DEMO)
+  title      String?
+  solution   String[]
+  hint       String?
+  orderIndex Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  assignmentItems AssignmentItem[]
+  puzzleAttempts  PuzzleAttempt[]
+
+  @@index([lessonId, orderIndex])
+}
+
+model Assignment {
+  id           Int       @id @default(autoincrement())
+  classId      Int
+  class        Class     @relation(fields: [classId], references: [id], onDelete: Cascade)
+  lessonId     Int?
+  lesson       Lesson?   @relation(fields: [lessonId], references: [id])
+  title        String
+  instructions String?
+  dueAt        DateTime?
+  maxScore     Int       @default(100)
+  isPublished  Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  items       AssignmentItem[]
+  submissions Submission[]
+
+  @@index([classId])
+}
+
+model AssignmentItem {
+  id           Int            @id @default(autoincrement())
+  assignmentId Int
+  assignment   Assignment     @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  positionId   Int
+  position     LessonPosition @relation(fields: [positionId], references: [id])
+  orderIndex   Int            @default(0)
+
+  @@index([assignmentId, orderIndex])
+}
+
+model Submission {
+  id           Int              @id @default(autoincrement())
+  assignmentId Int
+  assignment   Assignment       @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  studentId    Int
+  student      User             @relation(fields: [studentId], references: [id])
+  status       SubmissionStatus @default(NOT_STARTED)
+  score        Int?
+  feedback     String?
+  submittedAt  DateTime?
+  gradedAt     DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  puzzleAttempts PuzzleAttempt[]
+
+  @@unique([assignmentId, studentId])
+}
+
+model PuzzleAttempt {
+  id           Int            @id @default(autoincrement())
+  positionId   Int
+  position     LessonPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  userId       Int
+  user         User           @relation(fields: [userId], references: [id])
+  submissionId Int?
+  submission   Submission?    @relation(fields: [submissionId], references: [id])
+  moves        String[]
+  isCorrect    Boolean
+  timeTakenMs  Int?
+  createdAt    DateTime       @default(now())
+
+  @@index([userId, positionId])
+}
+
+model Game {
+  id       Int        @id @default(autoincrement())
+  gameCode String     @unique
+  gameType GameType   @default(PLAYER_VS_PLAYER)
+  status   GameStatus @default(WAITING)
+
+  createdBy Int
+  creator   User @relation("CreatedBy", fields: [createdBy], references: [id])
 
   whitePlayerId Int?
-  whitePlayer   User?        @relation("WhitePlayer", fields: [whitePlayerId], references: [id])
+  whitePlayer   User? @relation("WhitePlayer", fields: [whitePlayerId], references: [id])
 
   blackPlayerId Int?
-  blackPlayer   User?        @relation("BlackPlayer", fields: [blackPlayerId], references: [id])
+  blackPlayer   User? @relation("BlackPlayer", fields: [blackPlayerId], references: [id])
 
-  aiDifficulty  AIDifficulty?
+  aiDifficulty AIDifficulty?
 
-  timeControl   String
+  timeControl String
 
-  whiteTimeMs   Int?
-  blackTimeMs   Int?
+  whiteTimeMs Int?
+  blackTimeMs Int?
 
-  fen           String
-  pgn           String       @default("")
-  currentTurn   PlayerColor  @default(WHITE)
+  fen         String
+  pgn         String      @default("")
+  currentTurn PlayerColor @default(WHITE)
 
-  result        GameResult?
-  winnerId      Int?
-  winner        User?        @relation("GameWinner", fields: [winnerId], references: [id])
+  result   GameResult?
+  winnerId Int?
+  winner   User?       @relation("GameWinner", fields: [winnerId], references: [id])
 
   ratingApplied     Boolean @default(false)
   whiteRatingChange Int?
@@ -120,14 +361,14 @@ model Game {
 
   drawOfferFrom PlayerColor?
 
-  lastMoveAt    DateTime?
+  lastMoveAt DateTime?
 
-  createdAt     DateTime     @default(now())
-  startedAt     DateTime?
-  finishedAt    DateTime?
+  createdAt  DateTime  @default(now())
+  startedAt  DateTime?
+  finishedAt DateTime?
 
-  invitations   GameInvitation[]
-  moves         GameMove[]
+  invitations GameInvitation[]
+  moves       GameMove[]
 
   @@index([gameCode])
   @@index([status])
@@ -146,9 +387,9 @@ model GameInvitation {
   expiresAt   DateTime
   respondedAt DateTime?
 
-  game        Game             @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  sender      User             @relation("SentInvitations", fields: [senderId], references: [id])
-  receiver    User             @relation("ReceivedInvitations", fields: [receiverId], references: [id])
+  game     Game @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  sender   User @relation("SentInvitations", fields: [senderId], references: [id])
+  receiver User @relation("ReceivedInvitations", fields: [receiverId], references: [id])
 
   @@index([gameId])
   @@index([receiverId, status])
@@ -162,17 +403,17 @@ model GameMove {
   playerId   Int?
   color      PlayerColor
 
-  from       String
-  to         String
-  promotion  String?
-  san        String
+  from      String
+  to        String
+  promotion String?
+  san       String
 
-  fenAfter   String
+  fenAfter String
 
-  createdAt  DateTime    @default(now())
+  createdAt DateTime @default(now())
 
-  game       Game        @relation(fields: [gameId], references: [id], onDelete: Cascade)
-  player     User?       @relation(fields: [playerId], references: [id])
+  game   Game  @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  player User? @relation(fields: [playerId], references: [id])
 
   @@index([gameId, moveNumber])
 }

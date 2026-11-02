@@ -63,6 +63,17 @@ function errorHandler(err, req, res, next) {
     });
   }
 
+  // Prisma record not found
+  if (err.code === "P2025") {
+    return res.status(404).json({
+      success: false,
+      error: {
+        code: "RESOURCE_NOT_FOUND",
+        message: err.meta?.cause || "Record not found",
+      },
+    });
+  }
+
   // General unhandled error
   console.error("Unhandled Error:", err);
 

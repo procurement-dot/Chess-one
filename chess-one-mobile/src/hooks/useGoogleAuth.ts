@@ -234,22 +234,15 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         return true;
       }
 
-      // Offline fallback
-      const fallbackUser = {
-        id: String(userId),
-        name: userId === 1 ? 'Player One' : 'Player Two',
-        email: `player${userId}@chessone.local`,
-      };
-      const devToken = `dev-token-${userId}`;
-      authStore.setChessOneToken(devToken);
-      authStore.setGoogleAuth({
-        user: fallbackUser,
-        idToken: devToken,
-        chessOneToken: devToken,
-      });
-      return true;
+      const msg = 'Dev login failed: Unable to authenticate with server. Please check your credentials or connection.';
+      setError(msg);
+      authStore.setError(msg);
+      return false;
     } catch (err: any) {
+      const msg = err?.message || 'Dev login failed. Please try again.';
       console.warn('[Auth] Dev login failed:', err);
+      setError(msg);
+      authStore.setError(msg);
       return false;
     } finally {
       setIsLoading(false);

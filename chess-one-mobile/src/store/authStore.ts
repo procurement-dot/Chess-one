@@ -1,6 +1,8 @@
 import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthState, GoogleUser } from '../types/auth.types';
+import { UserRole } from '../types/class.types';
+import { getApiBaseUrl } from '../services/apiClient';
 
 type Listener = () => void;
 
@@ -8,10 +10,15 @@ const STORAGE_TOKEN_KEY = 'chess_one_token';
 const STORAGE_USER_KEY = 'chess_one_user';
 const STORAGE_GOOGLE_KEY = 'chess_one_google_token';
 
+let onLogoutCallback: (() => void) | null = null;
+
+export function setOnLogout(cb: () => void) {
+  onLogoutCallback = cb;
+}
+
 function getStoredString(key: string): string | null {
   try {
     if (typeof window !== 'undefined') {
-      // Prioritize persistent localStorage so user stays logged in across sessions
       if (window.localStorage) {
         const localVal = window.localStorage.getItem(key);
         if (localVal) return localVal;
@@ -28,7 +35,6 @@ function getStoredString(key: string): string | null {
 function setStoredString(key: string, val: string | null) {
   try {
     if (typeof window !== 'undefined') {
-      // Always persist to localStorage for permanent login retention
       if (window.localStorage) {
         if (val) {
           window.localStorage.setItem(key, val);
@@ -74,9 +80,14 @@ function getStoredUser(): GoogleUser | null {
     const user = raw ? JSON.parse(raw) : null;
     const token = getStoredString(STORAGE_TOKEN_KEY);
     const tokenUser = extractUserFromToken(token);
+
     if (user) {
       if (tokenUser?.id) user.id = tokenUser.id;
       if (!user.email && tokenUser?.email) user.email = tokenUser.email;
+      // If cached user has no role, treat as "PLAYER"
+      if (!user.role) {
+        user.role = 'PLAYER';
+      }
       return user;
     }
     if (tokenUser) {
@@ -84,11 +95,17 @@ function getStoredUser(): GoogleUser | null {
         id: tokenUser.id,
         email: tokenUser.email || '',
         name: tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
+        role: 'PLAYER',
       };
     }
     return user;
   } catch {}
   return null;
+}
+
+export interface ExtendedAuthState extends AuthState {
+  isCoach: boolean;
+  isAdmin: boolean;
 }
 
 class AuthStore {
@@ -107,9 +124,28 @@ class AuthStore {
   })();
 
   private listeners: Set<Listener> = new Set();
+  private hasSyncedWithMe = false;
+
+  constructor() {
+    // If token exists on app start, sync profile with backend /api/auth/me
+    if (typeof window !== 'undefined' || typeof setTimeout !== 'undefined') {
+      setTimeout(() => {
+        this.syncCurrentUser();
+      }, 0);
+    }
+  }
 
   getState(): AuthState {
     return this.state;
+  }
+
+  get isCoach(): boolean {
+    const role = this.state.user?.role || 'PLAYER';
+    return role === 'COACH' || role === 'ADMIN';
+  }
+
+  get isAdmin(): boolean {
+    return this.state.user?.role === 'ADMIN';
   }
 
   subscribe(listener: Listener): () => void {
@@ -133,6 +169,48 @@ class AuthStore {
     this.notify();
   }
 
+  /**
+   * Sync user profile from backend GET /api/auth/me on app start
+   * 200 -> update user (with role) in store + storage
+   * 401 -> logout
+   * network error -> keep cached user
+   */
+  async syncCurrentUser(): Promise<void> {
+    const token = this.state.chessOneToken || getStoredString(STORAGE_TOKEN_KEY);
+    if (!token) return;
+
+    try {
+      const url = `${getApiBaseUrl()}/api/auth/me`;
+      const res = await fetch(url, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (res.status === 200) {
+        const json = await res.json();
+        const serverUser = json.data?.user || json.user;
+        if (serverUser) {
+          const role: UserRole = serverUser.role || 'PLAYER';
+          this.updateUser({
+            id: String(serverUser.id),
+            name: serverUser.name,
+            email: serverUser.email,
+            photo: serverUser.avatarUrl || this.state.user?.photo,
+            role,
+          });
+          this.hasSyncedWithMe = true;
+        }
+      } else if (res.status === 401) {
+        this.clearAuth();
+      }
+    } catch {
+      // Network error -> keep cached user
+    }
+  }
+
   setGoogleAuth({
     user,
     idToken,
@@ -150,6 +228,12 @@ class AuthStore {
         ...finalUser,
         id: tokenUser.id,
         email: finalUser.email || tokenUser.email,
+        role: finalUser.role || 'PLAYER',
+      };
+    } else if (finalUser && !finalUser.role) {
+      finalUser = {
+        ...finalUser,
+        role: 'PLAYER',
       };
     }
 
@@ -169,9 +253,17 @@ class AuthStore {
   }
 
   updateUser(partial: Partial<GoogleUser>) {
-    const updated = this.state.user
-      ? { ...this.state.user, ...partial }
-      : (partial as GoogleUser);
+    const current = this.state.user || {
+      id: '',
+      email: '',
+      name: '',
+      role: 'PLAYER',
+    };
+    const updated: GoogleUser = {
+      ...current,
+      ...partial,
+      role: partial.role || current.role || 'PLAYER',
+    };
     this.state = {
       ...this.state,
       user: updated,
@@ -193,12 +285,14 @@ class AuthStore {
         ...updatedUser,
         id: tokenUser.id,
         email: updatedUser.email || tokenUser.email,
+        role: updatedUser.role || 'PLAYER',
       };
     } else if (tokenUser && !updatedUser) {
       updatedUser = {
         id: tokenUser.id,
         email: tokenUser.email || '',
         name: tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
+        role: 'PLAYER',
       };
     }
     if (updatedUser) {
@@ -218,6 +312,20 @@ class AuthStore {
     setStoredString(STORAGE_TOKEN_KEY, null);
     setStoredString(STORAGE_USER_KEY, null);
     setStoredString(STORAGE_GOOGLE_KEY, null);
+    try {
+      AsyncStorage.removeItem(STORAGE_TOKEN_KEY).catch(() => {});
+      AsyncStorage.removeItem(STORAGE_USER_KEY).catch(() => {});
+      AsyncStorage.removeItem(STORAGE_GOOGLE_KEY).catch(() => {});
+      AsyncStorage.removeItem('@chessone_user').catch(() => {});
+    } catch {}
+
+    // Disconnect socket cleanly on logout
+    if (onLogoutCallback) {
+      try {
+        onLogoutCallback();
+      } catch {}
+    }
+
     this.state = {
       isAuthenticated: false,
       user: null,
@@ -233,12 +341,30 @@ class AuthStore {
 export const authStore = new AuthStore();
 
 /**
+ * Selectors/helpers
+ */
+export const isCoach = (user?: GoogleUser | null): boolean => {
+  const role = user?.role || 'PLAYER';
+  return role === 'COACH' || role === 'ADMIN';
+};
+
+export const isAdmin = (user?: GoogleUser | null): boolean => {
+  return user?.role === 'ADMIN';
+};
+
+/**
  * React hook to subscribe to authentication state reactively
  */
-export function useAuthStore(): AuthState {
-  return useSyncExternalStore(
+export function useAuthStore(): ExtendedAuthState {
+  const state = useSyncExternalStore(
     (callback) => authStore.subscribe(callback),
     () => authStore.getState(),
     () => authStore.getState()
   );
+
+  return {
+    ...state,
+    isCoach: authStore.isCoach,
+    isAdmin: authStore.isAdmin,
+  };
 }

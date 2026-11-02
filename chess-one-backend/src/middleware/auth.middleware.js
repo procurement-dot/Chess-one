@@ -68,7 +68,7 @@ async function requireAuth(req, res, next) {
       });
     }
 
-    // Verify user exists in database
+    // Verify user exists in database and load current role from DB
     const user = await prisma.user.findUnique({
       where: { id: parseInt(userId, 10) },
       select: {
@@ -77,7 +77,6 @@ async function requireAuth(req, res, next) {
         email: true,
         avatarUrl: true,
         role: true,
-        rating: true,
       },
     });
 
@@ -91,10 +90,13 @@ async function requireAuth(req, res, next) {
       });
     }
 
-    // Attach verified user to request with integer id
+    // Attach verified user to request with integer id (role is derived from DB, not JWT)
     req.user = {
-      ...user,
       id: parseInt(user.id, 10),
+      name: user.name,
+      email: user.email,
+      avatarUrl: user.avatarUrl || null,
+      role: user.role,
     };
 
     next();

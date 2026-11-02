@@ -1,4 +1,18 @@
-export type BackendRole = 'STUDENT' | 'PARENT' | 'COACH' | 'SCHOOL' | 'ORGANISER' | 'ADMIN';
+import { UserRole } from './class.types';
+
+export type BackendRole = 'STUDENT' | 'PARENT' | 'COACH' | 'SCHOOL' | 'ORGANISER' | 'ADMIN' | UserRole;
+
+export interface User {
+  id: string | number;
+  name: string;
+  email: string;
+  photo?: string;
+  role: UserRole;
+  avatarUrl?: string | null;
+  rating?: number;
+  gamesPlayed?: number;
+  onboardingDone?: boolean;
+}
 
 export interface UserProfile {
   id: number;
@@ -23,7 +37,7 @@ export type UpdateProfileRequest = Partial<
     'name' | 'school' | 'schoolClass' | 'level' | 'fideId' | 'parentName' | 'parentEmail'
   >
 > & {
-  role?: 'STUDENT' | 'PARENT';
+  role?: 'STUDENT' | 'PARENT' | UserRole;
 };
 
 /**
@@ -36,7 +50,7 @@ export interface GoogleUser {
   photo?: string;
   givenName?: string;
   familyName?: string;
-  role?: BackendRole;
+  role?: UserRole | BackendRole;
   rating?: number;
   gamesPlayed?: number;
   onboardingDone?: boolean;

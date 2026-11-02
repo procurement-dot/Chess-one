@@ -36,7 +36,7 @@ function registerGameHandlers(io, socket) {
         currentRooms.add(`game:${game.gameCode}`);
       }
 
-      const userId = socket.data?.user?.id;
+      const userId = socket.data?.userId;
       const isPlayer =
         userId && (game.whitePlayerId === userId || game.blackPlayerId === userId);
 
@@ -69,9 +69,12 @@ function registerGameHandlers(io, socket) {
       const { gameId, reason } = payload;
       if (!gameId) return;
       const gameService = require("../services/game.service");
-      const userId = socket.data?.user?.id || socket.userId;
+      const userId = socket.data?.userId;
       await gameService.abortGame({ gameId, userId, reason });
     } catch (err) {
+      if (err.code) {
+        socket.emit("error", { code: err.code, message: err.message });
+      }
       console.error("Socket game:abort error:", err);
     }
   });
@@ -82,13 +85,13 @@ function registerGameHandlers(io, socket) {
    */
   socket.on("game:chat", async (payload = {}) => {
     try {
-      const { gameId, text, senderName: clientSenderName, senderId: clientSenderId } = payload;
+      const { gameId, text, senderName: clientSenderName } = payload;
       if (!gameId || !text || typeof text !== "string") return;
 
       const trimmed = text.trim().slice(0, 300);
       if (!trimmed) return;
 
-      const userId = socket.data?.user?.id || socket.userId || clientSenderId;
+      const userId = socket.data?.userId;
       let senderName = clientSenderName || "Player";
       if (userId) {
         try {
@@ -127,7 +130,7 @@ function registerGameHandlers(io, socket) {
    * Handle socket disconnection
    */
   socket.on("disconnect", () => {
-    const userId = socket.data?.user?.id;
+    const userId = socket.data?.userId;
     for (const room of currentRooms) {
       socket.to(room).emit("game:player-disconnected", {
         room,

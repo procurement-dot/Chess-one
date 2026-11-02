@@ -163,13 +163,24 @@ async function runTestSuite() {
     console.log("\n▶ TEST 7: Connect Socket.IO clients");
     p1Socket = ClientIO(`http://localhost:${TEST_PORT}`, {
       auth: { token: p1Token, userId: player1.id },
+      transports: ["websocket"],
+      forceNew: true,
     });
     p2Socket = ClientIO(`http://localhost:${TEST_PORT}`, {
       auth: { token: p2Token, userId: player2.id },
+      transports: ["websocket"],
+      forceNew: true,
     });
 
-    await new Promise((resolve) => p1Socket.on("connect", resolve));
-    await new Promise((resolve) => p2Socket.on("connect", resolve));
+    const waitForConnect = (sock) => {
+      if (sock.connected) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        sock.once("connect", resolve);
+        sock.once("connect_error", (e) => reject(new Error(e.message || "Socket connect error")));
+      });
+    };
+
+    await Promise.all([waitForConnect(p1Socket), waitForConnect(p2Socket)]);
     console.log("  ✅ Player 1 and Player 2 connected via Socket.IO");
 
     p1Socket.emit("game:join", { gameId });
