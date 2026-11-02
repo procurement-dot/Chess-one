@@ -55,6 +55,9 @@ export default function LoginScreen() {
     redirectUri,
   } = useGoogleAuth();
   const { isAuthenticated, user, chessOneToken } = useAuthStore();
+  const showRedirectSetupHint =
+    Platform.OS === 'web' &&
+    Boolean(redirectUri && error?.toLowerCase().includes('redirect_uri_mismatch'));
 
   const [games, setGames] = useState<Game[]>([]);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
@@ -609,7 +612,7 @@ export default function LoginScreen() {
                   <Text style={styles.errorIcon}>⚠️</Text>
                   <View style={styles.errorTextContainer}>
                     <Text style={styles.errorText}>{error}</Text>
-                    {Platform.OS === 'web' && redirectUri ? (
+                    {showRedirectSetupHint && redirectUri ? (
                       <View style={styles.redirectHintBox}>
                         <Text style={styles.redirectHintTitle}>
                           Google Cloud Web Setup Note:

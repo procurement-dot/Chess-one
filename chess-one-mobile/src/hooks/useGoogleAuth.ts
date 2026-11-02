@@ -105,8 +105,8 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           setError(null);
           await handleAuthSuccess(processed);
         } else if (processed.cancelled) {
-          setError(processed.error || 'Google sign-in was cancelled.');
-          authStore.setError(processed.error || 'Google sign-in was cancelled.');
+          setError(null);
+          authStore.setError(null);
         } else {
           const userFriendlyError =
             processed.error || 'Unable to sign in with Google. Please try again.';
@@ -160,12 +160,11 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       if (processed.success) {
         setError(null);
         await handleAuthSuccess(processed);
+      } else if (processed.cancelled) {
+        setError(null);
+        authStore.setError(null);
       } else {
-        const errMsg =
-          processed.error ||
-          (processed.cancelled
-            ? 'Google sign-in was cancelled.'
-            : 'Unable to sign in with Google. Please try again.');
+        const errMsg = processed.error || 'Unable to sign in with Google. Please try again.';
         setError(errMsg);
         authStore.setError(errMsg);
       }
