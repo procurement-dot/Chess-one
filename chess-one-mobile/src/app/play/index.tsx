@@ -252,10 +252,10 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
               <TouchableOpacity
                 style={[styles.primaryActionBtn, { backgroundColor: '#194E40' }]}
                 activeOpacity={0.8}
-                onPress={() => router.push('/community' as any)}
+                onPress={() => router.push('/classes' as any)}
               >
-                <Feather name="users" size={15} color={COLORS.white} />
-                <Text style={styles.primaryActionBtnText}>Classmates Circle</Text>
+                <Feather name="book-open" size={15} color={COLORS.white} />
+                <Text style={styles.primaryActionBtnText}>My Classes</Text>
               </TouchableOpacity>
 
               <TouchableOpacity

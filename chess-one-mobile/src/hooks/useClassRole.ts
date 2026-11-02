@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/authStore';
+import { useClassStore } from '../store/classStore';
 import { UserRole, ClassRole } from '../types/class.types';
 
 export interface UseClassRoleResult {
@@ -15,15 +16,16 @@ export interface UseClassRoleResult {
  * @param classId - Optional class context ID
  */
 export function useClassRole(classId?: number): UseClassRoleResult {
-  const { user, isCoach, isAdmin } = useAuthStore();
+  const { user, isCoach: globalIsCoach, isAdmin } = useAuthStore();
+  const { myRoleInClass } = useClassStore();
 
   const globalRole = (user?.role as UserRole) || 'PLAYER';
 
-  // For Phase 0: classRole is null, isOwner and isStudent are false.
-  // Phase 1 will resolve these dynamically from class membership store.
-  const classRole: ClassRole | null = null;
-  const isOwner = false;
-  const isStudent = false;
+  // Dynamic role resolution from classStore
+  const classRole = classId ? myRoleInClass(classId) : null;
+  const isOwner = classRole === 'OWNER' || isAdmin;
+  const isStudent = classRole === 'STUDENT';
+  const isCoach = globalIsCoach || isAdmin || classRole === 'OWNER' || classRole === 'COACH';
 
   return {
     globalRole,

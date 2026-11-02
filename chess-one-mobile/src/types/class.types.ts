@@ -222,3 +222,48 @@ export interface StudentProgress {
   totalAssignments: number;
   averageScore?: number;
 }
+
+export interface ClassDTO {
+  id: number;
+  name: string;
+  description?: string | null;
+  level?: string | null;
+  status: ClassStatus;
+  maxStudents?: number | null;
+  timezone: string;
+  createdAt: string;
+  owner?: {
+    id: number;
+    name: string;
+    avatarUrl?: string | null;
+  } | null;
+  memberCount: number;
+  myRole?: ClassRole | 'ADMIN' | null;
+  joinCode?: string;
+  nextSession?: any | null;
+}
+
+export interface MemberDTO {
+  userId: number;
+  name: string;
+  avatarUrl?: string | null;
+  role: ClassRole;
+  joinedAt: string;
+  email?: string;
+}
+
+export interface CreateClassPayload {
+  name: string;
+  description?: string | null;
+  level?: 'Beginner' | 'Intermediate' | 'Advanced' | null;
+  maxStudents?: number;
+  timezone?: string;
+}
+
+export interface UpdateClassPayload {
+  name?: string;
+  description?: string | null;
+  level?: 'Beginner' | 'Intermediate' | 'Advanced' | null;
+  maxStudents?: number;
+  timezone?: string;
+}

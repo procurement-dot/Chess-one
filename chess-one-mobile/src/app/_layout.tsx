@@ -38,7 +38,15 @@ export default function RootLayout() {
       <AnimatedSplashOverlay />
       <AuthLifecycleManager />
       <ProfileSynchronizer />
-      <Stack screenOptions={{ headerShown: false }} />
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="classes/index" options={{ headerShown: false }} />
+        <Stack.Screen name="classes/create" options={{ headerShown: false }} />
+        <Stack.Screen name="classes/join" options={{ headerShown: false }} />
+        <Stack.Screen name="classes/[classId]/index" options={{ headerShown: false }} />
+        <Stack.Screen name="classes/[classId]/members" options={{ headerShown: false }} />
+        <Stack.Screen name="classes/[classId]/edit" options={{ headerShown: false }} />
+      </Stack>
     </ThemeProvider>
   );
 }

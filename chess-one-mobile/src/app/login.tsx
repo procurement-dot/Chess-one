@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
-import { useAuthStore } from '../store/authStore';
+import { authStore, useAuthStore } from '../store/authStore';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AppHeader } from '../components/navigation/AppHeader';
 import { AppFooter } from '../components/navigation/AppFooter';
@@ -213,8 +213,43 @@ export default function LoginScreen() {
                   <Text style={styles.userEmail} numberOfLines={1}>
                     {user.email}
                   </Text>
-                  <View style={styles.idChip}>
-                    <Text style={styles.idChipText}>Player ID: #{user.id}</Text>
+                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center', marginTop: 4 }}>
+                    <View style={styles.idChip}>
+                      <Text style={styles.idChipText}>Player ID: #{user.id}</Text>
+                    </View>
+                    <View
+                      style={[
+                        styles.idChip,
+                        {
+                          backgroundColor:
+                            user.role === 'COACH' || user.role === 'ADMIN'
+                              ? '#DCFCE7'
+                              : '#E0E7FF',
+                          borderColor:
+                            user.role === 'COACH' || user.role === 'ADMIN'
+                              ? '#86EFAC'
+                              : '#C7D2FE',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.idChipText,
+                          {
+                            color:
+                              user.role === 'COACH' || user.role === 'ADMIN'
+                                ? '#166534'
+                                : '#3730A3',
+                          },
+                        ]}
+                      >
+                        {user.role === 'COACH'
+                          ? 'Coach'
+                          : user.role === 'ADMIN'
+                          ? 'Admin'
+                          : 'Player'}
+                      </Text>
+                    </View>
                   </View>
                 </View>
               </View>
@@ -226,6 +261,28 @@ export default function LoginScreen() {
                 </Text>
               </View>
             </View>
+
+            {/* My Classes Banner Link */}
+            <TouchableOpacity
+              style={styles.reportBannerCard}
+              activeOpacity={0.8}
+              onPress={() => router.push('/classes' as any)}
+            >
+              <View style={styles.reportBannerLeft}>
+                <View style={[styles.reportIconCircle, { backgroundColor: COLORS.hero }]}>
+                  <Text style={{ fontSize: 16 }}>🏫</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.reportBannerTitle}>My Classes & Coaching</Text>
+                  <Text style={styles.reportBannerSub}>
+                    Enrolled batches, classroom lessons & homework
+                  </Text>
+                </View>
+              </View>
+              <View style={styles.openReportBtn}>
+                <Text style={styles.openReportBtnText}>View My Classes</Text>
+              </View>
+            </TouchableOpacity>
 
             {/* Student Progress Report Banner */}
             <View style={styles.reportBannerCard}>
@@ -647,6 +704,55 @@ export default function LoginScreen() {
                 disabled={isAuthLoading || !isGoogleAuthConfigured}
                 style={styles.googleButton}
               />
+
+              {/* Quick UI/UX Preview for Director/Reviewer */}
+              <View style={styles.demoPreviewBox}>
+                <View style={styles.demoPreviewHeader}>
+                  <Text style={styles.demoPreviewBadge}>⚡ DIRECT UI / UX PREVIEW</Text>
+                  <Text style={styles.demoPreviewTitle}>Explore Phase 1 Classes</Text>
+                  <Text style={styles.demoPreviewSub}>
+                    One-click live demo to review the UI/UX as Coach or Student:
+                  </Text>
+                </View>
+
+                <View style={styles.demoPreviewActions}>
+                  <TouchableOpacity
+                    style={[styles.demoPreviewBtn, { backgroundColor: '#1E293B' }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      authStore.loginAsDemoUser('COACH');
+                      router.push('/classes' as any);
+                    }}
+                  >
+                    <Text style={styles.demoPreviewBtnIcon}>👑</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.demoPreviewBtnTitle}>Explore as Coach</Text>
+                      <Text style={styles.demoPreviewBtnSubtitle}>
+                        Create classes, manage students & share join codes
+                      </Text>
+                    </View>
+                    <Feather name="arrow-right" size={18} color="#94A3B8" />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.demoPreviewBtn, { backgroundColor: '#047857' }]}
+                    activeOpacity={0.8}
+                    onPress={() => {
+                      authStore.loginAsDemoUser('PLAYER');
+                      router.push('/classes' as any);
+                    }}
+                  >
+                    <Text style={styles.demoPreviewBtnIcon}>🎒</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.demoPreviewBtnTitle}>Explore as Student</Text>
+                      <Text style={styles.demoPreviewBtnSubtitle}>
+                        Enrolled batches, join with 6-char code
+                      </Text>
+                    </View>
+                    <Feather name="arrow-right" size={18} color="#A7F3D0" />
+                  </TouchableOpacity>
+                </View>
+              </View>
 
               <Text style={styles.disclaimerText}>
                 By signing in, you agree to fair-play chess rules and terms of service.
@@ -1374,5 +1480,60 @@ const styles = StyleSheet.create({
     color: COLORS.textBody,
     textAlign: 'center',
     lineHeight: 15,
+  },
+  demoPreviewBox: {
+    width: '100%',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 14,
+    marginVertical: 12,
+  },
+  demoPreviewHeader: {
+    marginBottom: 10,
+  },
+  demoPreviewBadge: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0284C7',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  demoPreviewTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  demoPreviewSub: {
+    fontSize: 12,
+    color: '#64748B',
+    marginTop: 2,
+    lineHeight: 16,
+  },
+  demoPreviewActions: {
+    gap: 8,
+    marginTop: 6,
+  },
+  demoPreviewBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    gap: 10,
+  },
+  demoPreviewBtnIcon: {
+    fontSize: 22,
+  },
+  demoPreviewBtnTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  demoPreviewBtnSubtitle: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.75)',
+    marginTop: 1,
   },
 });

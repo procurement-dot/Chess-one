@@ -35,8 +35,8 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Handle custom AppError
-  if (err instanceof AppError) {
+  // Handle custom AppError or errors with code and statusCode
+  if (err instanceof AppError || (err.code && err.statusCode && typeof err.statusCode === "number")) {
     const response = {
       success: false,
       error: {

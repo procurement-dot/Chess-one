@@ -4,12 +4,18 @@ import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { getErrorMessage } from '../../utils/classErrors';
 
 export interface ErrorStateProps {
+  title?: string;
   error?: unknown;
   message?: string;
   onRetry?: () => void;
 }
 
-export function ErrorState({ error, message, onRetry }: ErrorStateProps) {
+export function ErrorState({
+  title = 'Something went wrong',
+  error,
+  message,
+  onRetry,
+}: ErrorStateProps) {
   const displayMessage = message || getErrorMessage(error);
 
   return (
@@ -19,7 +25,7 @@ export function ErrorState({ error, message, onRetry }: ErrorStateProps) {
           <Text style={styles.icon}>⚠️</Text>
         </View>
 
-        <Text style={styles.title}>Something went wrong</Text>
+        <Text style={styles.title}>{title}</Text>
         <Text style={styles.message}>{displayMessage}</Text>
 
         {Boolean(onRetry) && (

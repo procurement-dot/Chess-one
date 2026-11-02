@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AuthState, GoogleUser } from '../types/auth.types';
 import { UserRole } from '../types/class.types';
 import { getApiBaseUrl } from '../services/apiClient';
+import { classStore } from './classStore';
 
 type Listener = () => void;
 
@@ -106,6 +107,7 @@ function getStoredUser(): GoogleUser | null {
 export interface ExtendedAuthState extends AuthState {
   isCoach: boolean;
   isAdmin: boolean;
+  loginAsDemoUser: (role?: 'COACH' | 'PLAYER' | 'ADMIN') => void;
 }
 
 class AuthStore {
@@ -319,6 +321,11 @@ class AuthStore {
       AsyncStorage.removeItem('@chessone_user').catch(() => {});
     } catch {}
 
+    // Reset class module store cleanly
+    try {
+      classStore.reset();
+    } catch {}
+
     // Disconnect socket cleanly on logout
     if (onLogoutCallback) {
       try {
@@ -335,6 +342,52 @@ class AuthStore {
       error: null,
     };
     this.notify();
+  }
+
+  /**
+   * Fast 1-click Demo Login for UI/UX testing
+   */
+  loginAsDemoUser(role: 'COACH' | 'PLAYER' | 'ADMIN' = 'COACH') {
+    const demoUser: GoogleUser = {
+      id: role === 'COACH' ? '140' : role === 'ADMIN' ? '86' : '1',
+      name: role === 'COACH' ? 'Coach One' : role === 'ADMIN' ? 'Admin User' : 'Player One',
+      email:
+        role === 'COACH'
+          ? 'coach1@chessone.local'
+          : role === 'ADMIN'
+          ? 'admin@chessone.local'
+          : 'player1@chessone.local',
+      role,
+      onboardingDone: true,
+      rating: 1200,
+      gamesPlayed: 10,
+    };
+
+    let b64Payload = '';
+    try {
+      const json = JSON.stringify({
+        userId: Number(demoUser.id),
+        email: demoUser.email,
+        role: demoUser.role,
+      });
+      if (typeof window !== 'undefined' && window.btoa) {
+        b64Payload = window.btoa(json);
+      } else if (typeof (globalThis as any).btoa === 'function') {
+        b64Payload = (globalThis as any).btoa(json);
+      } else {
+        b64Payload = 'eyJ1c2VySWQiOjEsInJvbGUiOiJDT0FDSCJ9';
+      }
+    } catch {
+      b64Payload = 'eyJ1c2VySWQiOjEsInJvbGUiOiJDT0FDSCJ9';
+    }
+
+    const mockToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${b64Payload}.demoSignature`;
+
+    this.setGoogleAuth({
+      user: demoUser,
+      idToken: mockToken,
+      chessOneToken: mockToken,
+    });
   }
 }
 
@@ -366,5 +419,6 @@ export function useAuthStore(): ExtendedAuthState {
     ...state,
     isCoach: authStore.isCoach,
     isAdmin: authStore.isAdmin,
+    loginAsDemoUser: authStore.loginAsDemoUser.bind(authStore),
   };
 }

@@ -35,6 +35,65 @@ async function seed() {
 
     console.log("✅ Seeded users successfully:");
     console.log({ admin, coach1, player1, player2, player3 });
+
+    // Seed Beginners Batch A
+    let batchA = await prisma.class.findFirst({
+      where: { name: "Beginners Batch A", ownerId: coach1.id },
+    });
+
+    if (!batchA) {
+      batchA = await prisma.class.create({
+        data: {
+          name: "Beginners Batch A",
+          description: "Foundational chess batch for young champions",
+          level: "Beginner",
+          joinCode: "BATCHA",
+          ownerId: coach1.id,
+          maxStudents: 30,
+          timezone: "Asia/Kolkata",
+          status: "ACTIVE",
+        },
+      });
+    }
+
+    // Coach1 as OWNER
+    await prisma.classMember.upsert({
+      where: {
+        classId_userId: {
+          classId: batchA.id,
+          userId: coach1.id,
+        },
+      },
+      update: { role: "OWNER", status: "ACTIVE" },
+      create: {
+        classId: batchA.id,
+        userId: coach1.id,
+        role: "OWNER",
+        status: "ACTIVE",
+      },
+    });
+
+    // Students player1, player2, player3
+    for (const player of [player1, player2, player3]) {
+      await prisma.classMember.upsert({
+        where: {
+          classId_userId: {
+            classId: batchA.id,
+            userId: player.id,
+          },
+        },
+        update: { role: "STUDENT", status: "ACTIVE" },
+        create: {
+          classId: batchA.id,
+          userId: player.id,
+          role: "STUDENT",
+          status: "ACTIVE",
+        },
+      });
+    }
+
+    console.log("✅ Seeded class 'Beginners Batch A' with students successfully:");
+    console.log({ classId: batchA.id, joinCode: batchA.joinCode });
   } catch (error) {
     console.error("❌ Seed error:", error);
     process.exit(1);

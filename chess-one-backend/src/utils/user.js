@@ -16,4 +16,5 @@ function toPublicUser(user) {
 
 module.exports = {
   toPublicUser,
+  sanitizeUser: toPublicUser,
 };

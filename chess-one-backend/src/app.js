@@ -4,6 +4,8 @@ const gameRoutes = require("./routes/game.routes");
 const invitationRoutes = require("./routes/invitation.routes");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
+const classRoutes = require("./routes/class.routes");
+const adminRoutes = require("./routes/admin.routes");
 const { errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -25,6 +27,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/games", gameRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/classes", classRoutes);
+app.use("/api/admin", adminRoutes);
 
 // 404 handler for unknown routes
 app.use((req, res) => {
