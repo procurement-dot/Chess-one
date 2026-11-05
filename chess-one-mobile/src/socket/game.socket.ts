@@ -296,6 +296,26 @@ class GameSocketManager {
     };
   }
 
+  sendMove(
+    gameId: number | string,
+    move: { from: string; to: string; promotion?: string }
+  ): Promise<any> {
+    return new Promise((resolve, reject) => {
+      const socket = this.connect();
+      if (!socket || !socket.connected) {
+        reject(new Error('Socket not connected'));
+        return;
+      }
+      socket.emit('game:move', { gameId, ...move }, (res: any) => {
+        if (res && res.error) {
+          reject(new Error(res.error));
+        } else {
+          resolve(res?.result);
+        }
+      });
+    });
+  }
+
   sendChatMessage(
     gameId: number | string,
     text: string,

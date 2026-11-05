@@ -56,6 +56,7 @@ export function useGame(gameId: number | string) {
   const isAiThinkingRef = useRef<boolean>(false);
   const lastAiFenProcessedRef = useRef<string | null>(null);
   const turnStartedAtRef = useRef<number>(Date.now());
+  const lastClockTickRef = useRef<number>(Date.now());
 
   // Sync chess.js instance whenever FEN updates in the store
   useEffect(() => {
@@ -268,18 +269,19 @@ export function useGame(gameId: number | string) {
     [gameId, userColor, currentUserId]
   );
 
-  // Active clock countdown interval
+  // Active high-precision clock countdown interval (smooth 100ms ticks for Bullet/Blitz)
   useEffect(() => {
     if (store.gameStatus !== 'ACTIVE') return;
 
+    lastClockTickRef.current = Date.now();
     const isAiGame = store.currentGame?.gameType === 'PLAYER_VS_AI';
 
     const timer = setInterval(() => {
-      if (isAiGame) {
-        const now = Date.now();
-        const elapsed = now - turnStartedAtRef.current;
-        turnStartedAtRef.current = now;
+      const now = Date.now();
+      const elapsed = Math.max(0, now - lastClockTickRef.current);
+      lastClockTickRef.current = now;
 
+      if (isAiGame) {
         const currentStore = gameStore.getState();
         if (currentStore.currentTurn === 'WHITE' && currentStore.whiteTimeMs !== null) {
           const nextTime = Math.max(0, currentStore.whiteTimeMs - elapsed);
@@ -297,9 +299,10 @@ export function useGame(gameId: number | string) {
           gameStore.updateClocks(currentStore.whiteTimeMs, nextTime);
         }
       } else {
-        gameStore.tickActiveClock(1000);
+        // High-precision smooth countdown for PVP match (no 2x speed jumping)
+        gameStore.tickActiveClock(elapsed);
       }
-    }, 500);
+    }, 100);
 
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn, handleLocalTimeout]);
@@ -405,7 +408,11 @@ export function useGame(gameId: number | string) {
 
     try {
       const difficulty = (game.aiDifficulty as any) || 'MEDIUM';
-      const bestMove = await localAiService.getBestMove(currentFen, difficulty);
+      const aiRemainingMs = aiColor === 'WHITE' ? currentStore.whiteTimeMs : currentStore.blackTimeMs;
+      const bestMove = await localAiService.getBestMove(currentFen, difficulty, {
+        timeControl: game.timeControl,
+        remainingTimeMs: aiRemainingMs,
+      });
       if (!bestMove) return;
 
       // Ensure match is still active and it is still AI's turn
@@ -482,7 +489,7 @@ export function useGame(gameId: number | string) {
     if (store.currentTurn === aiColor) {
       const timer = setTimeout(() => {
         triggerAiMove();
-      }, 250);
+      }, 20);
       return () => clearTimeout(timer);
     }
   }, [store.currentTurn, store.gameStatus, userColor, triggerAiMove]);
@@ -652,11 +659,16 @@ export function useGame(gameId: number | string) {
     setIsSubmittingMove(true);
 
     try {
-      const response = await gameService.makeMove(gameId, {
-        from,
-        to,
-        promotion,
-      });
+      let response: any = null;
+      try {
+        response = await gameSocket.sendMove(gameId, { from, to, promotion });
+      } catch (wsErr) {
+        response = await gameService.makeMove(gameId, {
+          from,
+          to,
+          promotion,
+        });
+      }
 
       if (response) {
         if (response.whiteTimeMs !== undefined && response.blackTimeMs !== undefined) {

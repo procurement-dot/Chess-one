@@ -64,6 +64,40 @@ function registerGameHandlers(io, socket) {
    * Real-time game abort (first move timeout or disconnect)
    * Payload: { gameId, reason }
    */
+  /**
+   * Real-time ultra-low-latency move execution over WebSocket
+   * Payload: { gameId, from, to, promotion }
+   */
+  socket.on("game:move", async (payload = {}, callback) => {
+    try {
+      const { gameId, from, to, promotion } = payload;
+      const userId = socket.data?.user?.id || socket.userId;
+      if (!gameId || !from || !to) {
+        if (typeof callback === "function") callback({ error: "Invalid move parameters" });
+        return;
+      }
+
+      const moveService = require("../services/move.service");
+      const result = await moveService.makeMove({
+        gameId,
+        userId,
+        from,
+        to,
+        promotion,
+      });
+
+      if (typeof callback === "function") {
+        callback({ success: true, result });
+      }
+    } catch (err) {
+      console.error("Socket game:move error:", err);
+      if (typeof callback === "function") {
+        callback({ error: err.message || "Move failed" });
+      }
+      socket.emit("error", { code: err.code || "MOVE_ERROR", message: err.message });
+    }
+  });
+
   socket.on("game:abort", async (payload = {}) => {
     try {
       const { gameId, reason } = payload;
