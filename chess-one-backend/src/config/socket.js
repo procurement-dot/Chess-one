@@ -193,8 +193,29 @@ function emitToGame(gameId, event, payload) {
  * @param {object} payload
  */
 function emitToUser(userId, event, payload) {
-  if (!io) return;
+  if (!io) {
+    console.warn(`[Socket] emitToUser failed: io not set (event=${event}, userId=${userId})`);
+    return;
+  }
+  const numericId = parseInt(userId, 10);
+  console.log(`[Socket] emitToUser event=${event} userId=${userId} (numeric=${numericId})`);
+
+  // Emit to user room (both string and numeric format)
   io.to(`user:${userId}`).emit(event, payload);
+  if (!isNaN(numericId) && String(numericId) !== String(userId)) {
+    io.to(`user:${numericId}`).emit(event, payload);
+  }
+
+  // Also emit directly to every active socket registered for this user
+  if (!isNaN(numericId)) {
+    const sockets = userSockets.get(numericId);
+    if (sockets && sockets.size > 0) {
+      for (const socketId of sockets) {
+        console.log(`[Socket] emitToUser direct to socketId=${socketId} for userId=${numericId}`);
+        io.to(socketId).emit(event, payload);
+      }
+    }
+  }
 }
 
 /**

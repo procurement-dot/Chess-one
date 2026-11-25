@@ -60,33 +60,11 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
   // Fair-Play modal state
   const [fairPlayModalVisible, setFairPlayModalVisible] = useState(false);
 
-  // Connect socket and listen for live incoming challenge notifications
+  // Connect socket
   useEffect(() => {
     if (!isAuthenticated) return;
-
     gameSocket.connect();
-
-    const unsubInvite = gameSocket.onInvitationReceived((payload: any) => {
-      console.log('[PlayHub] New live invitation received via socket:', payload);
-      refreshInvites();
-      if (payload) {
-        setIncomingInvite({
-          id: payload.invitationId || payload.id,
-          gameId: payload.gameId,
-          gameCode: payload.gameCode,
-          sender: payload.sender,
-          timeControl: payload.timeControl || '5+0',
-          createdAt: new Date().toISOString(),
-          expiresAt: payload.expiresAt || new Date().toISOString(),
-        });
-        setIncomingModalVisible(true);
-      }
-    });
-
-    return () => {
-      unsubInvite();
-    };
-  }, [isAuthenticated, refreshInvites]);
+  }, [isAuthenticated]);
 
   // Show incoming challenge popup if there are pending invitations
   useEffect(() => {

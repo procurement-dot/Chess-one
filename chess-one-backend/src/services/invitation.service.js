@@ -137,12 +137,22 @@ class InvitationService {
       invitation = memInv;
     }
 
+    const userStore = require("../store/user.store");
+    const realSender = userStore.getUser(senderId);
+    const resolvedSender = {
+      id: senderId,
+      name: realSender?.name || invitation.sender?.name || `Player ${senderId}`,
+      email: realSender?.email || invitation.sender?.email || null,
+      avatarUrl: realSender?.avatarUrl || null,
+    };
+
     // Notify opponent via Socket.IO
     emitToUser(opponentUserId, "invitation:received", {
+      id: invitation.id,
       invitationId: invitation.id,
       gameId: game.id,
       gameCode: game.gameCode,
-      sender: invitation.sender,
+      sender: resolvedSender,
       timeControl: game.timeControl,
       expiresAt: invitation.expiresAt,
     });
@@ -161,11 +171,12 @@ class InvitationService {
    * Get all active pending invitations for a user
    */
   async getInvitations(userId) {
+    const numUserId = parseInt(userId, 10);
     let invitations = [];
     try {
       invitations = await prisma.gameInvitation.findMany({
         where: {
-          receiverId: userId,
+          receiverId: numUserId,
           status: "PENDING",
           expiresAt: { gt: new Date() },
           game: { status: "WAITING" },
@@ -181,24 +192,32 @@ class InvitationService {
     }
 
     const memList = Array.from(inMemoryInvitations.values()).filter(
-      (inv) => inv.receiverId === userId && inv.status === "PENDING" && new Date(inv.expiresAt) > new Date()
+      (inv) =>
+        (inv.receiverId === userId || inv.receiverId === numUserId) &&
+        inv.status === "PENDING" &&
+        new Date(inv.expiresAt) > new Date()
     );
 
+    const userStore = require("../store/user.store");
     const formatted = [
-      ...invitations.map((inv) => ({
-        id: inv.id,
-        gameId: inv.game.id,
-        gameCode: inv.game.gameCode,
-        sender: inv.sender,
-        timeControl: inv.game.timeControl,
-        createdAt: inv.createdAt,
-        expiresAt: inv.expiresAt,
-      })),
-      ...memList.map((inv) => {
-        const userStore = require("../store/user.store");
+      ...invitations.map((inv) => {
         const realSender = userStore.getUser(inv.senderId) || inv.sender;
         return {
           id: inv.id,
+          invitationId: inv.id,
+          gameId: inv.game.id,
+          gameCode: inv.game.gameCode,
+          sender: realSender,
+          timeControl: inv.game.timeControl,
+          createdAt: inv.createdAt,
+          expiresAt: inv.expiresAt,
+        };
+      }),
+      ...memList.map((inv) => {
+        const realSender = userStore.getUser(inv.senderId) || inv.sender;
+        return {
+          id: inv.id,
+          invitationId: inv.id,
           gameId: inv.gameId,
           gameCode: inv.game?.gameCode || `GAME${inv.gameId}`,
           sender: realSender,
@@ -269,6 +288,7 @@ class InvitationService {
         emitToUser(inv.senderId, "game:started", startedPayload);
         emitToUser(userId, "game:started", startedPayload);
         return {
+          id: game.id,
           gameId: game.id,
           gameCode: game.gameCode,
           status: game.status,
@@ -412,6 +432,7 @@ class InvitationService {
     emitToUser(userId, "game:started", startedPayload);
 
     return {
+      id: updatedGame.id,
       gameId: updatedGame.id,
       gameCode: updatedGame.gameCode,
       status: updatedGame.status,

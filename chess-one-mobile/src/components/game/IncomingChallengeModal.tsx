@@ -74,7 +74,7 @@ export const IncomingChallengeModal: React.FC<IncomingChallengeModalProps> = ({
               disabled={isProcessing}
             >
               {isProcessing ? (
-                <ActivityIndicator size="small" color="COLORS.textHeading" />
+                <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <Text style={styles.acceptBtnText}>✅ Accept Challenge</Text>
               )}

@@ -7,6 +7,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { useProfile } from '../hooks/useProfile';
 import { authStore, useAuthStore } from '../store/authStore';
 import { gameSocket } from '../socket/game.socket';
+import { GlobalInvitationWatcher } from '../components/game/GlobalInvitationWatcher';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -95,6 +96,7 @@ export default function RootLayout() {
       <AnimatedSplashOverlay />
       <ProfileSynchronizer />
       <RootPresenceWatcher />
+      <GlobalInvitationWatcher />
       <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>
   );

@@ -138,30 +138,8 @@ export default function CommunityScreen() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    // Real-time socket notification when someone invites this user
-    const unsubInv = gameSocket.onInvitationReceived((inv: any) => {
-      console.log('[Community] Incoming match challenge received via socket:', inv);
-      setIncomingInvitation(inv);
-    });
-
-    // Polling fallback to check active invitations
-    const checkInv = async () => {
-      try {
-        const invs = await gameService.getInvitations();
-        if (invs && invs.length > 0 && !incomingInvitation) {
-          setIncomingInvitation(invs[0]);
-        }
-      } catch {}
-    };
-
-    checkInv();
-    const timer = setInterval(checkInv, 8000);
-
-    return () => {
-      unsubInv();
-      clearInterval(timer);
-    };
-  }, [isAuthenticated, incomingInvitation]);
+    // Incoming match challenges are now handled globally across all tabs by GlobalInvitationWatcher
+  }, [isAuthenticated]);
 
   const handleAcceptIncomingInvitation = async (invitationId: number) => {
     try {
@@ -1258,16 +1236,6 @@ export default function CommunityScreen() {
       {/* ======================================================== */}
       {/* EXISTING SOCKET MODALS (PRESERVED 100%)                  */}
       {/* ======================================================== */}
-      {/* Incoming Challenge Modal */}
-      <IncomingChallengeModal
-        visible={Boolean(incomingInvitation)}
-        invitation={incomingInvitation}
-        isProcessing={isProcessingInvitation}
-        onAccept={handleAcceptIncomingInvitation}
-        onDecline={handleDeclineIncomingInvitation}
-        onDismiss={() => setIncomingInvitation(null)}
-      />
-
       {/* Outgoing Challenge Waiting Modal */}
       <OutgoingChallengeModal
         visible={Boolean(outgoingTarget)}
