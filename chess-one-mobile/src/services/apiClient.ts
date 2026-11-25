@@ -132,6 +132,14 @@ apiClient.interceptors.response.use(
       if (isAuthError && authStore.getState().isAuthenticated) {
         console.warn('[apiClient] Stored token is invalid or expired. Resetting session.');
         authStore.clearAuth();
+        if (typeof window !== 'undefined') {
+          if (window.sessionStorage) {
+            window.sessionStorage.setItem('auth_notice', 'Session expired, please sign in again');
+          }
+          if (window.location && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
+          }
+        }
       }
     }
 

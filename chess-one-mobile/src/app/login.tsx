@@ -70,6 +70,18 @@ export default function LoginScreen() {
     Platform.OS === 'web' &&
     Boolean(redirectUri && error?.toLowerCase().includes('redirect_uri_mismatch'));
 
+  const [sessionNotice, setSessionNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      const notice = window.sessionStorage.getItem('auth_notice');
+      if (notice) {
+        setSessionNotice(notice);
+        window.sessionStorage.removeItem('auth_notice');
+      }
+    }
+  }, []);
+
   const [games, setGames] = useState<Game[]>([]);
   const [isLoadingGames, setIsLoadingGames] = useState(false);
   const [historyFilter, setHistoryFilter] = useState<'all' | 'wins' | 'losses'>('all');
@@ -1004,6 +1016,12 @@ export default function LoginScreen() {
                   </View>
                 </View>
               ) : null}
+
+              {sessionNotice && (
+                <View style={styles.sessionNoticeBox}>
+                  <Text style={styles.sessionNoticeText}>⚠️ {sessionNotice}</Text>
+                </View>
+              )}
 
               <GoogleSignInButton
                 onPress={handleGoogleSignIn}
@@ -2349,21 +2367,20 @@ const styles = StyleSheet.create({
     fontSize: 13.5,
     fontWeight: '700',
   },
-  quickDevButton: {
-    width: '100%',
-    backgroundColor: '#1E293B',
+  sessionNoticeBox: {
+    backgroundColor: '#FEF3C7',
     borderWidth: 1,
-    borderColor: '#38BDF8',
-    borderRadius: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 12,
+    borderColor: '#F59E0B',
+    borderRadius: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    marginBottom: 14,
+    width: '100%',
   },
-  quickDevButtonText: {
-    color: '#38BDF8',
-    fontSize: 14,
+  sessionNoticeText: {
+    color: '#92400E',
+    fontSize: 13,
     fontWeight: '600',
+    textAlign: 'center',
   },
 });

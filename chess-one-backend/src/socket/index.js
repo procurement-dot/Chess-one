@@ -20,8 +20,8 @@ function initializeSocket(httpServer) {
       methods: ["GET", "POST"],
       credentials: true,
     },
-    pingInterval: 10000,
-    pingTimeout: 5000,
+    pingInterval: 25000,
+    pingTimeout: 20000,
   });
 
   // Store global IO reference for services
@@ -48,9 +48,11 @@ function initializeSocket(httpServer) {
               avatarUrl: decoded.avatarUrl,
             };
             userStore.upsertUser(socket.data.user);
+          } else {
+            socket.authError = { code: "INVALID_TOKEN", message: "Invalid user ID in token" };
           }
         } catch {
-          // Unverified token: leave socket unauthenticated (spectator mode)
+          socket.authError = { code: "INVALID_TOKEN", message: "Token verification failed" };
         }
       }
 
@@ -61,6 +63,17 @@ function initializeSocket(httpServer) {
   });
 
   io.on("connection", (socket) => {
+    const transport = socket.conn?.transport?.name || "unknown";
+    console.log(`[Socket:connect] id=${socket.id} transport=${transport} userId=${socket.userId || 'anon'}`);
+
+    socket.conn?.on("upgrade", (upgradedTransport) => {
+      console.log(`[Socket:upgrade] id=${socket.id} transport upgraded to ${upgradedTransport.name}`);
+    });
+
+    if (socket.authError) {
+      socket.emit("auth:error", socket.authError);
+    }
+
     if (socket.userId) {
       registerUserSocket(socket.userId, socket.id);
       socket.join(`user:${socket.userId}`);
@@ -73,11 +86,17 @@ function initializeSocket(httpServer) {
     socket.on("auth:authenticate", (data) => {
       try {
         const token = data?.token || (typeof data === "string" ? data : null);
-        if (!token) return;
+        if (!token) {
+          socket.emit("auth:error", { code: "INVALID_TOKEN", message: "Token is required" });
+          return;
+        }
 
         const decoded = verifyToken(token);
         const userId = parseInt(decoded.userId || decoded.id, 10);
-        if (isNaN(userId)) return;
+        if (isNaN(userId)) {
+          socket.emit("auth:error", { code: "INVALID_TOKEN", message: "Invalid user ID in token" });
+          return;
+        }
 
         if (socket.userId && socket.userId !== userId) {
           unregisterUserSocket(socket.userId, socket.id);
@@ -98,14 +117,29 @@ function initializeSocket(httpServer) {
         registerUserSocket(userId, socket.id);
         socket.join(`user:${userId}`);
 
+        const currentTransport = socket.conn?.transport?.name || transport;
+        console.log(`[Socket:auth] id=${socket.id} transport=${currentTransport} userId=${userId}`);
+
         socket.emit("auth:authenticated", { success: true, user: socket.data.user });
       } catch (err) {
-        // Invalid token attempt
-        socket.emit("auth:error", { message: "Invalid or expired token" });
+        socket.emit("auth:error", { code: "INVALID_TOKEN", message: "Invalid or expired token" });
       }
     });
 
-    socket.on("disconnect", () => {
+    // Client heartbeat: refreshes presence and replies with online IDs
+    socket.on("presence:ping", () => {
+      if (socket.userId) {
+        registerUserSocket(socket.userId, socket.id);
+      }
+      socket.emit("presence:pong", {
+        onlineUserIds: getOnlineUserIds(),
+        timestamp: Date.now(),
+      });
+    });
+
+    socket.on("disconnect", (reason) => {
+      const currentTransport = socket.conn?.transport?.name || "unknown";
+      console.log(`[Socket:disconnect] id=${socket.id} transport=${currentTransport} userId=${socket.userId || 'anon'} reason=${reason}`);
       if (socket.userId) {
         unregisterUserSocket(socket.userId, socket.id);
       }

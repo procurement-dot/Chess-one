@@ -247,6 +247,10 @@ class AuthStore {
     };
     this.notify();
   }
+
+  logout() {
+    this.clearAuth();
+  }
 }
 
 export const authStore = new AuthStore();

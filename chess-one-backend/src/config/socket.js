@@ -102,6 +102,15 @@ function isUserOnline(userId) {
 }
 
 /**
+ * Get active socket count for a specific user
+ */
+function getUserSocketCount(userId) {
+  const numericId = parseInt(userId, 10);
+  if (isNaN(numericId)) return 0;
+  return userSockets.get(numericId)?.size || 0;
+}
+
+/**
  * Get list of currently online user IDs
  */
 function getOnlineUserIds() {
@@ -167,6 +176,7 @@ module.exports = {
   trackUserDisconnected,
   getOnlineUserIds,
   isUserOnline,
+  getUserSocketCount,
   broadcastOnlineUsers,
   emitToGame,
   emitToUser,

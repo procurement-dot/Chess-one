@@ -8,6 +8,14 @@ import {
   PlayerColor,
 } from '../types/game.types';
 
+export type ConnectionStatus =
+  | 'connecting'
+  | 'connected'
+  | 'authenticated'
+  | 'auth_error'
+  | 'offline'
+  | 'disconnected';
+
 export interface LiveGameState {
   currentGame: Game | null;
   gameState: GameState | null;
@@ -20,7 +28,7 @@ export interface LiveGameState {
   result: GameResult | null;
   winnerId: number | null;
   drawOfferFrom: PlayerColor | null;
-  connectionStatus: 'connected' | 'connecting' | 'disconnected';
+  connectionStatus: ConnectionStatus;
   lastMove: { from: string; to: string } | null;
   isLoading: boolean;
   error: string | null;
@@ -40,7 +48,7 @@ const initialState: LiveGameState = {
   result: null,
   winnerId: null,
   drawOfferFrom: null,
-  connectionStatus: 'disconnected',
+  connectionStatus: 'offline',
   lastMove: null,
   isLoading: false,
   error: null,
@@ -368,7 +376,7 @@ class GameStore {
     this.notify();
   }
 
-  setConnectionStatus(status: 'connected' | 'connecting' | 'disconnected') {
+  setConnectionStatus(status: ConnectionStatus) {
     this.state = { ...this.state, connectionStatus: status };
     this.notify();
   }

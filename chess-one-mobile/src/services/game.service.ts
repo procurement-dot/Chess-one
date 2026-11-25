@@ -263,6 +263,22 @@ class GameService {
   }
 
   /**
+   * Fetch current socket and presence status for self and all online users
+   * GET /api/users/presence
+   */
+  async getPresence(): Promise<{
+    me: { id: number; isOnline: boolean; socketCount: number };
+    onlineUserIds: number[];
+  }> {
+    const res = await apiClient.get<{
+      success: boolean;
+      me: { id: number; isOnline: boolean; socketCount: number };
+      onlineUserIds: number[];
+    }>('/api/users/presence');
+    return res.data;
+  }
+
+  /**
    * 1-Click direct challenge to an opponent
    * POST /api/invitations/quick-invite
    */

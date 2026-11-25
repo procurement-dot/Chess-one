@@ -21,6 +21,7 @@ import { CustomWheelPicker } from '../../components/ui/CustomWheelPicker';
 import { InviteFriendModal } from '../../components/game/InviteFriendModal';
 import { OutgoingChallengeModal } from '../../components/game/OutgoingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
+import { ConnectionStatusPill } from '../../components/ui/ConnectionStatusPill';
 import { useOnlineUsers } from '../../hooks/useOnlineUsers';
 import { authStore, useAuthStore } from '../../store/authStore';
 import { gameStore } from '../../store/gameStore';
@@ -254,6 +255,9 @@ export default function CreateMatchScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Connection Status Pill */}
+        <ConnectionStatusPill onRetry={refreshOnlineUsers} style={{ marginBottom: 12 }} />
+
         {/* Game Mode Segment */}
         <View style={styles.segmentContainer}>
           <TouchableOpacity

@@ -1,5 +1,5 @@
 const prisma = require("../config/database");
-const { getOnlineUserIds, isUserOnline } = require("../config/socket");
+const { getOnlineUserIds, isUserOnline, getUserSocketCount } = require("../config/socket");
 const { success } = require("../utils/response");
 const userService = require("../services/user.service");
 const userStore = require("../store/user.store");
@@ -18,6 +18,22 @@ class UserController {
     try {
       const user = await userService.updateProfile(req.user.id, req.validatedBody);
       return success(res, { user });
+    } catch (err) {
+      next(err);
+    }
+  }
+
+  async getPresence(req, res, next) {
+    try {
+      const userId = parseInt(req.user?.id, 10);
+      return success(res, {
+        me: {
+          id: userId,
+          isOnline: isUserOnline(userId),
+          socketCount: getUserSocketCount(userId),
+        },
+        onlineUserIds: getOnlineUserIds(),
+      });
     } catch (err) {
       next(err);
     }

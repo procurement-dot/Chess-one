@@ -1,5 +1,5 @@
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -15,6 +15,7 @@ import {
 import { useRouter } from 'expo-router';
 import { OnlineUser } from '../../types/game.types';
 import { useAuthStore } from '../../store/authStore';
+import { ConnectionStatusPill } from '../ui/ConnectionStatusPill';
 
 interface InviteFriendModalProps {
   visible: boolean;
@@ -42,6 +43,13 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Automatically refresh players whenever modal opens
+  useEffect(() => {
+    if (visible) {
+      onRefresh();
+    }
+  }, [visible, onRefresh]);
 
   // Filtered online candidates
   const currentList = useMemo(() => {
@@ -108,6 +116,9 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
               </TouchableOpacity>
             </View>
           )}
+
+          {/* Connection Status Indicator */}
+          <ConnectionStatusPill onRetry={onRefresh} style={{ marginBottom: 6 }} />
 
           {/* Online Tab */}
           <View style={styles.tabBar}>

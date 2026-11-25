@@ -11,6 +11,7 @@ const {
 // Profile endpoints require authentication
 router.get("/me", requireAuth, userController.getMe);
 router.patch("/me", requireAuth, blockPrivilegedRole, validate(updateProfileSchema), userController.updateMe);
+router.get("/presence", requireAuth, userController.getPresence);
 
 // User listing endpoints require authentication
 router.get("/", requireAuth, userController.getUsers);
