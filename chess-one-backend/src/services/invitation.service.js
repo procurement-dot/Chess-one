@@ -120,7 +120,6 @@ class InvitationService {
       });
     } catch (err) {
       console.warn("[InvitationService] Database unavailable for createInvitation, using inMemoryInvitations:", err.message);
-      const userStore = require("../store/user.store");
       const realSender = userStore.getUser(senderId) || { id: senderId, name: `Player #${senderId}`, email: `player${senderId}@chessone.local` };
       const memInv = {
         id: nextInMemoryInvId++,
@@ -137,7 +136,6 @@ class InvitationService {
       invitation = memInv;
     }
 
-    const userStore = require("../store/user.store");
     const realSender = userStore.getUser(senderId);
     const resolvedSender = {
       id: senderId,
@@ -198,7 +196,6 @@ class InvitationService {
         new Date(inv.expiresAt) > new Date()
     );
 
-    const userStore = require("../store/user.store");
     const formatted = [
       ...invitations.map((inv) => {
         const realSender = userStore.getUser(inv.senderId) || inv.sender;
@@ -252,7 +249,6 @@ class InvitationService {
       if (game) {
         game.status = "ACTIVE";
         game.startedAt = new Date();
-        const userStore = require("../store/user.store");
         const senderUser = userStore.getUser(inv.senderId) || { id: inv.senderId, name: `Player #${inv.senderId}` };
         const receiverUser = userStore.getUser(userId) || { id: userId, name: `Player #${userId}` };
         if (!game.whitePlayerId) {
@@ -402,7 +398,6 @@ class InvitationService {
       game.blackTimeMs = initialTimeMs;
       game.startedAt = now;
       game.lastMoveAt = null;
-      const userStore = require("../store/user.store");
       game.whitePlayer = userStore.getUser(whitePlayerId) || { id: whitePlayerId, name: `Player #${whitePlayerId}` };
       game.blackPlayer = userStore.getUser(blackPlayerId) || { id: blackPlayerId, name: `Player #${blackPlayerId}` };
       game.moves = game.moves || [];
