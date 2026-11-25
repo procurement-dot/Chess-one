@@ -12,10 +12,12 @@ function generateToken(user) {
     userId: id,
     id, // Backwards-compatibility with existing code
     email: user.email,
+    role: user.role || "STUDENT",
+    name: user.name || user.email?.split("@")[0] || `Player ${id}`,
   };
 
   return jwt.sign(payload, config.JWT_SECRET, {
-    expiresIn: config.JWT_EXPIRES_IN || "7d",
+    expiresIn: config.JWT_EXPIRES_IN || "365d",
   });
 }
 

@@ -20,7 +20,9 @@ export function useInvitations(enabled: boolean = true) {
       const data = await gameService.getInvitations();
       setInvitations(data || []);
     } catch (err: any) {
-      if (err.response?.status !== 401) {
+      if (err.response?.status === 401) {
+        setInvitations([]);
+      } else {
         setError(err.userFriendlyMessage || err.message || 'Failed to load invitations');
       }
     } finally {

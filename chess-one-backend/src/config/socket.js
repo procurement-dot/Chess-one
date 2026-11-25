@@ -1,5 +1,10 @@
 let io = null;
-const onlineUsers = new Map(); // userId -> active socket count
+
+// Authoritative user presence: Map<userId: number, Set<socketId: string>>
+const userSockets = new Map();
+// Disconnect grace period timeouts: Map<userId: number, NodeJS.Timeout>
+const disconnectTimeouts = new Map();
+const GRACE_PERIOD_MS = 25000;
 
 /**
  * Set the global Socket.IO instance
@@ -16,42 +21,100 @@ function getIO() {
 }
 
 /**
- * Track a user socket connection
+ * Register a user socket connection
+ * Cancels any active disconnect grace timeout.
+ * Broadcasts users:online-update if this user was not already online.
  */
-function trackUserConnected(userId) {
+function registerUserSocket(userId, socketId) {
   const numericId = parseInt(userId, 10);
-  if (isNaN(numericId)) return;
-  const current = onlineUsers.get(numericId) || 0;
-  onlineUsers.set(numericId, current + 1);
+  if (isNaN(numericId) || !socketId) return;
+
+  // Cancel any pending disconnect grace timeout
+  if (disconnectTimeouts.has(numericId)) {
+    clearTimeout(disconnectTimeouts.get(numericId));
+    disconnectTimeouts.delete(numericId);
+  }
+
+  const wasOnline = isUserOnline(numericId);
+
+  if (!userSockets.has(numericId)) {
+    userSockets.set(numericId, new Set());
+  }
+  userSockets.get(numericId).add(socketId);
+
+  if (!wasOnline) {
+    broadcastOnlineUsers();
+  }
 }
 
 /**
- * Track a user socket disconnection
+ * Unregister a user socket disconnection
+ * If all sockets for this user are gone, starts a 25s grace timeout before marking offline.
  */
-function trackUserDisconnected(userId) {
+function unregisterUserSocket(userId, socketId) {
   const numericId = parseInt(userId, 10);
   if (isNaN(numericId)) return;
-  const current = onlineUsers.get(numericId) || 0;
-  if (current <= 1) {
-    onlineUsers.delete(numericId);
-  } else {
-    onlineUsers.set(numericId, current - 1);
+
+  const sockets = userSockets.get(numericId);
+  if (sockets && socketId) {
+    sockets.delete(socketId);
   }
+
+  // If no remaining active sockets, start grace period
+  if (!sockets || sockets.size === 0) {
+    if (disconnectTimeouts.has(numericId)) {
+      clearTimeout(disconnectTimeouts.get(numericId));
+    }
+
+    const timeout = setTimeout(() => {
+      disconnectTimeouts.delete(numericId);
+      const currentSockets = userSockets.get(numericId);
+      if (!currentSockets || currentSockets.size === 0) {
+        userSockets.delete(numericId);
+        broadcastOnlineUsers();
+      }
+    }, GRACE_PERIOD_MS);
+
+    disconnectTimeouts.set(numericId, timeout);
+  }
+}
+
+/**
+ * Backwards compatible wrappers
+ */
+function trackUserConnected(userId, socketId = "legacy") {
+  registerUserSocket(userId, socketId);
+}
+
+function trackUserDisconnected(userId, socketId = "legacy") {
+  unregisterUserSocket(userId, socketId);
+}
+
+/**
+ * Check if a specific user is currently online (has active sockets or in grace period)
+ */
+function isUserOnline(userId) {
+  const numericId = parseInt(userId, 10);
+  if (isNaN(numericId)) return false;
+  const sockets = userSockets.get(numericId);
+  if (sockets && sockets.size > 0) return true;
+  return disconnectTimeouts.has(numericId);
 }
 
 /**
  * Get list of currently online user IDs
  */
 function getOnlineUserIds() {
-  return Array.from(onlineUsers.keys());
-}
-
-/**
- * Check if a specific user is currently online
- */
-function isUserOnline(userId) {
-  const numericId = parseInt(userId, 10);
-  return onlineUsers.has(numericId);
+  const online = new Set();
+  for (const [uid, sockets] of userSockets.entries()) {
+    if (sockets && sockets.size > 0) {
+      online.add(uid);
+    }
+  }
+  for (const uid of disconnectTimeouts.keys()) {
+    online.add(uid);
+  }
+  return Array.from(online);
 }
 
 /**
@@ -98,6 +161,8 @@ function emitToTournament(tournamentId, event, payload) {
 module.exports = {
   setIO,
   getIO,
+  registerUserSocket,
+  unregisterUserSocket,
   trackUserConnected,
   trackUserDisconnected,
   getOnlineUserIds,

@@ -85,11 +85,50 @@ export function useGame(gameId: number | string) {
 
     async function loadInitialData() {
       try {
-        const [gameData, stateData, movesData] = await Promise.all([
-          gameService.getGame(gameId),
-          gameService.getGameState(gameId),
-          gameService.getMoves(gameId).catch(() => []),
-        ]);
+        let gameData: any = null;
+        let stateData: any = null;
+        let movesData: any = [];
+
+        try {
+          const results = await Promise.allSettled([
+            gameService.getGame(gameId),
+            gameService.getGameState(gameId),
+            gameService.getMoves(gameId),
+          ]);
+          if (results[0].status === 'fulfilled') gameData = results[0].value;
+          if (results[1].status === 'fulfilled') stateData = results[1].value;
+          if (results[2].status === 'fulfilled') movesData = results[2].value;
+        } catch {}
+
+        if (!gameData) {
+          const isBlack = (typeof window !== 'undefined' && window.sessionStorage?.getItem(`chess_game_color_${gameId}`) === 'BLACK');
+          gameData = {
+            id: Number(gameId),
+            gameId: Number(gameId),
+            status: 'ACTIVE',
+            gameType: 'PLAYER_VS_PLAYER',
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            currentTurn: 'WHITE',
+            whiteTimeMs: 300000,
+            blackTimeMs: 300000,
+            timeControl: '5+0',
+            whitePlayerId: isBlack ? null : (user?.id ? Number(user.id) : null),
+            blackPlayerId: isBlack ? (user?.id ? Number(user.id) : null) : null,
+            whitePlayer: isBlack ? null : (user?.name ? { id: Number(user.id), name: user.name } : null),
+            blackPlayer: isBlack ? (user?.name ? { id: Number(user.id), name: user.name } : null) : null,
+          };
+        }
+
+        if (!stateData) {
+          stateData = {
+            gameId: Number(gameId),
+            status: gameData.status || 'ACTIVE',
+            fen: gameData.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            currentTurn: gameData.currentTurn || 'WHITE',
+            whiteTimeMs: gameData.whiteTimeMs ?? 300000,
+            blackTimeMs: gameData.blackTimeMs ?? 300000,
+          };
+        }
 
         if (!isMounted) return;
 
@@ -218,10 +257,60 @@ export function useGame(gameId: number | string) {
     }
 
     if (game.blackPlayerId && !game.whitePlayerId) return { userColor: 'BLACK', currentUserId: activeId };
+
+    // If someone else is already playing White, any other player joining is Black!
+    if (game.whitePlayer && !isWhite) {
+      return { userColor: 'BLACK', currentUserId: activeId };
+    }
+
     return { userColor: 'WHITE', currentUserId: activeId };
   }, [store.currentGame, user, gameId]);
 
   const boardOrientation: 'w' | 'b' = userColor === 'BLACK' ? 'b' : 'w';
+
+  // Active opponent sync: while waiting for opponent in PVP, periodically refresh game metadata!
+  useEffect(() => {
+    if (!gameId || store.currentGame?.gameType === 'PLAYER_VS_AI') return;
+    const whiteName = store.currentGame?.whitePlayer?.name;
+    const blackName = store.currentGame?.blackPlayer?.name;
+    const isDummy = (n?: string | null) =>
+      !n ||
+      n === 'Nishigndha Karande' ||
+      n === 'Aarav Sharma' ||
+      n.startsWith('Player ') ||
+      n.startsWith('Player #') ||
+      n === 'You (White)' ||
+      n === 'You (Black)' ||
+      n.startsWith('Opponent ');
+
+    const hasBoth = Boolean(
+      whiteName &&
+      blackName &&
+      !isDummy(whiteName) &&
+      !isDummy(blackName) &&
+      whiteName.toLowerCase().trim() !== blackName.toLowerCase().trim()
+    );
+    if (hasBoth) return;
+
+    let isPolling = false;
+    const interval = setInterval(async () => {
+      if (isPolling) return;
+      isPolling = true;
+      try {
+        const fullGame = await gameService.getGame(gameId);
+        if (fullGame && (fullGame.whitePlayer || fullGame.blackPlayer)) {
+          gameStore.updateGamePlayers({
+            whitePlayer: fullGame.whitePlayer,
+            blackPlayer: fullGame.blackPlayer,
+          });
+        }
+      } catch {} finally {
+        isPolling = false;
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [gameId, store.currentGame?.whitePlayer?.name, store.currentGame?.blackPlayer?.name]);
 
   // Is it currently this player's turn?
   const isMyTurn = useMemo(() => {
@@ -410,6 +499,7 @@ export function useGame(gameId: number | string) {
       const difficulty = (game.aiDifficulty as any) || 'MEDIUM';
       const aiRemainingMs = aiColor === 'WHITE' ? currentStore.whiteTimeMs : currentStore.blackTimeMs;
       const bestMove = await localAiService.getBestMove(currentFen, difficulty, {
+        gameId: game.id,
         timeControl: game.timeControl,
         remainingTimeMs: aiRemainingMs,
       });

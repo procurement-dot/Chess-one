@@ -47,7 +47,7 @@ function setStoredString(key: string, val: string | null) {
   } catch {}
 }
 
-export function extractUserFromToken(token: string | null): { id: string; email?: string } | null {
+export function extractUserFromToken(token: string | null): { id: string; email?: string; name?: string } | null {
   if (!token) return null;
   try {
     const parts = token.split('.');
@@ -61,6 +61,7 @@ export function extractUserFromToken(token: string | null): { id: string; email?
         return {
           id: String(id),
           email: payload.email,
+          name: payload.name,
         };
       }
     }
@@ -77,13 +78,20 @@ function getStoredUser(): GoogleUser | null {
     if (user) {
       if (tokenUser?.id) user.id = tokenUser.id;
       if (!user.email && tokenUser?.email) user.email = tokenUser.email;
+      if (!user.name || user.name?.startsWith('Player #') || user.name?.startsWith('Player ')) {
+        if (tokenUser?.name && !tokenUser.name.startsWith('Player')) {
+          user.name = tokenUser.name;
+        } else if (tokenUser?.email) {
+          user.name = tokenUser.email.split('@')[0];
+        }
+      }
       return user;
     }
     if (tokenUser) {
       return {
         id: tokenUser.id,
         email: tokenUser.email || '',
-        name: tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
+        name: tokenUser.name || tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
       };
     }
     return user;
@@ -142,7 +150,13 @@ class AuthStore {
     idToken: string | null;
     chessOneToken?: string | null;
   }) {
-    const token = chessOneToken || idToken || this.state.chessOneToken;
+    // Only valid backend JWT should populate chessOneToken. Never use Google ID token.
+    const token =
+      chessOneToken ||
+      (this.state.chessOneToken && this.state.chessOneToken !== idToken
+        ? this.state.chessOneToken
+        : null);
+
     let finalUser = user || this.state.user;
     const tokenUser = extractUserFromToken(token);
     if (tokenUser && finalUser) {
@@ -153,7 +167,12 @@ class AuthStore {
       };
     }
 
-    if (token) setStoredString(STORAGE_TOKEN_KEY, token);
+    if (token) {
+      setStoredString(STORAGE_TOKEN_KEY, token);
+    } else {
+      setStoredString(STORAGE_TOKEN_KEY, null);
+    }
+
     if (finalUser) setStoredString(STORAGE_USER_KEY, JSON.stringify(finalUser));
     if (idToken) setStoredString(STORAGE_GOOGLE_KEY, idToken);
 

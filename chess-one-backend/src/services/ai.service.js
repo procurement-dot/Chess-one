@@ -1,4 +1,5 @@
 const { Chess } = require("chess.js");
+const stockfishService = require("./stockfish.service");
 
 // Material piece weights (Centipawns)
 const PIECE_VALUES = {
@@ -151,16 +152,41 @@ function evaluateBoard(chess) {
     }
   }
 
+  const fenParts = chess.fen().split(" ");
+  const moveNumber = parseInt(fenParts[5] || "1", 10);
+
   const centerSquares = ['d4', 'd5', 'e4', 'e5'];
   for (const sq of centerSquares) {
     const piece = chess.get(sq);
     if (piece) {
-      score += piece.color === 'w' ? 18 : -18;
+      if (piece.type === 'q' && moveNumber < 8) {
+        // Queen exposed in center too early is a tactical liability
+        score += piece.color === 'w' ? -25 : 25;
+      } else {
+        score += piece.color === 'w' ? 18 : -18;
+      }
     }
   }
 
-  if (chess.isCheck()) {
-    score += chess.turn() === 'w' ? -40 : 40;
+  // Early queen penalty: if Queen leaves home rank before move 8 while minors are undeveloped
+  if (moveNumber < 8) {
+    const whiteMinorsAtHome = ['b1', 'c1', 'f1', 'g1'].filter((sq) => {
+      const p = chess.get(sq);
+      return p && p.color === 'w' && (p.type === 'n' || p.type === 'b');
+    }).length;
+    const whiteQueenAtHome = chess.get('d1')?.type === 'q' && chess.get('d1')?.color === 'w';
+    if (!whiteQueenAtHome && whiteMinorsAtHome >= 2) {
+      score -= 70;
+    }
+
+    const blackMinorsAtHome = ['b8', 'c8', 'f8', 'g8'].filter((sq) => {
+      const p = chess.get(sq);
+      return p && p.color === 'b' && (p.type === 'n' || p.type === 'b');
+    }).length;
+    const blackQueenAtHome = chess.get('d8')?.type === 'q' && chess.get('d8')?.color === 'b';
+    if (!blackQueenAtHome && blackMinorsAtHome >= 2) {
+      score += 70;
+    }
   }
 
   return score;
@@ -168,139 +194,59 @@ function evaluateBoard(chess) {
 
 class AIService {
   /**
-   * Calculate best move adhering to rating standards:
-   * - EASY:   ~800
-   * - MEDIUM: ~1400
-   * - HARD:   ~1900-2000
+   * Calculate best move using backend Stockfish engine with difficulty settings:
+   * - EASY:   ~800 Elo
+   * - MEDIUM: ~1400 Elo
+   * - HARD:   ~2000+ Elo
    */
-  async getBestMove({ fen, difficulty = "MEDIUM" }) {
+  async getBestMove({ fen, difficulty = "MEDIUM", timeControl, remainingTimeMs }) {
+    try {
+      const sfMove = await stockfishService.getBestMove({
+        fen,
+        difficulty,
+        timeControl,
+        remainingTimeMs,
+      });
+
+      if (sfMove) {
+        return {
+          from: sfMove.from,
+          to: sfMove.to,
+          promotion: sfMove.promotion,
+          san: sfMove.san,
+        };
+      }
+    } catch (err) {
+      console.error("[AIService] Stockfish getBestMove failed:", err);
+    }
+
+    // Fallback: pick best immediate move if Stockfish engine is temporarily unavailable
     try {
       const chess = new Chess(fen);
       const legalMoves = chess.moves({ verbose: true });
-
       if (legalMoves.length === 0) return null;
 
-      // 1. Instant checkmate in 1 check
+      // Check mate in 1
       for (const m of legalMoves) {
         chess.move(m);
         if (chess.isCheckmate()) {
           chess.undo();
-          return { from: m.from, to: m.to, promotion: m.promotion };
+          return { from: m.from, to: m.to, promotion: m.promotion, san: m.san };
         }
         chess.undo();
       }
 
-      // 2. Check opening book
-      const bookMoves = OPENING_BOOK[fen];
-      if (bookMoves && bookMoves.length > 0 && difficulty !== "EASY") {
-        const selectedUci = bookMoves[Math.floor(Math.random() * bookMoves.length)];
-        const from = selectedUci.slice(0, 2);
-        const to = selectedUci.slice(2, 4);
-        const matched = legalMoves.find((m) => m.from === from && m.to === to);
-        if (matched) {
-          return { from: matched.from, to: matched.to, promotion: matched.promotion };
-        }
-      }
-
-      const isWhite = chess.turn() === "w";
-
-      // 3. Move ordering
-      legalMoves.sort((a, b) => {
-        let sa = 0, sb = 0;
-        if (a.captured) sa += (PIECE_VALUES[a.captured] || 100) * 10;
-        if (b.captured) sb += (PIECE_VALUES[b.captured] || 100) * 10;
-        if (a.promotion) sa += 800;
-        if (b.promotion) sb += 800;
-        if (a.san.includes('+')) sa += 60;
-        if (b.san.includes('+')) sb += 60;
-        return sb - sa;
-      });
-
-      let bestMove = legalMoves[0];
-      let bestScore = isWhite ? -Infinity : Infinity;
-      const scoredMoves = [];
-
-      const maxOppCandidates =
-        difficulty === "HARD" ? 12 : difficulty === "MEDIUM" ? 6 : 2;
-
-      for (const m of legalMoves) {
-        chess.move(m);
-        let oppScore = isWhite ? Infinity : -Infinity;
-        const oppMoves = chess.moves({ verbose: true });
-
-        if (oppMoves.length === 0) {
-          oppScore = evaluateBoard(chess);
-        } else if (difficulty === "EASY") {
-          oppScore = evaluateBoard(chess);
-        } else {
-          oppMoves.sort((a, b) => {
-            let sa = 0, sb = 0;
-            if (a.captured) sa += (PIECE_VALUES[a.captured] || 100) * 10;
-            if (b.captured) sb += (PIECE_VALUES[b.captured] || 100) * 10;
-            if (a.san.includes('#')) sa += 50000;
-            if (b.san.includes('#')) sb += 50000;
-            return sb - sa;
-          });
-
-          const candidates = oppMoves.slice(0, maxOppCandidates);
-          for (const opp of candidates) {
-            chess.move(opp);
-            let s = evaluateBoard(chess);
-            if (chess.isCheckmate()) {
-              s = isWhite ? -100000 : 100000;
-            }
-            chess.undo();
-
-            if (isWhite) {
-              if (s < oppScore) oppScore = s;
-            } else {
-              if (s > oppScore) oppScore = s;
-            }
-          }
-        }
-
-        chess.undo();
-        scoredMoves.push({ move: m, score: oppScore });
-
-        if (isWhite) {
-          if (oppScore > bestScore) {
-            bestScore = oppScore;
-            bestMove = m;
-          }
-        } else {
-          if (oppScore < bestScore) {
-            bestScore = oppScore;
-            bestMove = m;
-          }
-        }
-      }
-
-      // Difficulty tuning
-      if (difficulty === "EASY" && scoredMoves.length > 1) {
-        scoredMoves.sort((a, b) => (isWhite ? b.score - a.score : a.score - b.score));
-        const safe = scoredMoves.slice(0, Math.min(3, scoredMoves.length));
-        if (Math.random() < 0.35 && safe[1]) {
-          bestMove = safe[1].move;
-        } else {
-          bestMove = safe[0].move;
-        }
-      } else if (difficulty === "MEDIUM" && scoredMoves.length > 1) {
-        scoredMoves.sort((a, b) => (isWhite ? b.score - a.score : a.score - b.score));
-        const diff = Math.abs(scoredMoves[0].score - scoredMoves[1].score);
-        if (diff < 35 && Math.random() < 0.2) {
-          bestMove = scoredMoves[1].move;
-        } else {
-          bestMove = scoredMoves[0].move;
-        }
-      }
-
+      // Safe capture or first move
+      const capture = legalMoves.find((m) => m.captured);
+      const chosen = capture || legalMoves[0];
       return {
-        from: bestMove.from,
-        to: bestMove.to,
-        promotion: bestMove.promotion,
+        from: chosen.from,
+        to: chosen.to,
+        promotion: chosen.promotion,
+        san: chosen.san,
       };
-    } catch (err) {
-      console.error("AI service move calculation failed:", err);
+    } catch (fallbackErr) {
+      console.error("[AIService] Fallback move generation failed:", fallbackErr);
       return null;
     }
   }

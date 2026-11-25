@@ -12,7 +12,7 @@ export const StudentHome = () => {
   const { user } = useAuthStore();
   const router = useRouter();
   
-  const firstName = user?.name ? user.name.split(' ')[0] : 'Aarav';
+  const firstName = user?.name ? user.name.split(' ')[0] : 'Champion';
 
   const {
     isPlacementComplete,

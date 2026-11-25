@@ -202,54 +202,43 @@ export interface BackendAuthResult {
 export async function exchangeGoogleTokenWithBackend(
   idToken: string
 ): Promise<BackendAuthResult | null> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   try {
     const response = await fetch(`${getApiBaseUrl()}/api/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ idToken }),
+      signal: controller.signal,
     });
 
+    const json = await response.json().catch(() => null);
     if (!response.ok) {
-      console.warn('Backend Google Auth failed with status:', response.status);
-      return null;
+      const message =
+        json?.error?.message || `Backend Google sign-in failed (${response.status}).`;
+      throw new Error(message);
     }
 
-    const json = await response.json();
-    if (!json.success) return null;
+    if (!json?.success) {
+      throw new Error(json?.error?.message || 'Backend could not complete Google sign-in.');
+    }
 
     const token = json.token || json.data?.token;
     const user = json.user || json.data?.user;
 
     if (!token || !user) {
-      console.warn('Backend response missing token or user payload:', json);
-      return null;
+      throw new Error('Backend response is missing the sign-in token or user profile.');
     }
 
     return { token, user };
   } catch (err) {
     console.warn('Error connecting to backend auth:', err);
-    return null;
+    if (controller.signal.aborted) {
+      throw new Error('Backend sign-in timed out. Check that the backend and database are available.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }
-
-/**
- * Call backend dev-login endpoint for fast local testing
- */
-export async function devLoginWithBackend(
-  userId: number = 1
-): Promise<BackendAuthResult | null> {
-  try {
-    const response = await fetch(`${getApiBaseUrl()}/api/auth/dev-login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ userId }),
-    });
-    if (!response.ok) return null;
-    const json = await response.json();
-    return json.success ? { token: json.token, user: json.user } : null;
-  } catch (err) {
-    console.warn('[Auth] Dev login error:', err);
-    return null;
-  }
-}
-

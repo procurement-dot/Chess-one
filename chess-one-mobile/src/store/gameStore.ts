@@ -131,6 +131,19 @@ class GameStore {
     this.notify();
   }
 
+  updateGamePlayers(players: { whitePlayer?: any; blackPlayer?: any }) {
+    const prevGame = this.state.currentGame || ({} as any);
+    this.state = {
+      ...this.state,
+      currentGame: {
+        ...prevGame,
+        ...(players.whitePlayer ? { whitePlayer: players.whitePlayer } : {}),
+        ...(players.blackPlayer ? { blackPlayer: players.blackPlayer } : {}),
+      },
+    };
+    this.notify();
+  }
+
   setMoves(moves: GameMove[]) {
     const last = moves.length > 0 ? moves[moves.length - 1] : null;
     this.state = {

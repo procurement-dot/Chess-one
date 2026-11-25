@@ -20,15 +20,21 @@ class GameSocketManager {
    * Connect to backend Socket.IO server with authentication
    */
   connect(): Socket {
-    if (this.socket && this.socket.connected) {
-      gameStore.setConnectionStatus('connected');
-      return this.socket;
-    }
-
     let token = authStore.getState().chessOneToken;
     if (!token && typeof window !== 'undefined') {
       token = window.localStorage?.getItem('chess_one_token') || window.sessionStorage?.getItem('chess_one_token');
     }
+
+    if (this.socket && this.socket.connected) {
+      gameStore.setConnectionStatus('connected');
+      // Update auth payload only if token changed
+      if (token && (this.socket.auth as any)?.token !== token) {
+        this.socket.auth = { token };
+        this.socket.emit('auth:authenticate', { token });
+      }
+      return this.socket;
+    }
+
     const url = getSocketBaseUrl();
 
     this.socket = io(url, {
@@ -45,12 +51,49 @@ class GameSocketManager {
     return this.socket;
   }
 
+  /**
+   * Dynamically update socket authentication token without full teardown
+   */
+  updateAuth(token?: string | null) {
+    let currentToken = token !== undefined ? token : authStore.getState().chessOneToken;
+    if (!currentToken && typeof window !== 'undefined') {
+      currentToken = window.localStorage?.getItem('chess_one_token') || window.sessionStorage?.getItem('chess_one_token');
+    }
+
+    if (!currentToken) {
+      this.disconnect();
+      return;
+    }
+
+    if (this.socket) {
+      const prevToken = (this.socket.auth as any)?.token;
+      this.socket.auth = { token: currentToken };
+      if (this.socket.connected) {
+        if (prevToken !== currentToken) {
+          this.socket.emit('auth:authenticate', { token: currentToken });
+        }
+      } else {
+        this.socket.connect();
+      }
+    } else {
+      this.connect();
+    }
+  }
+
   private setupListeners() {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
       console.log('[Socket] Connected to server, ID:', this.socket?.id);
       gameStore.setConnectionStatus('connected');
+
+      let token = authStore.getState().chessOneToken;
+      if (!token && typeof window !== 'undefined') {
+        token = window.localStorage?.getItem('chess_one_token') || window.sessionStorage?.getItem('chess_one_token');
+      }
+      if (token) {
+        this.socket?.emit('auth:authenticate', { token });
+      }
 
       // If we were in a game and reconnected, rejoin room and restore authoritative state
       if (this.currentGameId) {
@@ -76,6 +119,12 @@ class GameSocketManager {
 
     this.socket.on('game:joined', (payload) => {
       console.log('[Socket] Confirmed joined game room:', payload);
+      if (payload && (payload.whitePlayer || payload.blackPlayer)) {
+        gameStore.updateGamePlayers({
+          whitePlayer: payload.whitePlayer,
+          blackPlayer: payload.blackPlayer,
+        });
+      }
     });
 
     // Match activated / started
@@ -86,6 +135,23 @@ class GameSocketManager {
           status: 'ACTIVE',
           fen: payload.fen,
           currentTurn: payload.currentTurn,
+        });
+        if (payload.whitePlayer || payload.blackPlayer) {
+          gameStore.updateGamePlayers({
+            whitePlayer: payload.whitePlayer,
+            blackPlayer: payload.blackPlayer,
+          });
+        }
+      }
+    });
+
+    // Synchronize real-time player profiles
+    this.socket.on('game:players-updated', (payload: any) => {
+      console.log('[Socket] Players updated dynamically:', payload);
+      if (payload && (payload.whitePlayer || payload.blackPlayer)) {
+        gameStore.updateGamePlayers({
+          whitePlayer: payload.whitePlayer,
+          blackPlayer: payload.blackPlayer,
         });
       }
     });
@@ -189,17 +255,23 @@ class GameSocketManager {
   joinGame(gameId: number | string) {
     this.currentGameId = gameId;
     const socket = this.connect();
+    const user = authStore.getState().user;
+    let color: string | null = null;
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      color = window.sessionStorage.getItem(`chess_game_color_${gameId}`);
+    }
+    const payload = { gameId, user, color };
 
     if (socket.connected) {
       gameStore.setConnectionStatus('connected');
-      socket.emit('game:join', { gameId });
-      console.log('[Socket] Joined game room immediately:', gameId);
+      socket.emit('game:join', payload);
+      console.log('[Socket] Joined game room immediately with profile:', gameId, user?.name);
     } else {
       gameStore.setConnectionStatus('connecting');
       socket.once('connect', () => {
         gameStore.setConnectionStatus('connected');
-        socket.emit('game:join', { gameId });
-        console.log('[Socket] Joined game room upon connection:', gameId);
+        socket.emit('game:join', payload);
+        console.log('[Socket] Joined game room upon connection with profile:', gameId, user?.name);
       });
     }
   }
@@ -406,3 +478,9 @@ class GameSocketManager {
 }
 
 export const gameSocket = new GameSocketManager();
+
+// Automatically keep socket authentication in sync with authStore
+authStore.subscribe(() => {
+  const token = authStore.getState().chessOneToken;
+  gameSocket.updateAuth(token);
+});

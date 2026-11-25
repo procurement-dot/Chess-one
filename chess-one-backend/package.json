@@ -14,6 +14,7 @@
     "test:tournaments": "node src/test-tournaments.js",
     "test:pairing": "node src/test-pairing.js",
     "test:tournament-start": "node src/test-tournament-start.js",
+    "test:stockfish": "node src/test-stockfish.js",
     "test": "node src/test-live-match.js && node src/test-auth-and-games.js"
   },
   "keywords": [],
@@ -31,6 +32,7 @@
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1",
     "socket.io": "^4.8.4",
+    "stockfish": "^19.0.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {

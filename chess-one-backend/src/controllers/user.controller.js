@@ -2,6 +2,7 @@ const prisma = require("../config/database");
 const { getOnlineUserIds, isUserOnline } = require("../config/socket");
 const { success } = require("../utils/response");
 const userService = require("../services/user.service");
+const userStore = require("../store/user.store");
 
 class UserController {
   async getMe(req, res, next) {
@@ -25,53 +26,58 @@ class UserController {
   async getUsers(req, res, next) {
     try {
       const currentUserId = req.user?.id ? parseInt(req.user.id, 10) : null;
-      const onlineIds = getOnlineUserIds();
-      const onlineSet = new Set(onlineIds.map((id) => parseInt(id, 10)));
 
-      // Fetch registered users (exclude current logged in user)
-      const users = await prisma.user.findMany({
-        where: currentUserId ? { id: { not: currentUserId } } : {},
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatarUrl: true,
-          createdAt: true,
-        },
-        orderBy: { updatedAt: "desc" },
-      });
+      let dbUsers;
+      try {
+        dbUsers = await prisma.user.findMany({
+          select: {
+            id: true,
+            name: true,
+            avatarUrl: true,
+            role: true,
+            rating: true,
+          },
+          orderBy: { name: "asc" },
+        });
+      } catch (dbErr) {
+        return res.status(503).json({
+          success: false,
+          error: {
+            code: "DATABASE_UNAVAILABLE",
+            message: "Database connection unavailable. If using Supabase, please ensure your project is restored and active in the Supabase Dashboard.",
+          },
+        });
+      }
 
-      const formatted = users.map((u) => {
-        const isOnline = onlineSet.has(u.id);
-        return {
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          avatarUrl: u.avatarUrl,
-          isOnline,
-          createdAt: u.createdAt,
-        };
-      });
+      const formatted = dbUsers.map((u) => ({
+        id: u.id,
+        name: u.name,
+        avatarUrl: u.avatarUrl || null,
+        role: u.role || "STUDENT",
+        rating: u.rating || 1200,
+        isOnline: isUserOnline(u.id),
+        isMe: currentUserId === u.id,
+      }));
 
-      // Sort: online users first, then alphabetically
+      // Sort: online users first, then by name ascending
       formatted.sort((a, b) => {
-        if (a.isOnline === b.isOnline) {
-          return a.name.localeCompare(b.name);
-        }
-        return a.isOnline ? -1 : 1;
+        if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+        return (a.name || "").localeCompare(b.name || "");
       });
 
-      // Only return users who are genuinely online right now (no static offline accounts)
-      const onlineOnly = formatted.filter((u) => u.isOnline);
+      const onlineCount = formatted.filter((u) => u.isOnline).length;
+      const isOnlineOnlyQuery = req.path === "/online" || req.query.online === "true";
+      const resultUsers = isOnlineOnlyQuery ? formatted.filter((u) => u.isOnline) : formatted;
 
       return success(res, {
-        users: onlineOnly,
-        total: onlineOnly.length,
-        onlineCount: onlineOnly.length,
+        users: resultUsers,
+        total: resultUsers.length,
+        onlineCount,
       });
     } catch (err) {
       next(err);
     }
+  }
   }
 }
 

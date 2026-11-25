@@ -115,7 +115,7 @@ export const SchoolHome = () => {
       <StudentProgressReportModal
         visible={reportModalVisible}
         onClose={() => setReportModalVisible(false)}
-        studentName={selectedStudent || 'Aarav'}
+        studentName={selectedStudent || 'Student'}
       />
     </View>
   );

@@ -6,31 +6,33 @@ import { authStore } from '../store/authStore';
  * Resolve the backend API base URL based on platform and environment
  */
 export function getApiBaseUrl(): string {
-  // If running in browser on localhost, always target local backend on port 4000
-  if (
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ) {
-    const envUrl = process.env.EXPO_PUBLIC_API_URL;
-    if (envUrl && (envUrl.includes('localhost') || envUrl.includes('127.0.0.1'))) {
-      return envUrl;
-    }
-    return 'http://localhost:4000';
-  }
-
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  if (envUrl) {
+  let resolvedUrl: string;
+
+  if (envUrl && envUrl.trim()) {
     if (Platform.OS === 'android' && envUrl.includes('localhost')) {
-      return envUrl.replace('localhost', '10.0.2.2');
+      resolvedUrl = envUrl.replace('localhost', '10.0.2.2');
+    } else {
+      resolvedUrl = envUrl.trim();
     }
-    return envUrl;
+  } else if (typeof window !== 'undefined' && window.location?.hostname) {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    resolvedUrl = `${protocol}//${hostname}:4000`;
+  } else if (Platform.OS === 'android') {
+    resolvedUrl = 'http://10.0.2.2:4000';
+  } else {
+    resolvedUrl = 'http://localhost:4000';
   }
 
-  // Fallback defaults for local development
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:4000';
+  if (__DEV__) {
+    if ((globalThis as any).__lastResolvedApiUrl !== resolvedUrl) {
+      console.log('[API] Resolved backend URL:', resolvedUrl);
+      (globalThis as any).__lastResolvedApiUrl = resolvedUrl;
+    }
   }
-  return 'http://localhost:4000';
+
+  return resolvedUrl;
 }
 
 /**
@@ -119,9 +121,18 @@ apiClient.interceptors.response.use(
     augmentedError.errorCode = errorData?.code;
 
     if (error.response?.status === 401) {
-      // Log warning but DO NOT automatically log user out.
-      // User stays logged in and is ONLY logged out when clicking the sign out button.
       console.warn('[apiClient] 401 Unauthorized response for:', error.config?.url);
+      const isAuthError =
+        errorData?.code === 'TOKEN_EXPIRED' ||
+        errorData?.code === 'UNAUTHORIZED' ||
+        errorMessage?.includes('Invalid authentication token') ||
+        errorMessage?.includes('Authenticated user no longer exists') ||
+        errorMessage?.includes('Token has expired');
+
+      if (isAuthError && authStore.getState().isAuthenticated) {
+        console.warn('[apiClient] Stored token is invalid or expired. Resetting session.');
+        authStore.clearAuth();
+      }
     }
 
     return Promise.reject(error);

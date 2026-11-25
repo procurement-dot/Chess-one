@@ -1,5 +1,6 @@
 import { Chess, Square } from 'chess.js';
 import { AIDifficulty } from '../types/game.types';
+import { gameService } from './game.service';
 
 export interface BestMoveResult {
   from: string;
@@ -9,6 +10,7 @@ export interface BestMoveResult {
 }
 
 export interface AIOptions {
+  gameId?: number | string;
   timeControl?: string;
   remainingTimeMs?: number | null;
 }
@@ -101,30 +103,66 @@ const KING_EG_PST = [
   -50, -30, -30, -30, -30, -30, -30, -50,
 ];
 
-// Classic grandmaster opening book for authentic master-level starts
+// Classic grandmaster opening book (keyed by normalized FEN prefix: "board turn castling")
 const OPENING_BOOK: Record<string, string[]> = {
-  'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1': [
+  // 1. Initial Position (White to move)
+  'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq': [
     'e2e4', 'd2d4', 'g1f3', 'c2c4',
   ],
-  'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq e3 0 1': [
+  // 1. e4 (Black to move)
+  'rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq': [
     'e7e5', 'c7c5', 'e7e6', 'c7c6',
   ],
-  'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq d3 0 1': [
+  // 1. d4 (Black to move)
+  'rnbqkbnr/pppppppp/8/8/3P4/8/PPP1PPPP/RNBQKBNR b KQkq': [
     'd7d5', 'g8f6', 'e7e6',
   ],
-  'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq e6 0 2': [
+  // 1. c4 (English Opening, Black to move)
+  'rnbqkbnr/pppppppp/8/8/2P5/8/PP1PPPPP/RNBQKBNR b KQkq': [
+    'e7e5', 'c7c5', 'g8f6', 'e7e6',
+  ],
+  // 1. Nf3 (Reti Opening, Black to move)
+  'rnbqkbnr/pppppppp/8/8/8/5N2/PPPPPPPP/RNBQKB1R b KQkq': [
+    'd7d5', 'g8f6', 'c7c5',
+  ],
+  // 1. e4 e5 (White to move)
+  'rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq': [
     'g1f3', 'f1c4', 'b1c3',
   ],
-  'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq c6 0 2': [
+  // 1. e4 e5 2. Nf3 (Black to move)
+  'rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R b KQkq': [
+    'b8c6', 'g8f6', 'd7d6',
+  ],
+  // 1. e4 c5 (Sicilian Defense, White to move)
+  'rnbqkbnr/pp1ppppp/8/2p5/4P3/8/PPPP1PPP/RNBQKBNR w KQkq': [
     'g1f3', 'b1c3', 'c2c3',
   ],
-  'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq d6 0 2': [
+  // 1. e4 e6 (French Defense, White to move)
+  'rnbqkbnr/pppp1ppp/4p3/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq': [
+    'd2d4', 'g1f3',
+  ],
+  // 1. e4 c6 (Caro-Kann Defense, White to move)
+  'rnbqkbnr/pp1ppppp/2p5/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq': [
+    'd2d4', 'b1c3',
+  ],
+  // 1. d4 d5 (White to move)
+  'rnbqkbnr/ppp1pppp/8/3p4/3P4/8/PPP1PPPP/RNBQKBNR w KQkq': [
     'c2c4', 'g1f3', 'c1f4',
   ],
-  'rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq - 1 2': [
+  // 1. d4 d5 2. c4 (Queen's Gambit, Black to move)
+  'rnbqkbnr/ppp1pppp/8/3p4/2PP4/8/PP2PPPP/RNBQKBNR b KQkq': [
+    'e7e6', 'c7c6', 'd5c4',
+  ],
+  // 1. d4 Nf6 (Indian Defenses, White to move)
+  'rnbqkb1r/pppppppp/5n2/8/3P4/8/PPP1PPPP/RNBQKBNR w KQkq': [
     'c2c4', 'g1f3', 'c1g5',
   ],
 };
+
+function normalizeFenForBook(fen: string): string {
+  const parts = fen.trim().split(/\s+/);
+  return parts.slice(0, 3).join(' ');
+}
 
 function squareToIndex(sq: string, forWhite: boolean): number {
   const file = sq.charCodeAt(0) - 97;
@@ -182,17 +220,42 @@ export function evaluateBoard(chess: Chess): number {
     }
   }
 
+  const fenParts = chess.fen().split(' ');
+  const moveNumber = parseInt(fenParts[5] || '1', 10);
+
   // Center Control bonus (d4, d5, e4, e5)
   const centerSquares: Square[] = ['d4', 'd5', 'e4', 'e5'];
   for (const sq of centerSquares) {
     const piece = chess.get(sq);
     if (piece) {
-      score += piece.color === 'w' ? 18 : -18;
+      if (piece.type === 'q' && moveNumber < 8) {
+        // Queen exposed in center too early is a tactical liability
+        score += piece.color === 'w' ? -25 : 25;
+      } else {
+        score += piece.color === 'w' ? 18 : -18;
+      }
     }
   }
 
-  if (chess.isCheck()) {
-    score += chess.turn() === 'w' ? -40 : 40;
+  // Early queen penalty: penalize queen moving before move 8 while minors are undeveloped
+  if (moveNumber < 8) {
+    const whiteMinorsAtHome = (['b1', 'c1', 'f1', 'g1'] as Square[]).filter((sq) => {
+      const p = chess.get(sq);
+      return p && p.color === 'w' && (p.type === 'n' || p.type === 'b');
+    }).length;
+    const whiteQueenAtHome = chess.get('d1')?.type === 'q' && chess.get('d1')?.color === 'w';
+    if (!whiteQueenAtHome && whiteMinorsAtHome >= 2) {
+      score -= 70;
+    }
+
+    const blackMinorsAtHome = (['b8', 'c8', 'f8', 'g8'] as Square[]).filter((sq) => {
+      const p = chess.get(sq);
+      return p && p.color === 'b' && (p.type === 'n' || p.type === 'b');
+    }).length;
+    const blackQueenAtHome = chess.get('d8')?.type === 'q' && chess.get('d8')?.color === 'b';
+    if (!blackQueenAtHome && blackMinorsAtHome >= 2) {
+      score += 70;
+    }
   }
 
   return score;
@@ -212,6 +275,31 @@ class LocalAIService {
   ): Promise<BestMoveResult | null> {
     const startTime = Date.now();
 
+    // 1. Attempt authoritative Stockfish move from backend if gameId provided
+    if (options?.gameId) {
+      try {
+        const sfMove = await gameService.getAiMove(options.gameId, {
+          fen,
+          difficulty,
+          timeControl: options.timeControl,
+          remainingTimeMs: options.remainingTimeMs,
+        });
+        if (sfMove && sfMove.from && sfMove.to) {
+          return {
+            from: sfMove.from,
+            to: sfMove.to,
+            promotion: sfMove.promotion,
+            san: sfMove.san,
+          };
+        }
+      } catch (backendErr) {
+        console.warn(
+          '[LocalAIService] Backend Stockfish unavailable, falling back to local engine:',
+          backendErr
+        );
+      }
+    }
+
     // Check if bullet game or low clock (< 15 seconds)
     const isBulletOrLowTime = Boolean(
       (options?.timeControl &&
@@ -229,7 +317,7 @@ class LocalAIService {
 
     if (legalMoves.length === 0) return null;
 
-    // 1. Instant Checkmate in 1 detection (always execute or block)
+    // 2. Instant Checkmate in 1 detection (always execute or block)
     for (const m of legalMoves) {
       chess.move(m);
       if (chess.isCheckmate()) {
@@ -244,8 +332,9 @@ class LocalAIService {
       chess.undo();
     }
 
-    // 2. Opening Book check
-    const bookMoves = OPENING_BOOK[fen];
+    // 3. Opening Book check (normalized by board, turn, castling)
+    const normalizedFen = normalizeFenForBook(fen);
+    const bookMoves = OPENING_BOOK[normalizedFen] || OPENING_BOOK[fen];
     if (bookMoves && bookMoves.length > 0 && difficulty !== 'EASY') {
       const selectedUci = bookMoves[Math.floor(Math.random() * bookMoves.length)];
       const from = selectedUci.slice(0, 2);

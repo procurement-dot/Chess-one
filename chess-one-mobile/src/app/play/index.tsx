@@ -27,6 +27,11 @@ export default function PlayHubScreen({ isTab = false }: { isTab?: boolean }) {
   const router = useRouter();
   const { isAuthenticated, user } = useAuthStore();
 
+  // Directly forward to the match setup page (/play/create)
+  useEffect(() => {
+    router.replace('/play/create' as any);
+  }, []);
+
   // Invitations hook
   const {
     invitations,

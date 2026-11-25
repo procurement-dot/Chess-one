@@ -69,17 +69,33 @@ async function requireAuth(req, res, next) {
     }
 
     // Verify user exists in database
-    const user = await prisma.user.findUnique({
-      where: { id: parseInt(userId, 10) },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        avatarUrl: true,
-        role: true,
-        rating: true,
-      },
-    });
+    let user = null;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: parseInt(userId, 10) },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          role: true,
+          rating: true,
+        },
+      });
+    } catch (dbErr) {
+      if (decoded.email && decoded.name) {
+        user = {
+          id: parseInt(userId, 10),
+          name: decoded.name,
+          email: decoded.email,
+          avatarUrl: decoded.avatarUrl || null,
+          role: decoded.role || "STUDENT",
+          rating: decoded.rating || 1200,
+        };
+      } else {
+        throw dbErr;
+      }
+    }
 
     if (!user) {
       return res.status(401).json({
@@ -103,6 +119,80 @@ async function requireAuth(req, res, next) {
   }
 }
 
+/**
+ * Optional authentication middleware:
+ * Populates req.user if a valid token is present, but allows guest requests through.
+ */
+async function optionalAuth(req, res, next) {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      req.user = null;
+      return next();
+    }
+
+    const token = authHeader.split(" ")[1]?.trim();
+    if (!token) {
+      req.user = null;
+      return next();
+    }
+
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch {
+      req.user = null;
+      return next();
+    }
+
+    const userId = decoded.userId || decoded.id;
+    if (!userId) {
+      req.user = null;
+      return next();
+    }
+
+    let user = null;
+    try {
+      user = await prisma.user.findUnique({
+        where: { id: parseInt(userId, 10) },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          avatarUrl: true,
+          role: true,
+          rating: true,
+        },
+      });
+    } catch (dbErr) {
+      if (decoded.email && decoded.name) {
+        user = {
+          id: parseInt(userId, 10),
+          name: decoded.name,
+          email: decoded.email,
+          avatarUrl: decoded.avatarUrl || null,
+          role: decoded.role || "STUDENT",
+          rating: decoded.rating || 1200,
+        };
+      }
+    }
+
+    if (user) {
+      req.user = {
+        ...user,
+        id: parseInt(user.id, 10),
+      };
+    } else {
+      req.user = null;
+    }
+
+    next();
+  } catch (error) {
+    req.user = null;
+    next();
+  }
+}
+
 const { forbidden, unauthorized } = require("./rbac.middleware");
 
 /**
@@ -122,6 +212,7 @@ function requireRole(...roles) {
 
 module.exports = {
   requireAuth,
+  optionalAuth,
   authenticate: requireAuth, // Backward-compatibility
   generateToken, // Backward-compatibility
   requireRole,

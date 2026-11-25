@@ -28,6 +28,7 @@ import { TournamentGameBanner } from '../../components/game/TournamentGameBanner
 import { authStore, useAuthStore } from '../../store/authStore';
 import { gameSocket } from '../../socket/game.socket';
 import { PieceSymbol } from 'chess.js';
+import { GamePlayer } from '../../types/game.types';
 
 export default function LiveGameScreen() {
   const router = useRouter();
@@ -233,7 +234,46 @@ export default function LiveGameScreen() {
     : boardOrientation;
 
   // Top player is opponent, bottom player is user
-  const topPlayer = isUserWhite ? game?.blackPlayer : game?.whitePlayer;
+  const currentAuthUser = authStore.getState().user || user;
+
+  const rawWhiteName = game?.whitePlayer?.name;
+  const rawBlackName = game?.blackPlayer?.name;
+
+  const resolvedWhiteName =
+    rawWhiteName ||
+    (isUserWhite && currentAuthUser?.name ? currentAuthUser.name : null) ||
+    'White Player';
+
+  const resolvedBlackName =
+    rawBlackName ||
+    (!isUserWhite && currentAuthUser?.name ? currentAuthUser.name : null) ||
+    (game?.gameType === 'PLAYER_VS_AI'
+      ? `AI (${game?.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
+      : 'Black Player');
+
+  const bottomPlayerName = isUserWhite ? resolvedWhiteName : resolvedBlackName;
+  let topPlayerName = isUserWhite ? resolvedBlackName : resolvedWhiteName;
+
+  const topPlayerRaw = isUserWhite ? game?.blackPlayer : game?.whitePlayer;
+  const bottomPlayerRaw = isUserWhite ? game?.whitePlayer : game?.blackPlayer;
+
+  const bottomPlayer: GamePlayer = {
+    ...bottomPlayerRaw,
+    id: bottomPlayerRaw?.id || (currentAuthUser as any)?.id || (isUserWhite ? 1 : 2),
+    name: bottomPlayerName,
+    email: bottomPlayerRaw?.email || (currentAuthUser as any)?.email || '',
+    avatarUrl: (currentAuthUser as any)?.avatarUrl || (currentAuthUser as any)?.photo || bottomPlayerRaw?.avatarUrl || null,
+    rating: currentAuthUser?.rating || bottomPlayerRaw?.rating || 1200,
+  };
+
+  const topPlayer: GamePlayer = {
+    ...topPlayerRaw,
+    id: topPlayerRaw?.id || (isUserWhite ? 2 : 1),
+    name: topPlayerName,
+    email: topPlayerRaw?.email || '',
+    avatarUrl: topPlayerRaw?.avatarUrl || null,
+    rating: topPlayerRaw?.rating || 1200,
+  };
   const topPlayerColor = isUserWhite ? 'BLACK' : 'WHITE';
   const topPlayerTime = isUserWhite ? blackTimeMs : whiteTimeMs;
   const topPlayerIsTurn = currentTurn === topPlayerColor;
@@ -244,7 +284,6 @@ export default function LiveGameScreen() {
     ? 'Opponent (Black)'
     : 'Opponent (White)';
 
-  const bottomPlayer = isUserWhite ? game?.whitePlayer : game?.blackPlayer;
   const bottomPlayerColor = isUserWhite ? 'WHITE' : 'BLACK';
   const bottomPlayerTime = isUserWhite ? whiteTimeMs : blackTimeMs;
   const bottomPlayerIsTurn = currentTurn === bottomPlayerColor;

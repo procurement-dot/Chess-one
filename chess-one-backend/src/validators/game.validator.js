@@ -25,6 +25,13 @@ const makeMoveSchema = z.object({
   promotion: z.enum(["q", "r", "b", "n"]).optional(),
 });
 
+const aiMoveSchema = z.object({
+  fen: z.string().min(1, "FEN string is required"),
+  difficulty: z.enum(["EASY", "MEDIUM", "HARD"]).optional().default("MEDIUM"),
+  timeControl: z.string().optional(),
+  remainingTimeMs: z.number().nullable().optional(),
+});
+
 function validate(schema) {
   return (req, res, next) => {
     try {
@@ -39,5 +46,6 @@ function validate(schema) {
 module.exports = {
   createGameSchema,
   makeMoveSchema,
+  aiMoveSchema,
   validate,
 };

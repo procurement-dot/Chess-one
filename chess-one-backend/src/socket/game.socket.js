@@ -15,12 +15,19 @@ function registerGameHandlers(io, socket) {
       const { gameId } = payload;
       if (!gameId) return;
 
-      const isNum = !isNaN(gameId) && !isNaN(parseInt(gameId, 10));
-      const where = isNum
-        ? { id: parseInt(gameId, 10) }
-        : { gameCode: gameId.toString().toUpperCase() };
+      const gameService = require("../services/game.service");
+      let game = null;
+      try {
+        game = await gameService.findGameByIdOrCode(gameId);
+      } catch (err) {
+        // Fallback check
+        const isNum = !isNaN(gameId) && !isNaN(parseInt(gameId, 10));
+        const where = isNum
+          ? { id: parseInt(gameId, 10) }
+          : { gameCode: gameId.toString().toUpperCase() };
+        game = await prisma.game.findFirst({ where }).catch(() => null);
+      }
 
-      const game = await prisma.game.findFirst({ where });
       if (!game) {
         socket.emit("error", { code: "GAME_NOT_FOUND", message: "Game not found" });
         return;
@@ -36,24 +43,119 @@ function registerGameHandlers(io, socket) {
         currentRooms.add(`game:${game.gameCode}`);
       }
 
-      const userId = socket.data?.user?.id;
+      const userStore = require("../store/user.store");
+      const clientUser = payload.user;
+      let currentUser = socket.data?.user || clientUser;
+      let currentUid = currentUser?.id ? parseInt(currentUser.id, 10) : (socket.userId || null);
+      const requestedColor = payload.color;
+
+      if (currentUid && (!currentUser || !currentUser.name)) {
+        currentUser = userStore.getUser(currentUid) || currentUser;
+      }
+      if (currentUser?.email && (!currentUser || !currentUser.name)) {
+        currentUser = userStore.getUserByEmail(currentUser.email) || currentUser;
+      }
+
+      if (currentUser && currentUid && currentUser.name) {
+        userStore.upsertUser({ id: currentUid, ...currentUser });
+
+        // Purge dummy placeholder names
+        if (game.whitePlayer?.name === "Nishigndha Karande" || game.whitePlayer?.name === "Aarav Sharma" || game.whitePlayer?.name?.startsWith("Player ")) {
+          game.whitePlayer = null;
+          game.whitePlayerId = null;
+        }
+        if (game.blackPlayer?.name === "Nishigndha Karande" || game.blackPlayer?.name === "Aarav Sharma" || game.blackPlayer?.name?.startsWith("Player ")) {
+          game.blackPlayer = null;
+          game.blackPlayerId = null;
+        }
+
+        const isUserWhite =
+          game.whitePlayerId === currentUid ||
+          (game.whitePlayer?.email && currentUser.email && game.whitePlayer.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+          (game.whitePlayer?.name && game.whitePlayer.name.toLowerCase() === currentUser.name.toLowerCase());
+
+        const isUserBlack =
+          game.blackPlayerId === currentUid ||
+          (game.blackPlayer?.email && currentUser.email && game.blackPlayer.email.toLowerCase() === currentUser.email.toLowerCase()) ||
+          (game.blackPlayer?.name && game.blackPlayer.name.toLowerCase() === currentUser.name.toLowerCase());
+
+        if (requestedColor === "WHITE" || isUserWhite) {
+          game.whitePlayerId = currentUid;
+          game.whitePlayer = { ...currentUser, id: currentUid };
+          if (isUserBlack || game.blackPlayerId === currentUid) {
+            game.blackPlayerId = null;
+            game.blackPlayer = null;
+          }
+        } else if (requestedColor === "BLACK" || isUserBlack) {
+          game.blackPlayerId = currentUid;
+          game.blackPlayer = { ...currentUser, id: currentUid };
+          if (isUserWhite || game.whitePlayerId === currentUid) {
+            game.whitePlayerId = null;
+            game.whitePlayer = null;
+          }
+        } else {
+          if (!game.whitePlayerId) {
+            game.whitePlayerId = currentUid;
+            game.whitePlayer = { ...currentUser, id: currentUid };
+          } else if (!game.blackPlayerId && !isUserWhite) {
+            game.blackPlayerId = currentUid;
+            game.blackPlayer = { ...currentUser, id: currentUid };
+          }
+        }
+
+        // Never allow both slots to be the same player
+        if (
+          game.whitePlayer &&
+          game.blackPlayer &&
+          (game.whitePlayerId === game.blackPlayerId ||
+           (game.whitePlayer.email && game.blackPlayer.email && game.whitePlayer.email.toLowerCase() === game.blackPlayer.email.toLowerCase()) ||
+           (game.whitePlayer.name && game.blackPlayer.name && game.whitePlayer.name.toLowerCase() === game.blackPlayer.name.toLowerCase()))
+        ) {
+          game.blackPlayer = null;
+          game.blackPlayerId = null;
+        }
+
+        if (gameService.inMemoryGames) {
+          gameService.inMemoryGames.set(game.id, game);
+          if (game.gameCode) gameService.inMemoryGames.set(game.gameCode, game);
+        }
+      }
+
+      // Refresh dynamic names from userStore
+      if (game.whitePlayerId) {
+        const w = userStore.getUser(game.whitePlayerId);
+        if (w && w.name) game.whitePlayer = { ...w };
+      }
+      if (game.blackPlayerId) {
+        const b = userStore.getUser(game.blackPlayerId);
+        if (b && b.name) game.blackPlayer = { ...b };
+      }
+
       const isPlayer =
-        userId && (game.whitePlayerId === userId || game.blackPlayerId === userId);
+        currentUid && (game.whitePlayerId === currentUid || game.blackPlayerId === currentUid);
 
       if (isPlayer) {
-        // Broadcast reconnection to room
         socket.to(roomName).emit("game:player-reconnected", {
           gameId: game.id,
           gameCode: game.gameCode,
-          userId,
+          userId: currentUid,
           socketId: socket.id,
         });
       }
+
+      // Broadcast synchronized real player identities to both clients in the match!
+      io.to(roomName).emit("game:players-updated", {
+        gameId: game.id,
+        whitePlayer: game.whitePlayer,
+        blackPlayer: game.blackPlayer,
+      });
 
       socket.emit("game:joined", {
         gameId: game.id,
         gameCode: game.gameCode,
         room: roomName,
+        whitePlayer: game.whitePlayer,
+        blackPlayer: game.blackPlayer,
       });
     } catch (err) {
       console.error("Socket game:join error:", err);

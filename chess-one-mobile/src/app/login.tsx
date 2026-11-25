@@ -86,12 +86,12 @@ export default function LoginScreen() {
   const [activeTab, setActiveTab] = useState<'profile' | 'progress'>('profile');
 
   // Student & Parent Profile Information
-  const [studentName, setStudentName] = useState('Nishigndha Karande');
+  const [studentName, setStudentName] = useState(user?.name || '');
   const [dob, setDob] = useState('2014-04-12');
   const [grade, setGrade] = useState('Grade 5');
   const [school, setSchool] = useState("The Bishop's School");
-  const [parentName, setParentName] = useState('Rahul Laddha');
-  const [parentEmail, setParentEmail] = useState('rahul.laddha@gmail.com');
+  const [parentName, setParentName] = useState('');
+  const [parentEmail, setParentEmail] = useState(user?.email || '');
   const [parentPhone, setParentPhone] = useState('+91 98220 12345');
   const [joinCode, setJoinCode] = useState('BISHOPS-CHESS-2026');
   const [parentConsent, setParentConsent] = useState(true);
@@ -133,7 +133,7 @@ export default function LoginScreen() {
   const handleSaveProfile = async () => {
     try {
       const dataToSave = {
-        studentName: studentName.trim() || 'Nishigndha Karande',
+        studentName: studentName.trim() || user?.name || 'Chess Player',
         dob,
         grade,
         school,
@@ -383,7 +383,7 @@ export default function LoginScreen() {
                     accessibilityLabel="View and edit student and parent record"
                   >
                     <Text style={styles.userName} numberOfLines={1}>
-                      {studentName || user.name || 'Nishigndha Karande'}
+                      {user?.name || studentName || 'Chess Player'}
                     </Text>
                     <Feather name="check-circle" size={16} color="#10B981" style={{ marginLeft: 4 }} />
                     <Feather name="info" size={13} color={COLORS.primary} style={{ marginLeft: 6, opacity: 0.6 }} />
@@ -394,7 +394,7 @@ export default function LoginScreen() {
                   </Text>
 
                   <Text style={styles.userEmail} numberOfLines={1}>
-                    {user.email || 'nishigndhakarande@gmail.com'}
+                    {user?.email || ''}
                   </Text>
 
                   <View style={styles.idChip}>
@@ -1104,7 +1104,7 @@ export default function LoginScreen() {
                     style={styles.textInput}
                     value={studentName}
                     onChangeText={setStudentName}
-                    placeholder="e.g. Nishigndha Karande"
+                    placeholder="e.g. Full Name"
                   />
                 </View>
 
@@ -2170,6 +2170,46 @@ const styles = StyleSheet.create({
     fontSize: 12.5,
     fontWeight: '600',
   },
+  redirectHintBox: {
+    marginTop: 8,
+    padding: 8,
+    backgroundColor: '#FFF1F2',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FECDD3',
+  },
+  redirectHintTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#9F1239',
+    marginBottom: 4,
+  },
+  redirectHintText: {
+    fontSize: 10.5,
+    color: '#881337',
+    marginBottom: 4,
+  },
+  redirectHintCode: {
+    fontSize: 10,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#4C0519',
+    backgroundColor: '#FFE4E6',
+    padding: 4,
+    borderRadius: 4,
+    marginBottom: 6,
+  },
+  openConsoleButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    backgroundColor: '#BE123C',
+    borderRadius: 6,
+  },
+  openConsoleButtonText: {
+    color: '#FFFFFF',
+    fontSize: 10.5,
+    fontWeight: '600',
+  },
   disclaimerText: {
     fontSize: 11,
     color: COLORS.textBody,
@@ -2308,5 +2348,22 @@ const styles = StyleSheet.create({
     color: COLORS.white,
     fontSize: 13.5,
     fontWeight: '700',
+  },
+  quickDevButton: {
+    width: '100%',
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#38BDF8',
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
+  },
+  quickDevButtonText: {
+    color: '#38BDF8',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

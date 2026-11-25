@@ -1,18 +1,17 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import * as Google from 'expo-auth-session/providers/google';
 import { GOOGLE_AUTH_CONFIG, isGoogleAuthConfigured } from '../constants/auth.config';
 import {
   processAuthSessionResponse,
   exchangeGoogleTokenWithBackend,
-  devLoginWithBackend,
 } from '../services/auth.service';
 import { GoogleAuthResult } from '../types/auth.types';
 import { authStore } from '../store/authStore';
 import { roleStore } from '../features/roles/roleStore';
+import { gameSocket } from '../socket/game.socket';
 
 export interface UseGoogleAuthReturn {
   signInWithGoogle: () => Promise<GoogleAuthResult | null>;
-  signInWithDevAccount: (userId?: number) => Promise<boolean>;
   signOut: () => void;
   isLoading: boolean;
   result: GoogleAuthResult | null;
@@ -30,24 +29,25 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
 
   // Prevent duplicate concurrent requests
   const isPromptingRef = useRef(false);
-  const lastProcessedTokenRef = useRef<string | null>(null);
 
   // Initialize Expo AuthSession Google Request
-  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+  const [request, , promptAsync] = Google.useIdTokenAuthRequest({
     androidClientId: GOOGLE_AUTH_CONFIG.androidClientId || undefined,
     webClientId: GOOGLE_AUTH_CONFIG.webClientId || undefined,
     clientId: GOOGLE_AUTH_CONFIG.webClientId || undefined,
     redirectUri: GOOGLE_AUTH_CONFIG.redirectUri || undefined,
   });
 
-  const handleAuthSuccess = useCallback(async (processed: GoogleAuthResult) => {
-    if (!processed.success || !processed.idToken) return;
-
-    // Deduplicate: avoid running concurrent or duplicate exchange for the same ID token
-    if (lastProcessedTokenRef.current === processed.idToken) {
-      return;
+  const handleAuthSuccess = useCallback(async (processed: GoogleAuthResult): Promise<GoogleAuthResult | null> => {
+    if (!processed.success) return processed;
+    if (!processed.idToken) {
+      const errMsg = 'Google did not return an ID token. Please try signing in again.';
+      setError(errMsg);
+      authStore.setError(errMsg);
+      const failureResult: GoogleAuthResult = { success: false, error: errMsg };
+      setResult(failureResult);
+      return failureResult;
     }
-    lastProcessedTokenRef.current = processed.idToken;
 
     try {
       const backendAuth = await exchangeGoogleTokenWithBackend(processed.idToken);
@@ -65,74 +65,49 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
         authStore.setChessOneToken(backendAuth.token);
         authStore.setGoogleAuth({
           user: fullUser,
-          idToken: backendAuth.token,
+          idToken: processed.idToken,
           chessOneToken: backendAuth.token,
         });
         if (backendAuth.user.role) {
           roleStore.syncFromServer(backendAuth.user.role);
         }
-        setResult({
+        gameSocket.updateAuth(backendAuth.token);
+        const successResult = {
           ...processed,
           user: fullUser,
           chessOneToken: backendAuth.token,
-        });
+        };
+        setResult(successResult);
+        return successResult;
       } else {
-        authStore.setGoogleAuth({
-          user: processed.user || null,
-          idToken: processed.idToken || null,
-        });
+        const errMsg = 'Failed to connect to backend server. Please verify backend is running on port 4000.';
+        setError(errMsg);
+        authStore.setError(errMsg);
+        authStore.clearAuth();
+        const failureResult: GoogleAuthResult = {
+          success: false,
+          error: errMsg,
+        };
+        setResult(failureResult);
+        return failureResult;
       }
     } catch (exchangeErr) {
       console.warn('[useGoogleAuth] Token exchange failed:', exchangeErr);
+      const errMsg =
+        exchangeErr instanceof Error
+          ? exchangeErr.message
+          : 'Unable to complete sign in. Please try again.';
+      setError(errMsg);
+      authStore.setError(errMsg);
+      authStore.clearAuth();
+      const failureResult: GoogleAuthResult = {
+        success: false,
+        error: errMsg,
+      };
+      setResult(failureResult);
+      return failureResult;
     }
   }, []);
-
-  // Watch for auth session response completion
-  useEffect(() => {
-    if (!response) return;
-
-    let isMounted = true;
-
-    async function handleResponse() {
-      try {
-        const processed = await processAuthSessionResponse(response);
-
-        if (!isMounted) return;
-
-        setResult(processed);
-
-        if (processed.success) {
-          setError(null);
-          await handleAuthSuccess(processed);
-        } else if (processed.cancelled) {
-          setError(null);
-          authStore.setError(null);
-        } else {
-          const userFriendlyError =
-            processed.error || 'Unable to sign in with Google. Please try again.';
-          setError(userFriendlyError);
-          authStore.setError(userFriendlyError);
-        }
-      } catch {
-        if (!isMounted) return;
-        const msg = 'Unable to sign in with Google. Please try again.';
-        setError(msg);
-        authStore.setError(msg);
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-          authStore.setLoading(false);
-          isPromptingRef.current = false;
-        }
-      }
-    }
-
-    handleResponse();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [response, handleAuthSuccess]);
 
   const signInWithGoogle = useCallback(async (): Promise<GoogleAuthResult | null> => {
     if (isPromptingRef.current || isLoading) {
@@ -152,14 +127,26 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       setError(null);
       authStore.setLoading(true);
 
-      const promptResult = await promptAsync();
+      let promptTimeout: ReturnType<typeof setTimeout> | undefined;
+      const promptResult = await Promise.race([
+        promptAsync(),
+        new Promise<never>((_, reject) => {
+          promptTimeout = setTimeout(
+            () => reject(new Error('Google sign-in timed out. Please try again.')),
+            60000
+          );
+        }),
+      ]).finally(() => {
+        if (promptTimeout) clearTimeout(promptTimeout);
+      });
       const processed = await processAuthSessionResponse(promptResult);
 
       setResult(processed);
 
       if (processed.success) {
         setError(null);
-        await handleAuthSuccess(processed);
+        const finalResult = await handleAuthSuccess(processed);
+        return finalResult || processed;
       } else if (processed.cancelled) {
         setError(null);
         authStore.setError(null);
@@ -170,8 +157,11 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
       }
 
       return processed;
-    } catch {
-      const friendlyMsg = 'Unable to sign in with Google. Please try again.';
+    } catch (authErr) {
+      const friendlyMsg =
+        authErr instanceof Error
+          ? authErr.message
+          : 'Unable to sign in with Google. Please try again.';
       setError(friendlyMsg);
       authStore.setError(friendlyMsg);
       return { success: false, error: friendlyMsg };
@@ -186,67 +176,11 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     setResult(null);
     setError(null);
     authStore.clearAuth();
-  }, []);
-
-  const signInWithDevAccount = useCallback(async (userId: number = 1): Promise<boolean> => {
-    setIsLoading(true);
-    authStore.setLoading(true);
-    try {
-      const backendData = await devLoginWithBackend(userId);
-      if (backendData) {
-        const fullDevUser = {
-          id: String(backendData.user.id),
-          name: backendData.user.name,
-          email: backendData.user.email,
-          photo: backendData.user.avatarUrl || undefined,
-          role: backendData.user.role,
-          rating: backendData.user.rating,
-          gamesPlayed: backendData.user.gamesPlayed,
-          onboardingDone: backendData.user.onboardingDone,
-        };
-        authStore.setChessOneToken(backendData.token);
-        authStore.setGoogleAuth({
-          user: fullDevUser,
-          idToken: backendData.token,
-          chessOneToken: backendData.token,
-        });
-        if (backendData.user.role) {
-          roleStore.syncFromServer(backendData.user.role);
-        }
-        setResult({
-          success: true,
-          user: fullDevUser,
-          idToken: backendData.token,
-        });
-        return true;
-      }
-
-      // Offline fallback
-      const fallbackUser = {
-        id: String(userId),
-        name: userId === 1 ? 'Player One' : 'Player Two',
-        email: `player${userId}@chessone.local`,
-      };
-      const devToken = `dev-token-${userId}`;
-      authStore.setChessOneToken(devToken);
-      authStore.setGoogleAuth({
-        user: fallbackUser,
-        idToken: devToken,
-        chessOneToken: devToken,
-      });
-      return true;
-    } catch (err: any) {
-      console.warn('[Auth] Dev login failed:', err);
-      return false;
-    } finally {
-      setIsLoading(false);
-      authStore.setLoading(false);
-    }
+    gameSocket.disconnect();
   }, []);
 
   return {
     signInWithGoogle,
-    signInWithDevAccount,
     signOut,
     isLoading,
     result,

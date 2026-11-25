@@ -17,10 +17,11 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { gameService } from '../services/game.service';
 import { gameSocket } from '../socket/game.socket';
-import { OnlineUser } from '../types/game.types';
+import { OnlineUser, GameInvitation } from '../types/game.types';
 import { AppHeader } from '../components/navigation/AppHeader';
 import { AppFooter } from '../components/navigation/AppFooter';
 import { OutgoingChallengeModal } from '../components/game/OutgoingChallengeModal';
+import { IncomingChallengeModal } from '../components/game/IncomingChallengeModal';
 import { MatchStartVsModal } from '../components/game/MatchStartVsModal';
 import { useOnlineUsers } from '../hooks/useOnlineUsers';
 import { authStore, useAuthStore } from '../store/authStore';
@@ -107,7 +108,7 @@ export default function CommunityScreen() {
     onlineCount,
     isLoading,
     refresh,
-  } = useOnlineUsers(isAuthenticated);
+  } = useOnlineUsers(true);
 
   // Challenge states
   const [invitingUserId, setInvitingUserId] = useState<number | null>(null);
@@ -117,6 +118,10 @@ export default function CommunityScreen() {
   >('sending');
   const [outgoingError, setOutgoingError] = useState('');
   const [activeGameId, setActiveGameId] = useState<number | null>(null);
+
+  // Incoming challenge states
+  const [incomingInvitation, setIncomingInvitation] = useState<GameInvitation | null>(null);
+  const [isProcessingInvitation, setIsProcessingInvitation] = useState(false);
 
   // VS Faceoff Modal states
   const [vsModalVisible, setVsModalVisible] = useState(false);
@@ -128,6 +133,71 @@ export default function CommunityScreen() {
     blackPlayerAvatar?: string | null;
     timeControl: string;
   } | null>(null);
+
+  // Listen for incoming match invitations via socket & polling
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    // Real-time socket notification when someone invites this user
+    const unsubInv = gameSocket.onInvitationReceived((inv: any) => {
+      console.log('[Community] Incoming match challenge received via socket:', inv);
+      setIncomingInvitation(inv);
+    });
+
+    // Polling fallback to check active invitations
+    const checkInv = async () => {
+      try {
+        const invs = await gameService.getInvitations();
+        if (invs && invs.length > 0 && !incomingInvitation) {
+          setIncomingInvitation(invs[0]);
+        }
+      } catch {}
+    };
+
+    checkInv();
+    const timer = setInterval(checkInv, 8000);
+
+    return () => {
+      unsubInv();
+      clearInterval(timer);
+    };
+  }, [isAuthenticated, incomingInvitation]);
+
+  const handleAcceptIncomingInvitation = async (invitationId: number) => {
+    try {
+      setIsProcessingInvitation(true);
+      const res = await gameService.acceptInvitation(invitationId);
+      setIncomingInvitation(null);
+
+      const targetGameId = (res as any)?.gameId || (res as any)?.id;
+      const myName = user?.name || 'You';
+      const oppName = (res as any)?.whitePlayer?.name || (res as any)?.blackPlayer?.name || 'Opponent';
+
+      setVsModalData({
+        gameId: targetGameId,
+        whitePlayerName: (res as any)?.whitePlayer?.name || myName,
+        blackPlayerName: (res as any)?.blackPlayer?.name || oppName,
+        whitePlayerAvatar: null,
+        blackPlayerAvatar: null,
+        timeControl: (res as any)?.timeControl || selectedTimeControl,
+      });
+      setVsModalVisible(true);
+    } catch (err: any) {
+      Alert.alert('Error', err.userFriendlyMessage || err.message || 'Could not accept challenge');
+    } finally {
+      setIsProcessingInvitation(false);
+    }
+  };
+
+  const handleDeclineIncomingInvitation = async (invitationId: number) => {
+    try {
+      setIsProcessingInvitation(true);
+      await gameService.declineInvitation(invitationId);
+      setIncomingInvitation(null);
+    } catch {} finally {
+      setIsProcessingInvitation(false);
+    }
+  };
 
   // Listen for outgoing challenge acceptance
   useEffect(() => {
@@ -259,7 +329,7 @@ export default function CommunityScreen() {
 
   // Preset message sender
   const handleSendPresetMessage = (msg: string) => {
-    const studentName = user?.name || 'Aarav';
+    const studentName = user?.name || 'Player';
     const newMsg: ClubMessage = {
       id: `m-${Date.now()}`,
       sender: studentName,
@@ -276,7 +346,7 @@ export default function CommunityScreen() {
       Alert.alert('Empty Question', 'Please type a chess question for your teacher.');
       return;
     }
-    const studentName = user?.name || 'Aarav';
+    const studentName = user?.name || 'Player';
     const newMsg: ClubMessage = {
       id: `m-${Date.now()}`,
       sender: `${studentName} (Question for Teacher)`,
@@ -805,7 +875,7 @@ export default function CommunityScreen() {
             ) : (
               <View style={styles.playersList}>
                 {filteredUsers.map((item) => {
-                  const isMe = currentUserId === item.id;
+                  const isMe = currentUserId === item.id || Boolean((item as any).isMe);
                   const isInviting = invitingUserId === item.id;
                   const initials = (item.name || item.email || 'P')[0].toUpperCase();
 
@@ -1188,6 +1258,16 @@ export default function CommunityScreen() {
       {/* ======================================================== */}
       {/* EXISTING SOCKET MODALS (PRESERVED 100%)                  */}
       {/* ======================================================== */}
+      {/* Incoming Challenge Modal */}
+      <IncomingChallengeModal
+        visible={Boolean(incomingInvitation)}
+        invitation={incomingInvitation}
+        isProcessing={isProcessingInvitation}
+        onAccept={handleAcceptIncomingInvitation}
+        onDecline={handleDeclineIncomingInvitation}
+        onDismiss={() => setIncomingInvitation(null)}
+      />
+
       {/* Outgoing Challenge Waiting Modal */}
       <OutgoingChallengeModal
         visible={Boolean(outgoingTarget)}

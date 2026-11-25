@@ -1,20 +1,19 @@
 const express = require("express");
 const router = express.Router();
 const userController = require("../controllers/user.controller");
-const { requireAuth } = require("../middleware/auth.middleware");
+const { requireAuth, optionalAuth } = require("../middleware/auth.middleware");
 const {
   updateProfileSchema,
   blockPrivilegedRole,
   validate,
 } = require("../validators/user.validator");
 
-// Require authentication for user listing and profile endpoints
-router.use(requireAuth);
+// Profile endpoints require authentication
+router.get("/me", requireAuth, userController.getMe);
+router.patch("/me", requireAuth, blockPrivilegedRole, validate(updateProfileSchema), userController.updateMe);
 
-router.get("/me", userController.getMe);
-router.patch("/me", blockPrivilegedRole, validate(updateProfileSchema), userController.updateMe);
-
-router.get("/", userController.getUsers);
-router.get("/online", userController.getUsers);
+// User listing endpoints require authentication
+router.get("/", requireAuth, userController.getUsers);
+router.get("/online", requireAuth, userController.getUsers);
 
 module.exports = router;
