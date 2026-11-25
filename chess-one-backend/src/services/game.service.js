@@ -12,6 +12,10 @@ const { AppError } = require("../middleware/error.middleware");
 const inMemoryGames = new Map();
 let nextInMemoryGameId = 7000;
 
+function saveGamesToCache() {
+  // Safe in-memory persist hook
+}
+
 class GameService {
   /**
    * Helper to format tournament info on games
@@ -157,42 +161,46 @@ class GameService {
           timeControl: game.timeControl,
         };
       } catch (dbErr) {
-        if (process.env.NODE_ENV !== "production") {
-          const memGame = {
-            id: nextInMemoryGameId++,
-            gameCode,
-            gameType: "PLAYER_VS_AI",
-            status: "ACTIVE",
-            createdBy: userId,
-            whitePlayerId,
-            blackPlayerId,
-            aiDifficulty,
-            timeControl,
-            whiteTimeMs: initialTimeMs,
-            blackTimeMs: initialTimeMs,
-            fen: STARTING_FEN,
-            pgn: "",
-            currentTurn: "WHITE",
-            startedAt: new Date(),
-            lastMoveAt: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-          };
-          inMemoryGames.set(memGame.id, memGame);
-          inMemoryGames.set(String(memGame.id), memGame);
-          inMemoryGames.set(memGame.gameCode, memGame);
-          saveGamesToCache();
-          return {
-            gameId: memGame.id,
-            gameCode: memGame.gameCode,
-            gameType: memGame.gameType,
-            status: memGame.status,
-            playerColor: assignedColor,
-            aiDifficulty: memGame.aiDifficulty,
-            timeControl: memGame.timeControl,
-          };
+        console.warn("[GameService] Database unavailable for AI game create, falling back to inMemoryGames:", dbErr.message);
+        const memGame = {
+          id: nextInMemoryGameId++,
+          gameCode,
+          gameType: "PLAYER_VS_AI",
+          status: "ACTIVE",
+          createdBy: userId,
+          whitePlayerId,
+          blackPlayerId,
+          aiDifficulty,
+          timeControl,
+          whiteTimeMs: initialTimeMs,
+          blackTimeMs: initialTimeMs,
+          fen: STARTING_FEN,
+          pgn: "",
+          currentTurn: "WHITE",
+          startedAt: new Date(),
+          lastMoveAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        };
+        inMemoryGames.set(memGame.id, memGame);
+        inMemoryGames.set(String(memGame.id), memGame);
+        inMemoryGames.set(memGame.gameCode, memGame);
+        saveGamesToCache();
+
+        if (!whitePlayerId) {
+          const moveService = require("./move.service");
+          moveService._scheduleAIMove(memGame.id, aiDifficulty);
         }
-        throw dbErr;
+
+        return {
+          gameId: memGame.id,
+          gameCode: memGame.gameCode,
+          gameType: memGame.gameType,
+          status: memGame.status,
+          playerColor: assignedColor,
+          aiDifficulty: memGame.aiDifficulty,
+          timeControl: memGame.timeControl,
+        };
       }
     }
 
@@ -224,49 +232,42 @@ class GameService {
         timeControl: game.timeControl,
       };
     } catch (dbErr) {
-      if (process.env.NODE_ENV !== "production") {
-        const memGame = {
-          id: nextInMemoryGameId++,
-          gameCode,
-          gameType: "PLAYER_VS_PLAYER",
-          status: "WAITING",
-          createdBy: userId,
-          whitePlayerId,
-          blackPlayerId,
-          timeControl,
-          whiteTimeMs: initialTimeMs,
-          blackTimeMs: initialTimeMs,
-          fen: STARTING_FEN,
-          pgn: "",
-          currentTurn: "WHITE",
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          creator: (() => {
-            const userStore = require("../store/user.store");
-            return userStore.getUser(userId) || { id: parseInt(userId, 10), name: `Player ${userId}`, rating: 1200 };
-          })(),
-          whitePlayer: assignedColor === "WHITE" ? (() => {
-            const userStore = require("../store/user.store");
-            return userStore.getUser(userId) || { id: parseInt(userId, 10), name: `Player ${userId}`, rating: 1200 };
-          })() : null,
-          blackPlayer: assignedColor === "BLACK" ? (() => {
-            const userStore = require("../store/user.store");
-            return userStore.getUser(userId) || { id: parseInt(userId, 10), name: `Player ${userId}`, rating: 1200 };
-          })() : null,
-        };
-        inMemoryGames.set(memGame.id, memGame);
-        inMemoryGames.set(memGame.gameCode, memGame);
+      console.warn("[GameService] Database unavailable for PvP createGame, falling back to inMemoryGames:", dbErr.message);
+      const userStore = require("../store/user.store");
+      const creatorUser = userStore.getUser(userId) || { id: parseInt(userId, 10), name: `Player ${userId}`, rating: 1200 };
+      const memGame = {
+        id: nextInMemoryGameId++,
+        gameCode,
+        gameType: "PLAYER_VS_PLAYER",
+        status: "WAITING",
+        createdBy: userId,
+        whitePlayerId,
+        blackPlayerId,
+        timeControl,
+        whiteTimeMs: initialTimeMs,
+        blackTimeMs: initialTimeMs,
+        fen: STARTING_FEN,
+        pgn: "",
+        currentTurn: "WHITE",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        creator: creatorUser,
+        whitePlayer: assignedColor === "WHITE" ? creatorUser : null,
+        blackPlayer: assignedColor === "BLACK" ? creatorUser : null,
+      };
+      inMemoryGames.set(memGame.id, memGame);
+      inMemoryGames.set(String(memGame.id), memGame);
+      inMemoryGames.set(memGame.gameCode, memGame);
+      saveGamesToCache();
 
-        return {
-          gameId: memGame.id,
-          gameCode: memGame.gameCode,
-          gameType: memGame.gameType,
-          status: memGame.status,
-          playerColor: assignedColor,
-          timeControl: memGame.timeControl,
-        };
-      }
-      throw dbErr;
+      return {
+        gameId: memGame.id,
+        gameCode: memGame.gameCode,
+        gameType: memGame.gameType,
+        status: memGame.status,
+        playerColor: assignedColor,
+        timeControl: memGame.timeControl,
+      };
     }
   }
 

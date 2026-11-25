@@ -31,10 +31,23 @@ class UserStore {
     const numId = parseInt(data.id, 10);
     const existing = this.users.get(numId);
 
+    let name = data.name;
+    // Don't overwrite an existing real name with a placeholder like "Player 50"
+    if ((!name || name.startsWith("Player ") || name.startsWith("Player #")) && existing?.name && !existing.name.startsWith("Player")) {
+      name = existing.name;
+    }
+    // If name is still placeholder but email is available, extract a friendly name
+    const email = data.email || existing?.email;
+    if ((!name || name.startsWith("Player ") || name.startsWith("Player #")) && email && email.includes("@") && !email.includes("local")) {
+      const prefix = email.split("@")[0].replace(/[._-]/g, " ");
+      name = prefix.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    }
+
     const updated = {
       ...existing,
       ...data,
       id: numId,
+      name: name || `Player ${numId}`,
     };
 
     this.users.set(numId, updated);

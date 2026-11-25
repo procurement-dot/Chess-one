@@ -44,8 +44,14 @@ class GameSocketManager {
     const url = getSocketBaseUrl();
     gameStore.setConnectionStatus('connecting');
 
+    const currentUser = authStore.getState().user;
     this.socket = io(url, {
-      auth: { token: token || undefined },
+      auth: {
+        token: token || undefined,
+        name: currentUser?.name || undefined,
+        email: currentUser?.email || undefined,
+        avatarUrl: currentUser?.photo || undefined,
+      },
       transports: ['websocket', 'polling'],
       tryAllTransports: true,
       reconnection: true,
@@ -76,10 +82,21 @@ class GameSocketManager {
         window.sessionStorage?.getItem('chess_one_token');
     }
 
+    const currentUser = authStore.getState().user;
     if (token) {
-      (socket.auth as any) = { token };
+      (socket.auth as any) = {
+        token,
+        name: currentUser?.name || undefined,
+        email: currentUser?.email || undefined,
+        avatarUrl: currentUser?.photo || undefined,
+      };
       if (socket.connected) {
-        socket.emit('auth:authenticate', { token });
+        socket.emit('auth:authenticate', {
+          token,
+          name: currentUser?.name,
+          email: currentUser?.email,
+          avatarUrl: currentUser?.photo,
+        });
       }
     }
 
@@ -110,11 +127,22 @@ class GameSocketManager {
 
     if (this.socket) {
       const prevToken = (this.socket.auth as any)?.token;
-      this.socket.auth = { token: currentToken };
+      const currentUser = authStore.getState().user;
+      this.socket.auth = {
+        token: currentToken,
+        name: currentUser?.name || undefined,
+        email: currentUser?.email || undefined,
+        avatarUrl: currentUser?.photo || undefined,
+      };
 
       if (this.socket.connected) {
         if (prevToken !== currentToken) {
-          this.socket.emit('auth:authenticate', { token: currentToken });
+          this.socket.emit('auth:authenticate', {
+            token: currentToken,
+            name: currentUser?.name,
+            email: currentUser?.email,
+            avatarUrl: currentUser?.photo,
+          });
         }
       } else {
         gameStore.setConnectionStatus('connecting');

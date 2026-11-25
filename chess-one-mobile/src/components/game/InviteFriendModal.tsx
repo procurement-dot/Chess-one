@@ -29,6 +29,17 @@ interface InviteFriendModalProps {
   onClose: () => void;
 }
 
+function formatPlayerDisplayName(name?: string, email?: string, id?: number | string): string {
+  if (name && !name.startsWith('Player ') && !name.startsWith('Player #') && name !== 'Chess Player') {
+    return name;
+  }
+  if (email && email.includes('@') && !email.includes('local')) {
+    const userPart = email.split('@')[0].replace(/[._-]/g, ' ');
+    return userPart.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  return name || `Player ${id || ''}`;
+}
+
 export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
   visible,
   onlineUsers,
@@ -179,7 +190,8 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
               >
                 {currentList.map((item) => {
                   const isInviting = invitingUserId === item.id;
-                  const initials = (item.name || item.email || 'P')[0].toUpperCase();
+                  const displayName = formatPlayerDisplayName(item.name, item.email, item.id);
+                  const initials = displayName[0].toUpperCase();
 
                   return (
                     <View key={`online-user-${item.id}`} style={styles.userCard}>
@@ -200,7 +212,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                       <View style={styles.infoCol}>
                         <View style={styles.nameRow}>
                           <Text style={styles.nameText} numberOfLines={1}>
-                            {item.name || item.email}
+                            {displayName}
                           </Text>
                           <View style={styles.idChip}>
                             <Text style={styles.idChipText}>#{item.id}</Text>

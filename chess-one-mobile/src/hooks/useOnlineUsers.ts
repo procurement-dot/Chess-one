@@ -58,7 +58,15 @@ export function useOnlineUsers(enabled: boolean = true) {
             for (const ou of onlineUsers) {
               const numId = Number(ou.id);
               if (map.has(numId)) {
-                map.set(numId, { ...map.get(numId)!, ...ou, isOnline: true });
+                const existing = map.get(numId)!;
+                const bestName =
+                  ou.name && !ou.name.startsWith('Player')
+                    ? ou.name
+                    : existing.name && !existing.name.startsWith('Player')
+                    ? existing.name
+                    : ou.name || existing.name;
+
+                map.set(numId, { ...existing, ...ou, name: bestName, isOnline: true });
               } else {
                 map.set(numId, { ...ou, isOnline: true });
               }

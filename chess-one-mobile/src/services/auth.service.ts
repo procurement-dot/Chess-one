@@ -200,7 +200,8 @@ export interface BackendAuthResult {
  * Call backend to exchange Google ID token for ChessOne JWT and user profile
  */
 export async function exchangeGoogleTokenWithBackend(
-  idToken: string
+  idToken: string,
+  profile?: { name?: string; avatarUrl?: string | null }
 ): Promise<BackendAuthResult | null> {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -209,7 +210,11 @@ export async function exchangeGoogleTokenWithBackend(
     const response = await fetch(`${getApiBaseUrl()}/api/auth/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({
+        idToken,
+        name: profile?.name || undefined,
+        avatarUrl: profile?.avatarUrl || undefined,
+      }),
       signal: controller.signal,
     });
 

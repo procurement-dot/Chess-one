@@ -50,12 +50,22 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
     }
 
     try {
-      const backendAuth = await exchangeGoogleTokenWithBackend(processed.idToken);
+      const backendAuth = await exchangeGoogleTokenWithBackend(processed.idToken, {
+        name: processed.user?.name,
+        avatarUrl: processed.user?.photo,
+      });
       if (backendAuth) {
+        const resolvedName =
+          processed.user?.name && !processed.user.name.startsWith('Player')
+            ? processed.user.name
+            : backendAuth.user.name && !backendAuth.user.name.startsWith('Player')
+            ? backendAuth.user.name
+            : processed.user?.name || backendAuth.user.name;
+
         const fullUser = {
           id: String(backendAuth.user.id),
-          name: backendAuth.user.name,
-          email: backendAuth.user.email,
+          name: resolvedName,
+          email: backendAuth.user.email || processed.user?.email,
           photo: backendAuth.user.avatarUrl || processed.user?.photo,
           role: backendAuth.user.role,
           rating: backendAuth.user.rating,

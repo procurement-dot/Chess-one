@@ -7,8 +7,8 @@ class AuthController {
    */
   async googleAuth(req, res, next) {
     try {
-      const { idToken } = req.validatedBody || req.body;
-      const result = await authService.authenticateWithGoogle(idToken);
+      const { idToken, name, avatarUrl } = req.validatedBody || req.body;
+      const result = await authService.authenticateWithGoogle(idToken, { name, avatarUrl });
 
       return res.status(200).json({
         success: true,

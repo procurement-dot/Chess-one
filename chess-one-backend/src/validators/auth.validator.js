@@ -4,6 +4,8 @@ const googleAuthSchema = z.object({
   idToken: z
     .string({ required_error: "idToken is required" })
     .min(1, "idToken cannot be empty"),
+  name: z.string().optional(),
+  avatarUrl: z.string().nullable().optional(),
 });
 
 function validate(schema) {

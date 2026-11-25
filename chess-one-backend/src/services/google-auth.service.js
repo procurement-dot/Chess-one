@@ -37,6 +37,8 @@ async function verifyGoogleIdToken(idToken) {
       sub,
       email,
       name,
+      given_name,
+      family_name,
       picture,
       email_verified,
     } = payload;
@@ -58,10 +60,20 @@ async function verifyGoogleIdToken(idToken) {
       );
     }
 
+    const cleanEmail = email.toLowerCase().trim();
+    let resolvedName = name;
+    if (!resolvedName && (given_name || family_name)) {
+      resolvedName = [given_name, family_name].filter(Boolean).join(" ").trim();
+    }
+    if (!resolvedName && cleanEmail) {
+      const prefix = cleanEmail.split("@")[0].replace(/[._-]/g, " ");
+      resolvedName = prefix.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    }
+
     return {
       googleId: sub,
-      email: email.toLowerCase().trim(),
-      name: name || email.split("@")[0],
+      email: cleanEmail,
+      name: resolvedName || "Chess Player",
       avatarUrl: picture || null,
     };
   } catch (err) {

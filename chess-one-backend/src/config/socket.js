@@ -128,6 +128,17 @@ function getOnlineUserIds() {
   return Array.from(online);
 }
 
+function formatFriendlyName(name, email, id) {
+  if (name && !name.startsWith("Player ") && !name.startsWith("Player #") && name !== "Chess Player") {
+    return name;
+  }
+  if (email && email.includes("@") && !email.includes("local")) {
+    const userPart = email.split("@")[0].replace(/[._-]/g, " ");
+    return userPart.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+  return name || `Player ${id}`;
+}
+
 /**
  * Get detailed profiles of all currently online users
  */
@@ -139,7 +150,8 @@ function getOnlineUsersDetailed() {
     if (user) {
       detailed.push({
         id: user.id,
-        name: user.name || `Player ${user.id}`,
+        name: formatFriendlyName(user.name, user.email, user.id),
+        email: user.email || null,
         avatarUrl: user.avatarUrl || null,
         role: user.role || "STUDENT",
         rating: user.rating || 1200,

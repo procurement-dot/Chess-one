@@ -10,10 +10,19 @@ class AuthService {
    * Finds existing user by googleId or email, or creates a new user.
    * Returns ChessOne JWT and normalized user profile.
    */
-  async authenticateWithGoogle(idToken) {
+  async authenticateWithGoogle(idToken, clientProfile = {}) {
     // 1. Verify Google ID token cryptographically
     const googleUser = await verifyGoogleIdToken(idToken);
     const { googleId, email, name, avatarUrl } = googleUser;
+
+    const effectiveName =
+      clientProfile?.name && !clientProfile.name.startsWith("Player")
+        ? clientProfile.name.trim()
+        : name && !name.startsWith("Player")
+        ? name.trim()
+        : null;
+
+    const effectiveAvatar = clientProfile?.avatarUrl || avatarUrl || null;
 
     // 2. Search User by googleId first or by email in database
     let user = null;
@@ -36,11 +45,11 @@ class AuthService {
         if (googleId && user.googleId !== googleId) {
           updateData.googleId = googleId;
         }
-        if (avatarUrl && !user.avatarUrl) {
-          updateData.avatarUrl = avatarUrl;
+        if (effectiveAvatar && !user.avatarUrl) {
+          updateData.avatarUrl = effectiveAvatar;
         }
-        if (name && (user.name?.startsWith("Player ") || !user.name)) {
-          updateData.name = name;
+        if (effectiveName && (!user.name || user.name.startsWith("Player ") || user.name.startsWith("Player #") || user.name === "Chess Player")) {
+          updateData.name = effectiveName;
         }
 
         if (Object.keys(updateData).length > 0) {
@@ -50,9 +59,8 @@ class AuthService {
               data: updateData,
             });
           } catch (updateErr) {
-            if (updateErr.code !== "P2002") {
-              console.warn("[Auth] Failed to update user profile:", updateErr.message);
-            }
+            console.warn("[Auth] Failed to update user profile in DB:", updateErr.message);
+            user = { ...user, ...updateData };
           }
         }
       } else {
@@ -60,10 +68,10 @@ class AuthService {
         try {
           user = await prisma.user.create({
             data: {
-              name: name || "Chess Player",
+              name: effectiveName || (email ? email.split("@")[0] : "Chess Player"),
               email,
               googleId,
-              avatarUrl: avatarUrl || null,
+              avatarUrl: effectiveAvatar,
             },
           });
         } catch (createErr) {
@@ -86,17 +94,39 @@ class AuthService {
         }
       }
     } catch (dbErr) {
-      console.error("[Auth] Database operation failed during Google authentication:", dbErr);
-      throw dbErr;
+      console.warn("[Auth] Database operation failed during Google authentication, falling back to session store:", dbErr.message);
+      let memUser = email ? userStore.getUserByEmail(email) : null;
+      if (!memUser) {
+        const pseudoId = Math.floor(1000 + Math.random() * 9000);
+        memUser = {
+          id: pseudoId,
+          name: effectiveName || (email ? email.split("@")[0] : "Chess Player"),
+          email,
+          googleId,
+          avatarUrl: effectiveAvatar,
+          role: "STUDENT",
+          rating: 1200,
+          onboardingDone: true,
+        };
+      }
+      user = memUser;
     }
+
+    // Determine authoritative display name
+    const resolvedName =
+      effectiveName ||
+      (user && user.name && !user.name.startsWith("Player") && user.name !== "Chess Player" ? user.name : null) ||
+      (email ? email.split("@")[0] : `Player ${user?.id || 1}`);
+
+    user.name = resolvedName;
 
     // Always ensure user profile is saved to userStore
     if (user) {
       userStore.upsertUser({
         id: user.id,
-        name: user.name || name || (email ? email.split("@")[0] : `Player ${user.id}`),
+        name: resolvedName,
         email: user.email || email,
-        avatarUrl: user.avatarUrl || avatarUrl || null,
+        avatarUrl: user.avatarUrl || effectiveAvatar,
         role: user.role || "STUDENT",
         rating: user.rating || 1200,
         onboardingDone: true,
@@ -110,7 +140,7 @@ class AuthService {
       token,
       user: {
         id: parseInt(user.id, 10),
-        name: user.name,
+        name: resolvedName,
         email: user.email,
         avatarUrl: user.avatarUrl,
         role: user.role,

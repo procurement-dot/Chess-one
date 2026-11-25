@@ -20,7 +20,8 @@ import { useRouter } from 'expo-router';
 import Svg, { Circle, Path, G, Text as SvgText } from 'react-native-svg';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useGoogleAuth } from '../hooks/useGoogleAuth';
-import { useAuthStore } from '../store/authStore';
+import { useAuthStore, authStore } from '../store/authStore';
+import { gameSocket } from '../socket/game.socket';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { AppHeader } from '../components/navigation/AppHeader';
 import { AppFooter } from '../components/navigation/AppFooter';
@@ -165,6 +166,9 @@ export default function LoginScreen() {
 
       await AsyncStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(dataToSave));
 
+      authStore.updateUser({ name: dataToSave.studentName });
+      gameSocket.updateAuth();
+
       setIsEditMode(false);
       setStudentRecordModalVisible(false);
 
@@ -172,6 +176,12 @@ export default function LoginScreen() {
         'Profile Updated! ✅',
         `Record for ${dataToSave.studentName} has been verified and saved.`
       );
+
+      // Best effort update on backend profile
+      try {
+        const { apiClient } = require('../services/apiClient');
+        apiClient.patch('/api/users/me', { name: dataToSave.studentName }).catch(() => {});
+      } catch {}
     } catch (err) {
       Alert.alert('Save Error', 'Could not save profile details. Please try again.');
     }
@@ -410,7 +420,7 @@ export default function LoginScreen() {
                   </Text>
 
                   <View style={styles.idChip}>
-                    <Text style={styles.idChipText}>Player ID: #{user.id || 50}</Text>
+                    <Text style={styles.idChipText}>Player ID: #{user?.id || ''}</Text>
                   </View>
                 </View>
               </View>

@@ -20,6 +20,17 @@ interface OutgoingChallengeModalProps {
   onCancel: () => void;
 }
 
+function formatPlayerDisplayName(name?: string, email?: string, id?: number | string): string {
+  if (name && !name.startsWith('Player ') && !name.startsWith('Player #') && name !== 'Chess Player') {
+    return name;
+  }
+  if (email && email.includes('@') && !email.includes('local')) {
+    const userPart = email.split('@')[0].replace(/[._-]/g, ' ');
+    return userPart.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  return name || `Player ${id || ''}`;
+}
+
 export const OutgoingChallengeModal: React.FC<OutgoingChallengeModalProps> = ({
   visible,
   targetUser,
@@ -30,7 +41,7 @@ export const OutgoingChallengeModal: React.FC<OutgoingChallengeModalProps> = ({
 }) => {
   if (!visible || !targetUser) return null;
 
-  const opponentName = targetUser.name || targetUser.email || 'Player';
+  const opponentName = formatPlayerDisplayName(targetUser.name, targetUser.email, targetUser.id);
 
   return (
     <Modal

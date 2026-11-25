@@ -8,12 +8,23 @@ const config = require("../config/env");
  */
 function generateToken(user) {
   const id = parseInt(user.id, 10);
+  let name = user.name;
+  if (!name || name.startsWith("Player ") || name.startsWith("Player #") || name === "Chess Player") {
+    if (user.email && user.email.includes("@") && !user.email.includes("local")) {
+      const prefix = user.email.split("@")[0].replace(/[._-]/g, " ");
+      name = prefix.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    } else {
+      name = `Player ${id}`;
+    }
+  }
+
   const payload = {
     userId: id,
     id, // Backwards-compatibility with existing code
     email: user.email,
     role: user.role || "STUDENT",
-    name: user.name || user.email?.split("@")[0] || `Player ${id}`,
+    name,
+    avatarUrl: user.avatarUrl || null,
   };
 
   return jwt.sign(payload, config.JWT_SECRET, {

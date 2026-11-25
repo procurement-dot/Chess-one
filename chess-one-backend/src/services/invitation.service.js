@@ -33,7 +33,7 @@ class InvitationService {
       // Proceed to check in-memory
     }
 
-    if (process.env.NODE_ENV !== "production" && gameService.inMemoryGames) {
+    if (gameService.inMemoryGames) {
       if (numId && gameService.inMemoryGames.has(numId)) return gameService.inMemoryGames.get(numId);
       if (strCode && gameService.inMemoryGames.has(strCode)) return gameService.inMemoryGames.get(strCode);
     }
@@ -119,25 +119,22 @@ class InvitationService {
         },
       });
     } catch (err) {
-      if (process.env.NODE_ENV !== "production") {
-        const userStore = require("../store/user.store");
-        const realSender = userStore.getUser(senderId) || { id: senderId, name: `Player #${senderId}`, email: `player${senderId}@chessone.local` };
-        const memInv = {
-          id: nextInMemoryInvId++,
-          gameId: game.id,
-          senderId,
-          receiverId: opponentUserId,
-          status: "PENDING",
-          expiresAt,
-          createdAt: new Date(),
-          game: { id: game.id, gameCode: game.gameCode, timeControl: game.timeControl },
-          sender: realSender,
-        };
-        inMemoryInvitations.set(memInv.id, memInv);
-        invitation = memInv;
-      } else {
-        throw err;
-      }
+      console.warn("[InvitationService] Database unavailable for createInvitation, using inMemoryInvitations:", err.message);
+      const userStore = require("../store/user.store");
+      const realSender = userStore.getUser(senderId) || { id: senderId, name: `Player #${senderId}`, email: `player${senderId}@chessone.local` };
+      const memInv = {
+        id: nextInMemoryInvId++,
+        gameId: game.id,
+        senderId,
+        receiverId: opponentUserId,
+        status: "PENDING",
+        expiresAt,
+        createdAt: new Date(),
+        game: { id: game.id, gameCode: game.gameCode, timeControl: game.timeControl },
+        sender: realSender,
+      };
+      inMemoryInvitations.set(memInv.id, memInv);
+      invitation = memInv;
     }
 
     // Notify opponent via Socket.IO
@@ -507,6 +504,19 @@ class InvitationService {
           select: { id: true, name: true, email: true, avatarUrl: true },
         });
       } catch (err) {}
+    }
+
+    if (!opponent) {
+      const { isUserOnline } = require("../config/socket");
+      if (isUserOnline(parsedOpponentId)) {
+        opponent = {
+          id: parsedOpponentId,
+          name: `Player #${parsedOpponentId}`,
+          email: null,
+          avatarUrl: null,
+        };
+        userStore.upsertUser(opponent);
+      }
     }
 
     if (!opponent) {

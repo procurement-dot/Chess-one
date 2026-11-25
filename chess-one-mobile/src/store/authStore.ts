@@ -78,11 +78,15 @@ function getStoredUser(): GoogleUser | null {
     if (user) {
       if (tokenUser?.id) user.id = tokenUser.id;
       if (!user.email && tokenUser?.email) user.email = tokenUser.email;
-      if (!user.name || user.name?.startsWith('Player #') || user.name?.startsWith('Player ')) {
+      if (!user.name || user.name?.startsWith('Player #') || user.name?.startsWith('Player ') || user.name === 'Chess Player') {
         if (tokenUser?.name && !tokenUser.name.startsWith('Player')) {
           user.name = tokenUser.name;
-        } else if (tokenUser?.email) {
-          user.name = tokenUser.email.split('@')[0];
+        } else if (user.email && user.email.includes('@') && !user.email.includes('local')) {
+          const prefix = user.email.split('@')[0].replace(/[._-]/g, ' ');
+          user.name = prefix.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        } else if (tokenUser?.email && tokenUser.email.includes('@') && !tokenUser.email.includes('local')) {
+          const prefix = tokenUser.email.split('@')[0].replace(/[._-]/g, ' ');
+          user.name = prefix.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
         }
       }
       return user;
@@ -208,16 +212,30 @@ class AuthStore {
     const tokenUser = extractUserFromToken(chessOneToken);
     let updatedUser = this.state.user;
     if (tokenUser && updatedUser) {
+      const bestName =
+        updatedUser.name && !updatedUser.name.startsWith('Player')
+          ? updatedUser.name
+          : tokenUser.name && !tokenUser.name.startsWith('Player')
+          ? tokenUser.name
+          : updatedUser.name;
+
       updatedUser = {
         ...updatedUser,
         id: tokenUser.id,
+        name: bestName,
         email: updatedUser.email || tokenUser.email,
       };
     } else if (tokenUser && !updatedUser) {
+      let resolvedName = tokenUser.name && !tokenUser.name.startsWith('Player') ? tokenUser.name : null;
+      if (!resolvedName && tokenUser.email && tokenUser.email.includes('@') && !tokenUser.email.includes('local')) {
+        const prefix = tokenUser.email.split('@')[0].replace(/[._-]/g, ' ');
+        resolvedName = prefix.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+
       updatedUser = {
         id: tokenUser.id,
         email: tokenUser.email || '',
-        name: tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
+        name: resolvedName || `Player ${tokenUser.id}`,
       };
     }
     if (updatedUser) {

@@ -4,6 +4,17 @@ const { success } = require("../utils/response");
 const userService = require("../services/user.service");
 const userStore = require("../store/user.store");
 
+function formatFriendlyName(name, email, id) {
+  if (name && !name.startsWith("Player ") && !name.startsWith("Player #") && name !== "Chess Player") {
+    return name;
+  }
+  if (email && email.includes("@") && !email.includes("local")) {
+    const userPart = email.split("@")[0].replace(/[._-]/g, " ");
+    return userPart.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+  return name || `Player ${id}`;
+}
+
 class UserController {
   async getMe(req, res, next) {
     try {
@@ -51,7 +62,8 @@ class UserController {
           const numId = parseInt(u.id, 10);
           allKnownUsers.set(numId, {
             id: numId,
-            name: u.name || `Player ${numId}`,
+            name: formatFriendlyName(u.name, u.email, numId),
+            email: u.email || null,
             avatarUrl: u.avatarUrl || null,
             role: u.role || "STUDENT",
             rating: u.rating || 1200,
@@ -65,6 +77,7 @@ class UserController {
           select: {
             id: true,
             name: true,
+            email: true,
             avatarUrl: true,
             role: true,
             rating: true,
@@ -75,7 +88,8 @@ class UserController {
         for (const u of dbUsers) {
           allKnownUsers.set(u.id, {
             id: u.id,
-            name: u.name,
+            name: formatFriendlyName(u.name, u.email, u.id),
+            email: u.email || null,
             avatarUrl: u.avatarUrl || null,
             role: u.role || "STUDENT",
             rating: u.rating || 1200,

@@ -41,12 +41,30 @@ function initializeSocket(httpServer) {
           const userId = parseInt(decoded.userId || decoded.id, 10);
           if (!isNaN(userId)) {
             socket.userId = userId;
+
+            const handshakeName = socket.handshake.auth?.name;
+            const handshakeEmail = socket.handshake.auth?.email;
+            const handshakeAvatar = socket.handshake.auth?.avatarUrl;
+
+            let resolvedName =
+              handshakeName && !handshakeName.startsWith("Player")
+                ? handshakeName.trim()
+                : decoded.name && !decoded.name.startsWith("Player")
+                ? decoded.name.trim()
+                : null;
+
+            const resolvedEmail = handshakeEmail || decoded.email;
+            if (!resolvedName && resolvedEmail && resolvedEmail.includes("@") && !resolvedEmail.includes("local")) {
+              const prefix = resolvedEmail.split("@")[0].replace(/[._-]/g, " ");
+              resolvedName = prefix.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+            }
+
             socket.data.user = {
               id: userId,
-              email: decoded.email,
-              name: decoded.name,
-              role: decoded.role,
-              avatarUrl: decoded.avatarUrl,
+              email: resolvedEmail,
+              name: resolvedName || `Player ${userId}`,
+              role: decoded.role || "STUDENT",
+              avatarUrl: handshakeAvatar || decoded.avatarUrl || null,
             };
             userStore.upsertUser(socket.data.user);
           } else {
@@ -109,12 +127,30 @@ function initializeSocket(httpServer) {
 
         socket.userId = userId;
         socket.data = socket.data || {};
+
+        const clientName = data?.name || data?.user?.name;
+        const clientEmail = data?.email || data?.user?.email;
+        const clientAvatar = data?.avatarUrl || data?.user?.photo || data?.user?.avatarUrl;
+
+        let resolvedName =
+          clientName && !clientName.startsWith("Player")
+            ? clientName.trim()
+            : decoded.name && !decoded.name.startsWith("Player")
+            ? decoded.name.trim()
+            : null;
+
+        const resolvedEmail = clientEmail || decoded.email;
+        if (!resolvedName && resolvedEmail && resolvedEmail.includes("@") && !resolvedEmail.includes("local")) {
+          const prefix = resolvedEmail.split("@")[0].replace(/[._-]/g, " ");
+          resolvedName = prefix.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+        }
+
         socket.data.user = {
           id: userId,
-          email: decoded.email,
-          name: decoded.name,
-          role: decoded.role,
-          avatarUrl: decoded.avatarUrl,
+          email: resolvedEmail,
+          name: resolvedName || `Player ${userId}`,
+          role: decoded.role || "STUDENT",
+          avatarUrl: clientAvatar || decoded.avatarUrl || null,
         };
         userStore.upsertUser(socket.data.user);
 
@@ -122,9 +158,10 @@ function initializeSocket(httpServer) {
         socket.join(`user:${userId}`);
 
         const currentTransport = socket.conn?.transport?.name || transport;
-        console.log(`[Socket:auth] id=${socket.id} transport=${currentTransport} userId=${userId}`);
+        console.log(`[Socket:auth] id=${socket.id} transport=${currentTransport} userId=${userId} name=${socket.data.user.name}`);
 
         socket.emit("auth:authenticated", { success: true, user: socket.data.user });
+        broadcastOnlineUsers();
       } catch (err) {
         socket.emit("auth:error", { code: "INVALID_TOKEN", message: "Invalid or expired token" });
       }
