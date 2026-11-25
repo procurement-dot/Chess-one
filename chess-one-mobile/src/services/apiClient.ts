@@ -7,32 +7,44 @@ import { authStore } from '../store/authStore';
  */
 export function getApiBaseUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  let resolvedUrl: string;
 
+  // On web, detect whether running on a deployed domain (e.g. Netlify) vs local machine
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const hostname = window.location.hostname;
+    const isLocal =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.');
+
+    if (!isLocal) {
+      // Production web deployment (e.g. chess-one.netlify.app)
+      if (envUrl && envUrl.trim() && !envUrl.includes('localhost')) {
+        return envUrl.trim();
+      }
+      return 'https://chess-one.onrender.com';
+    }
+  }
+
+  // Local development / Native app
   if (envUrl && envUrl.trim()) {
     if (Platform.OS === 'android' && envUrl.includes('localhost')) {
-      resolvedUrl = envUrl.replace('localhost', '10.0.2.2');
-    } else {
-      resolvedUrl = envUrl.trim();
+      return envUrl.replace('localhost', '10.0.2.2');
     }
-  } else if (typeof window !== 'undefined' && window.location?.hostname) {
+    return envUrl.trim();
+  }
+
+  if (typeof window !== 'undefined' && window.location?.hostname) {
     const hostname = window.location.hostname;
     const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    resolvedUrl = `${protocol}//${hostname}:4000`;
-  } else if (Platform.OS === 'android') {
-    resolvedUrl = 'http://10.0.2.2:4000';
-  } else {
-    resolvedUrl = 'http://localhost:4000';
+    return `${protocol}//${hostname}:4000`;
   }
 
-  if (__DEV__) {
-    if ((globalThis as any).__lastResolvedApiUrl !== resolvedUrl) {
-      console.log('[API] Resolved backend URL:', resolvedUrl);
-      (globalThis as any).__lastResolvedApiUrl = resolvedUrl;
-    }
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:4000';
   }
 
-  return resolvedUrl;
+  return 'http://localhost:4000';
 }
 
 /**

@@ -40,16 +40,35 @@ export function useOnlineUsers(enabled: boolean = true) {
 
     fetchUsers();
 
-    // Listen to real-time online socket updates and update in-place without full re-fetch
-    const unsubOnline = gameSocket.onOnlineUsersUpdate((onlineUserIds: number[]) => {
-      const onlineSet = new Set(onlineUserIds.map((id) => Number(id)));
-      setUsers((prev) =>
-        prev.map((u) => ({
-          ...u,
-          isOnline: onlineSet.has(Number(u.id)),
-        }))
-      );
-    });
+    // Listen to real-time online socket updates and merge newly active users immediately
+    const unsubOnline = gameSocket.onOnlineUsersUpdate(
+      (onlineUserIds: number[], onlineUsers?: OnlineUser[]) => {
+        const onlineSet = new Set(onlineUserIds.map((id) => Number(id)));
+        setUsers((prev) => {
+          const map = new Map<number, OnlineUser>();
+
+          for (const u of prev) {
+            map.set(Number(u.id), {
+              ...u,
+              isOnline: onlineSet.has(Number(u.id)),
+            });
+          }
+
+          if (onlineUsers && Array.isArray(onlineUsers)) {
+            for (const ou of onlineUsers) {
+              const numId = Number(ou.id);
+              if (map.has(numId)) {
+                map.set(numId, { ...map.get(numId)!, ...ou, isOnline: true });
+              } else {
+                map.set(numId, { ...ou, isOnline: true });
+              }
+            }
+          }
+
+          return Array.from(map.values());
+        });
+      }
+    );
 
     // Automatically refetch users when the socket reconnects
     const unsubReconnect = gameSocket.onReconnected(() => {

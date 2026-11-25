@@ -1,3 +1,5 @@
+const userStore = require("../store/user.store");
+
 let io = null;
 
 // Authoritative user presence: Map<userId: number, Set<socketId: string>>
@@ -127,11 +129,38 @@ function getOnlineUserIds() {
 }
 
 /**
+ * Get detailed profiles of all currently online users
+ */
+function getOnlineUsersDetailed() {
+  const onlineIds = getOnlineUserIds();
+  const detailed = [];
+  for (const id of onlineIds) {
+    const user = userStore.getUser(id);
+    if (user) {
+      detailed.push({
+        id: user.id,
+        name: user.name || `Player ${user.id}`,
+        avatarUrl: user.avatarUrl || null,
+        role: user.role || "STUDENT",
+        rating: user.rating || 1200,
+        isOnline: true,
+      });
+    }
+  }
+  return detailed;
+}
+
+/**
  * Broadcast current online user list to all clients
  */
 function broadcastOnlineUsers() {
   if (!io) return;
-  io.emit("users:online-update", { onlineUserIds: getOnlineUserIds() });
+  const onlineIds = getOnlineUserIds();
+  const onlineUsers = getOnlineUsersDetailed();
+  io.emit("users:online-update", {
+    onlineUserIds: onlineIds,
+    onlineUsers,
+  });
 }
 
 /**
@@ -175,6 +204,7 @@ module.exports = {
   trackUserConnected,
   trackUserDisconnected,
   getOnlineUserIds,
+  getOnlineUsersDetailed,
   isUserOnline,
   getUserSocketCount,
   broadcastOnlineUsers,

@@ -5,6 +5,7 @@ const {
   registerUserSocket,
   unregisterUserSocket,
   getOnlineUserIds,
+  getOnlineUsersDetailed,
 } = require("../config/socket");
 const { registerGameHandlers } = require("./game.socket");
 const { registerTournamentHandlers } = require("./tournament.socket");
@@ -79,8 +80,11 @@ function initializeSocket(httpServer) {
       socket.join(`user:${socket.userId}`);
     }
 
-    // Immediately send current online list to connecting client
-    socket.emit("users:online-update", { onlineUserIds: getOnlineUserIds() });
+    // Immediately send current online list with user details to connecting client
+    socket.emit("users:online-update", {
+      onlineUserIds: getOnlineUserIds(),
+      onlineUsers: getOnlineUsersDetailed(),
+    });
 
     // Allow dynamic authentication after socket connects
     socket.on("auth:authenticate", (data) => {
@@ -126,13 +130,14 @@ function initializeSocket(httpServer) {
       }
     });
 
-    // Client heartbeat: refreshes presence and replies with online IDs
+    // Client heartbeat: refreshes presence and replies with online IDs and details
     socket.on("presence:ping", () => {
       if (socket.userId) {
         registerUserSocket(socket.userId, socket.id);
       }
       socket.emit("presence:pong", {
         onlineUserIds: getOnlineUserIds(),
+        onlineUsers: getOnlineUsersDetailed(),
         timestamp: Date.now(),
       });
     });

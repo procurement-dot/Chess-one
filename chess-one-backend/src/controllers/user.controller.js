@@ -42,10 +42,26 @@ class UserController {
   async getUsers(req, res, next) {
     try {
       const currentUserId = req.user?.id ? parseInt(req.user.id, 10) : null;
+      const allKnownUsers = new Map();
 
-      let dbUsers;
+      // 1. Add all active users currently tracked in memory (e.g. connected via socket)
+      const storeUsers = userStore.getAllUsers();
+      for (const u of storeUsers) {
+        if (u && u.id) {
+          const numId = parseInt(u.id, 10);
+          allKnownUsers.set(numId, {
+            id: numId,
+            name: u.name || `Player ${numId}`,
+            avatarUrl: u.avatarUrl || null,
+            role: u.role || "STUDENT",
+            rating: u.rating || 1200,
+          });
+        }
+      }
+
+      // 2. Fetch users from persistent database
       try {
-        dbUsers = await prisma.user.findMany({
+        const dbUsers = await prisma.user.findMany({
           select: {
             id: true,
             name: true,
@@ -55,17 +71,30 @@ class UserController {
           },
           orderBy: { name: "asc" },
         });
+
+        for (const u of dbUsers) {
+          allKnownUsers.set(u.id, {
+            id: u.id,
+            name: u.name,
+            avatarUrl: u.avatarUrl || null,
+            role: u.role || "STUDENT",
+            rating: u.rating || 1200,
+          });
+        }
       } catch (dbErr) {
-        return res.status(503).json({
-          success: false,
-          error: {
-            code: "DATABASE_UNAVAILABLE",
-            message: "Database connection unavailable. If using Supabase, please ensure your project is restored and active in the Supabase Dashboard.",
-          },
-        });
+        console.warn("[UserController] Database query failed or paused. Falling back to active users:", dbErr.message);
+        if (allKnownUsers.size === 0) {
+          return res.status(503).json({
+            success: false,
+            error: {
+              code: "DATABASE_UNAVAILABLE",
+              message: "Database connection unavailable. If using Supabase, please ensure your project is restored and active in the Supabase Dashboard.",
+            },
+          });
+        }
       }
 
-      const formatted = dbUsers.map((u) => ({
+      const formatted = Array.from(allKnownUsers.values()).map((u) => ({
         id: u.id,
         name: u.name,
         avatarUrl: u.avatarUrl || null,

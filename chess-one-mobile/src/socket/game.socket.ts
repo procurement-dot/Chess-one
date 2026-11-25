@@ -3,7 +3,7 @@ import { getSocketBaseUrl } from '../services/apiClient';
 import { authStore } from '../store/authStore';
 import { gameStore } from '../store/gameStore';
 import { gameService } from '../services/game.service';
-import { PlayerColor, GameResult, GameFinishedPayload } from '../types/game.types';
+import { PlayerColor, GameResult, GameFinishedPayload, OnlineUser } from '../types/game.types';
 import {
   RoundStartedEvent,
   YourGameEvent,
@@ -497,11 +497,13 @@ class GameSocketManager {
     return this.registerHandler('game:finished', callback);
   }
 
-  onOnlineUsersUpdate(callback: (onlineUserIds: number[]) => void): () => void {
+  onOnlineUsersUpdate(
+    callback: (onlineUserIds: number[], onlineUsers?: OnlineUser[]) => void
+  ): () => void {
     this.connect();
-    const handler = (payload: { onlineUserIds: number[] }) => {
+    const handler = (payload: { onlineUserIds: number[]; onlineUsers?: OnlineUser[] }) => {
       if (payload?.onlineUserIds) {
-        callback(payload.onlineUserIds);
+        callback(payload.onlineUserIds, payload.onlineUsers);
       }
     };
     return this.registerHandler('users:online-update', handler);

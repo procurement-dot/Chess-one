@@ -59,11 +59,16 @@ export default function CreateMatchScreen() {
 
   const currentUserId = user?.id ? parseInt(String(user.id), 10) : null;
   const otherUsers = useMemo(
-    () => allUsers.filter((u: OnlineUser) => u.id !== currentUserId && !(u as any).isMe),
+    () =>
+      allUsers.filter((u: OnlineUser) => {
+        if (currentUserId && Number(u.id) === currentUserId) return false;
+        if ((u as any).isMe) return false;
+        return true;
+      }),
     [allUsers, currentUserId]
   );
   const onlineOtherUsers = useMemo(
-    () => otherUsers.filter((u: OnlineUser) => u.isOnline),
+    () => otherUsers.filter((u: OnlineUser) => Boolean(u.isOnline)),
     [otherUsers]
   );
 
