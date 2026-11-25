@@ -28,23 +28,20 @@ function RootPresenceWatcher() {
     }
   }, [isAuthenticated, chessOneToken]);
 
-  // Handle auth errors (e.g. invalid/expired token from socket)
+  // Handle auth notifications from socket (never log user out of app on socket errors)
   useEffect(() => {
     const unsubAuthErr = gameSocket.onAuthError((err: any) => {
-      console.warn('[RootPresenceWatcher] Auth error from server:', err);
-      authStore.logout();
-      if (typeof window !== 'undefined' && window.sessionStorage) {
-        window.sessionStorage.setItem('auth_notice', 'Session expired, please sign in again');
+      console.warn('[RootPresenceWatcher] Socket auth error (retrying with current auth):', err);
+      const token = authStore.getState().chessOneToken;
+      if (token) {
+        gameSocket.updateAuth(token);
       }
-      try {
-        router.replace('/login');
-      } catch {}
     });
 
     return () => {
       unsubAuthErr();
     };
-  }, [router]);
+  }, []);
 
   // Comprehensive mobile web & native presence lifecycle
   useEffect(() => {

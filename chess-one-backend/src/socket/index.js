@@ -67,11 +67,9 @@ function initializeSocket(httpServer) {
               avatarUrl: handshakeAvatar || decoded.avatarUrl || null,
             };
             userStore.upsertUser(socket.data.user);
-          } else {
-            socket.authError = { code: "INVALID_TOKEN", message: "Invalid user ID in token" };
           }
         } catch {
-          socket.authError = { code: "INVALID_TOKEN", message: "Token verification failed" };
+          // Token in handshake failed verification - leave socket as anonymous
         }
       }
 
@@ -89,10 +87,6 @@ function initializeSocket(httpServer) {
       console.log(`[Socket:upgrade] id=${socket.id} transport upgraded to ${upgradedTransport.name}`);
     });
 
-    if (socket.authError) {
-      socket.emit("auth:error", socket.authError);
-    }
-
     if (socket.userId) {
       registerUserSocket(socket.userId, socket.id);
       socket.join(`user:${socket.userId}`);
@@ -109,7 +103,6 @@ function initializeSocket(httpServer) {
       try {
         const token = data?.token || (typeof data === "string" ? data : null);
         if (!token) {
-          socket.emit("auth:error", { code: "INVALID_TOKEN", message: "Token is required" });
           return;
         }
 

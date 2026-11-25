@@ -134,15 +134,12 @@ apiClient.interceptors.response.use(
 
     if (error.response?.status === 401) {
       console.warn('[apiClient] 401 Unauthorized response for:', error.config?.url);
-      const isAuthError =
+      const isTokenExpired =
         errorData?.code === 'TOKEN_EXPIRED' ||
-        errorData?.code === 'UNAUTHORIZED' ||
-        errorMessage?.includes('Invalid authentication token') ||
-        errorMessage?.includes('Authenticated user no longer exists') ||
         errorMessage?.includes('Token has expired');
 
-      if (isAuthError && authStore.getState().isAuthenticated) {
-        console.warn('[apiClient] Stored token is invalid or expired. Resetting session.');
+      if (isTokenExpired && authStore.getState().isAuthenticated) {
+        console.warn('[apiClient] Stored token has expired. Resetting session.');
         authStore.clearAuth();
         if (typeof window !== 'undefined') {
           if (window.sessionStorage) {

@@ -173,12 +173,21 @@ class AuthStore {
 
     if (token) {
       setStoredString(STORAGE_TOKEN_KEY, token);
+      AsyncStorage.setItem(STORAGE_TOKEN_KEY, token).catch(() => {});
     } else {
       setStoredString(STORAGE_TOKEN_KEY, null);
+      AsyncStorage.removeItem(STORAGE_TOKEN_KEY).catch(() => {});
     }
 
-    if (finalUser) setStoredString(STORAGE_USER_KEY, JSON.stringify(finalUser));
-    if (idToken) setStoredString(STORAGE_GOOGLE_KEY, idToken);
+    if (finalUser) {
+      setStoredString(STORAGE_USER_KEY, JSON.stringify(finalUser));
+      AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(finalUser)).catch(() => {});
+      AsyncStorage.setItem('@chessone_user', JSON.stringify(finalUser)).catch(() => {});
+    }
+    if (idToken) {
+      setStoredString(STORAGE_GOOGLE_KEY, idToken);
+      AsyncStorage.setItem(STORAGE_GOOGLE_KEY, idToken).catch(() => {});
+    }
 
     this.state = {
       isAuthenticated: Boolean(token),

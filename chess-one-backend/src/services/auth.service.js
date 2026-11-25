@@ -145,7 +145,7 @@ class AuthService {
         avatarUrl: user.avatarUrl,
         role: user.role,
         rating: user.rating,
-        onboardingDone: user.onboardingDone,
+        onboardingDone: user.onboardingDone ?? true,
       },
     };
   }
@@ -170,20 +170,26 @@ class AuthService {
         },
       });
 
-      if (!user) {
-        throw new AppError("USER_NOT_FOUND", "Authenticated user not found", 404);
+      if (user) {
+        userStore.upsertUser(user);
+        return {
+          ...user,
+          id: parseInt(user.id, 10),
+        };
       }
-
-      return {
-        ...user,
-        id: parseInt(user.id, 10),
-      };
     } catch (dbErr) {
-      if (dbErr instanceof AppError) throw dbErr;
-      const stored = userStore.getUser(numericId);
-      if (stored) return stored;
-      throw dbErr;
+      // DB failed, fallback to memory
     }
+
+    const stored = userStore.getUser(numericId);
+    if (stored) {
+      return {
+        ...stored,
+        id: numericId,
+      };
+    }
+
+    throw new AppError("USER_NOT_FOUND", "Authenticated user not found", 404);
   }
 }
 

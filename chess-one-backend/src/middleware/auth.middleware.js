@@ -68,8 +68,10 @@ async function requireAuth(req, res, next) {
       });
     }
 
-    // Verify user exists in database
+    // Verify user exists in database or in memory store
     let user = null;
+    const userStore = require("../store/user.store");
+
     try {
       user = await prisma.user.findUnique({
         where: { id: parseInt(userId, 10) },
@@ -82,19 +84,31 @@ async function requireAuth(req, res, next) {
           rating: true,
         },
       });
-    } catch (dbErr) {
-      if (decoded.email && decoded.name) {
-        user = {
-          id: parseInt(userId, 10),
-          name: decoded.name,
-          email: decoded.email,
-          avatarUrl: decoded.avatarUrl || null,
-          role: decoded.role || "STUDENT",
-          rating: decoded.rating || 1200,
-        };
-      } else {
-        throw dbErr;
+      if (user) {
+        userStore.upsertUser(user);
       }
+    } catch (dbErr) {
+      console.warn("[AuthMiddleware] Database query failed (fallback to userStore/token):", dbErr.message);
+    }
+
+    if (!user) {
+      user = userStore.getUser(parseInt(userId, 10));
+      if (!user && decoded.email) {
+        user = userStore.getUserByEmail(decoded.email);
+      }
+    }
+
+    // If still not in store, reconstruct user from verified signed JWT claims
+    if (!user && (decoded.email || decoded.name || userId)) {
+      user = {
+        id: parseInt(userId, 10),
+        name: decoded.name || (decoded.email ? decoded.email.split("@")[0] : `Player ${userId}`),
+        email: decoded.email || `player${userId}@chessone.local`,
+        avatarUrl: decoded.avatarUrl || null,
+        role: decoded.role || "STUDENT",
+        rating: decoded.rating || 1200,
+      };
+      userStore.upsertUser(user);
     }
 
     if (!user) {
@@ -152,6 +166,8 @@ async function optionalAuth(req, res, next) {
     }
 
     let user = null;
+    const userStore = require("../store/user.store");
+
     try {
       user = await prisma.user.findUnique({
         where: { id: parseInt(userId, 10) },
@@ -164,17 +180,30 @@ async function optionalAuth(req, res, next) {
           rating: true,
         },
       });
-    } catch (dbErr) {
-      if (decoded.email && decoded.name) {
-        user = {
-          id: parseInt(userId, 10),
-          name: decoded.name,
-          email: decoded.email,
-          avatarUrl: decoded.avatarUrl || null,
-          role: decoded.role || "STUDENT",
-          rating: decoded.rating || 1200,
-        };
+      if (user) {
+        userStore.upsertUser(user);
       }
+    } catch (dbErr) {
+      // Database query failed, fallback to memory
+    }
+
+    if (!user) {
+      user = userStore.getUser(parseInt(userId, 10));
+      if (!user && decoded.email) {
+        user = userStore.getUserByEmail(decoded.email);
+      }
+    }
+
+    if (!user && (decoded.email || decoded.name || userId)) {
+      user = {
+        id: parseInt(userId, 10),
+        name: decoded.name || (decoded.email ? decoded.email.split("@")[0] : `Player ${userId}`),
+        email: decoded.email || `player${userId}@chessone.local`,
+        avatarUrl: decoded.avatarUrl || null,
+        role: decoded.role || "STUDENT",
+        rating: decoded.rating || 1200,
+      };
+      userStore.upsertUser(user);
     }
 
     if (user) {

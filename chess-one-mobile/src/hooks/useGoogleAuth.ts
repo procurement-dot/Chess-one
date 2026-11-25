@@ -70,7 +70,7 @@ export function useGoogleAuth(): UseGoogleAuthReturn {
           role: backendAuth.user.role,
           rating: backendAuth.user.rating,
           gamesPlayed: backendAuth.user.gamesPlayed,
-          onboardingDone: backendAuth.user.onboardingDone,
+          onboardingDone: backendAuth.user.onboardingDone ?? true,
         };
         authStore.setChessOneToken(backendAuth.token);
         authStore.setGoogleAuth({
