@@ -62,8 +62,7 @@ export const ConnectionStatusPill: React.FC<ConnectionStatusPillProps> = ({ onRe
   };
 
   const isConnected = status === 'connected' || status === 'authenticated';
-  const isConnecting = status === 'connecting';
-  const isAuthError = status === 'auth_error';
+  const isConnecting = status === 'connecting' || status === 'auth_error';
   const isOffline = status === 'offline' || status === 'disconnected';
 
   const socketDebug = gameSocket.getDebugInfo();
@@ -76,7 +75,6 @@ export const ConnectionStatusPill: React.FC<ConnectionStatusPillProps> = ({ onRe
           isConnected && styles.pillConnected,
           isConnecting && styles.pillConnecting,
           isOffline && styles.pillOffline,
-          isAuthError && styles.pillAuthError,
         ]}
       >
         <View
@@ -85,14 +83,12 @@ export const ConnectionStatusPill: React.FC<ConnectionStatusPillProps> = ({ onRe
             isConnected && styles.dotConnected,
             isConnecting && styles.dotConnecting,
             isOffline && styles.dotOffline,
-            isAuthError && styles.dotAuthError,
           ]}
         />
         <Text style={styles.statusText}>
           {isConnected && 'Connected'}
           {isConnecting && 'Connecting…'}
           {isOffline && 'Offline'}
-          {isAuthError && 'Session expired'}
         </Text>
 
         {isOffline && (
@@ -102,16 +98,6 @@ export const ConnectionStatusPill: React.FC<ConnectionStatusPillProps> = ({ onRe
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <Text style={styles.actionText}>Retry</Text>
-          </TouchableOpacity>
-        )}
-
-        {isAuthError && (
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={() => router.push('/login')}
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <Text style={styles.actionText}>Sign in</Text>
           </TouchableOpacity>
         )}
       </View>

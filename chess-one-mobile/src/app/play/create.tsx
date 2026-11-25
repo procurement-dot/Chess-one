@@ -260,9 +260,6 @@ export default function CreateMatchScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Connection Status Pill */}
-        <ConnectionStatusPill onRetry={refreshOnlineUsers} style={{ marginBottom: 12 }} />
-
         {/* Game Mode Segment */}
         <View style={styles.segmentContainer}>
           <TouchableOpacity

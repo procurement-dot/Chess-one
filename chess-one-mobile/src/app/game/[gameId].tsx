@@ -426,15 +426,6 @@ export default function LiveGameScreen() {
           </View>
         )}
 
-        {/* Reconnecting Status Banner */}
-        {connectionStatus !== 'connected' && status === 'ACTIVE' && (
-          <View style={styles.reconnectingBanner}>
-            <ActivityIndicator size="small" color="#D97706" style={{ marginRight: 8 }} />
-            <Text style={styles.reconnectingText}>
-              Connection issues detected. Reconnecting to match...
-            </Text>
-          </View>
-        )}
 
         {/* Draw Feedback Banner */}
         {drawFeedbackText && (
