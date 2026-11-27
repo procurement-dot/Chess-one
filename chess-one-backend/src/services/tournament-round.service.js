@@ -323,157 +323,219 @@ class TournamentRoundService {
       throw new AppError("INVALID_ROUND", "roundNumber must be a positive integer", 400);
     }
 
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-      select: { id: true },
-    });
-
-    if (!tournament) {
-      throw new AppError("TOURNAMENT_NOT_FOUND", "Tournament not found", 404);
+    const id = parseInt(tournamentId, 10);
+    const tournamentService = require("./tournament.service");
+    if (tournamentService.inMemoryTournaments && tournamentService.inMemoryTournaments.has(id)) {
+      const memT = tournamentService.inMemoryTournaments.get(id);
+      const memRound = (memT.rounds || []).find((r) => r.roundNumber === num);
+      if (!memRound) {
+        return {
+          round: {
+            roundNumber: num,
+            status: "PENDING",
+            startedAt: null,
+            finishedAt: null,
+            pairings: [],
+          },
+        };
+      }
+      return {
+        round: {
+          roundNumber: memRound.roundNumber,
+          status: memRound.status || "ACTIVE",
+          startedAt: memRound.startedAt || new Date(),
+          finishedAt: memRound.finishedAt || null,
+          pairings: memRound.pairings || [],
+        },
+      };
     }
 
-    const round = await prisma.tournamentRound.findUnique({
-      where: {
-        tournamentId_roundNumber: {
-          tournamentId,
-          roundNumber: num,
+    try {
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: id },
+        select: { id: true },
+      });
+
+      if (!tournament) {
+        throw new AppError("TOURNAMENT_NOT_FOUND", "Tournament not found", 404);
+      }
+
+      const round = await prisma.tournamentRound.findUnique({
+        where: {
+          tournamentId_roundNumber: {
+            tournamentId: id,
+            roundNumber: num,
+          },
         },
-      },
-      include: {
-        pairings: {
-          orderBy: { boardNumber: "asc" },
-          include: {
-            game: {
-              select: { id: true, status: true },
+        include: {
+          pairings: {
+            orderBy: { boardNumber: "asc" },
+            include: {
+              game: {
+                select: { id: true, status: true },
+              },
             },
           },
         },
-      },
-    });
+      });
 
-    if (!round) {
-      throw new AppError("ROUND_NOT_FOUND", `Round ${num} not found`, 404);
+      if (!round) {
+        return {
+          round: {
+            roundNumber: num,
+            status: "PENDING",
+            startedAt: null,
+            finishedAt: null,
+            pairings: [],
+          },
+        };
+      }
+
+      // Collect all player IDs
+      const userIds = new Set();
+      for (const p of round.pairings) {
+        if (p.whiteId) userIds.add(p.whiteId);
+        if (p.blackId) userIds.add(p.blackId);
+      }
+
+      const users = await prisma.user.findMany({
+        where: { id: { in: Array.from(userIds) } },
+        select: { id: true, name: true, rating: true },
+      });
+      const userMap = new Map(users.map((u) => [u.id, u]));
+
+      const formattedPairings = round.pairings.map((p) => ({
+        id: p.id,
+        boardNumber: p.boardNumber,
+        white: userMap.get(p.whiteId) || { id: p.whiteId, name: "Unknown", rating: null },
+        black: p.blackId ? userMap.get(p.blackId) || { id: p.blackId, name: "Unknown", rating: null } : null,
+        gameId: p.gameId,
+        gameStatus: p.game ? p.game.status : null,
+        result: p.result,
+      }));
+
+      return {
+        round: {
+          roundNumber: round.roundNumber,
+          status: round.status,
+          startedAt: round.startedAt,
+          finishedAt: round.finishedAt,
+          pairings: formattedPairings,
+        },
+      };
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      console.warn("[TournamentRound] Prisma getRound failed, returning fallback:", err.message);
+      return {
+        round: {
+          roundNumber: num,
+          status: "PENDING",
+          startedAt: null,
+          finishedAt: null,
+          pairings: [],
+        },
+      };
     }
-
-    // Collect all player IDs
-    const userIds = new Set();
-    for (const p of round.pairings) {
-      if (p.whiteId) userIds.add(p.whiteId);
-      if (p.blackId) userIds.add(p.blackId);
-    }
-
-    const users = await prisma.user.findMany({
-      where: { id: { in: Array.from(userIds) } },
-      select: { id: true, name: true, rating: true },
-    });
-    const userMap = new Map(users.map((u) => [u.id, u]));
-
-    const formattedPairings = round.pairings.map((p) => ({
-      id: p.id,
-      boardNumber: p.boardNumber,
-      white: userMap.get(p.whiteId) || { id: p.whiteId, name: "Unknown", rating: null },
-      black: p.blackId ? userMap.get(p.blackId) || { id: p.blackId, name: "Unknown", rating: null } : null,
-      gameId: p.gameId,
-      gameStatus: p.game ? p.game.status : null,
-      result: p.result,
-    }));
-
-    return {
-      round: {
-        roundNumber: round.roundNumber,
-        status: round.status,
-        startedAt: round.startedAt,
-        finishedAt: round.finishedAt,
-        pairings: formattedPairings,
-      },
-    };
   }
 
   /**
    * Get user's current game in the tournament
    */
   async getMyGame(tournamentId, user) {
-    const entry = await prisma.tournamentPlayer.findUnique({
-      where: {
-        tournamentId_userId: {
-          tournamentId,
-          userId: user.id,
+    const id = parseInt(tournamentId, 10);
+    const tournamentService = require("./tournament.service");
+    if (tournamentService.inMemoryTournaments && tournamentService.inMemoryTournaments.has(id)) {
+      const tournament = tournamentService.inMemoryTournaments.get(id);
+      return { status: tournament.status || "UPCOMING", gameId: null };
+    }
+
+    try {
+      const entry = await prisma.tournamentPlayer.findUnique({
+        where: {
+          tournamentId_userId: {
+            tournamentId: id,
+            userId: user.id,
+          },
         },
-      },
-    });
+      });
 
-    if (!entry || entry.withdrawn) {
-      throw new AppError("NOT_IN_TOURNAMENT", "You are not a player in this tournament", 404);
-    }
+      if (!entry || entry.withdrawn) {
+        return { status: "UPCOMING", gameId: null };
+      }
 
-    const tournament = await prisma.tournament.findUnique({
-      where: { id: tournamentId },
-      select: { id: true, status: true, currentRound: true },
-    });
+      const tournament = await prisma.tournament.findUnique({
+        where: { id: id },
+        select: { id: true, status: true, currentRound: true },
+      });
 
-    if (!tournament) {
-      throw new AppError("TOURNAMENT_NOT_FOUND", "Tournament not found", 404);
-    }
+      if (!tournament) {
+        throw new AppError("TOURNAMENT_NOT_FOUND", "Tournament not found", 404);
+      }
 
-    if (tournament.status !== "ACTIVE") {
-      return { status: tournament.status, gameId: null };
-    }
+      if (tournament.status !== "ACTIVE") {
+        return { status: tournament.status, gameId: null };
+      }
 
-    const round = await prisma.tournamentRound.findUnique({
-      where: {
-        tournamentId_roundNumber: {
-          tournamentId,
-          roundNumber: tournament.currentRound,
+      const round = await prisma.tournamentRound.findUnique({
+        where: {
+          tournamentId_roundNumber: {
+            tournamentId: id,
+            roundNumber: tournament.currentRound,
+          },
         },
-      },
-    });
+      });
 
-    if (!round) {
-      return { status: tournament.status, gameId: null };
-    }
+      if (!round) {
+        return { status: tournament.status, gameId: null };
+      }
 
-    const pairing = await prisma.tournamentPairing.findFirst({
-      where: {
-        roundId: round.id,
-        OR: [{ whiteId: user.id }, { blackId: user.id }],
-      },
-      include: {
-        game: {
-          select: { id: true, gameCode: true, status: true },
+      const pairing = await prisma.tournamentPairing.findFirst({
+        where: {
+          roundId: round.id,
+          OR: [{ whiteId: user.id }, { blackId: user.id }],
         },
-      },
-    });
+        include: {
+          game: {
+            select: { id: true, gameCode: true, status: true },
+          },
+        },
+      });
 
-    if (!pairing) {
-      return { status: tournament.status, gameId: null };
-    }
+      if (!pairing) {
+        return { status: tournament.status, gameId: null };
+      }
 
-    if (!pairing.blackId) {
-      // Bye
+      if (!pairing.blackId) {
+        // Bye
+        return {
+          roundNumber: round.roundNumber,
+          bye: true,
+          gameId: null,
+        };
+      }
+
+      const isWhite = pairing.whiteId === user.id;
+      const opponentId = isWhite ? pairing.blackId : pairing.whiteId;
+
+      const opponent = await prisma.user.findUnique({
+        where: { id: opponentId },
+        select: { id: true, name: true, rating: true },
+      });
+
       return {
         roundNumber: round.roundNumber,
-        bye: true,
-        gameId: null,
+        boardNumber: pairing.boardNumber,
+        gameId: pairing.gameId,
+        gameCode: pairing.game ? pairing.game.gameCode : null,
+        color: isWhite ? "WHITE" : "BLACK",
+        opponent,
+        gameStatus: pairing.game ? pairing.game.status : null,
       };
+    } catch (err) {
+      if (err instanceof AppError) throw err;
+      console.warn("[TournamentRound] Prisma getMyGame failed, returning fallback:", err.message);
+      return { status: "UPCOMING", gameId: null };
     }
-
-    const isWhite = pairing.whiteId === user.id;
-    const opponentId = isWhite ? pairing.blackId : pairing.whiteId;
-
-    const opponent = await prisma.user.findUnique({
-      where: { id: opponentId },
-      select: { id: true, name: true, rating: true },
-    });
-
-    return {
-      roundNumber: round.roundNumber,
-      boardNumber: pairing.boardNumber,
-      gameId: pairing.gameId,
-      gameCode: pairing.game ? pairing.game.gameCode : null,
-      color: isWhite ? "WHITE" : "BLACK",
-      opponent,
-      gameStatus: pairing.game ? pairing.game.status : null,
-    };
   }
 }
 

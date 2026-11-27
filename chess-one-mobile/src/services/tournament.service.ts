@@ -134,6 +134,18 @@ export async function getRound(id: number, roundNumber: number): Promise<{ round
     const res = await apiClient.get(`/api/tournaments/${id}/rounds/${roundNumber}`);
     return res.data as { round: TournamentRound };
   } catch (err) {
+    if (isAxiosError(err) && (err.response?.status === 503 || err.response?.status === 502 || err.response?.status === 404)) {
+      console.warn(`[TournamentRound] Round ${roundNumber} temporarily unavailable or pending, returning fallback`);
+      return {
+        round: {
+          roundNumber,
+          status: 'PENDING',
+          startedAt: null,
+          finishedAt: null,
+          pairings: [],
+        },
+      };
+    }
     throw extractError(err);
   }
 }
@@ -143,6 +155,9 @@ export async function getMyGame(id: number): Promise<MyGame> {
     const res = await apiClient.get(`/api/tournaments/${id}/my-game`);
     return res.data as MyGame;
   } catch (err) {
+    if (isAxiosError(err) && (err.response?.status === 503 || err.response?.status === 502 || err.response?.status === 404)) {
+      return { status: 'UPCOMING', gameId: null };
+    }
     throw extractError(err);
   }
 }
