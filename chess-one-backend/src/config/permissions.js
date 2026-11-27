@@ -12,9 +12,9 @@ const ROLES = Object.freeze({
 const PERMISSIONS = Object.freeze({
   // Tournaments
   TOURNAMENT_VIEW:          ["STUDENT", "PARENT", "COACH", "SCHOOL", "ORGANISER"],
-  TOURNAMENT_CREATE:        ["STUDENT", "COACH", "SCHOOL", "ORGANISER"],
-  TOURNAMENT_MANAGE:        ["STUDENT", "COACH", "SCHOOL", "ORGANISER"],   // edit/cancel/start/next round/results (+ ownership check)
-  TOURNAMENT_JOIN:          ["STUDENT", "COACH", "SCHOOL", "ORGANISER"],
+  TOURNAMENT_CREATE:        ["ORGANISER"],
+  TOURNAMENT_MANAGE:        ["ORGANISER"],   // edit/cancel/start/next round/results (+ ownership check)
+  TOURNAMENT_JOIN:          ["STUDENT"],
   // Future (placeholders, not used yet)
   CLASS_MANAGE:             ["COACH", "SCHOOL"],
   CHILD_PROGRESS_VIEW:      ["PARENT"],

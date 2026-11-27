@@ -121,9 +121,20 @@ async function requireAuth(req, res, next) {
       });
     }
 
+    // Support active role header from mobile role-switcher
+    const headerRole = req.headers["x-user-role"] || req.headers["x-role"];
+    let activeRole = user.role;
+    if (headerRole && typeof headerRole === "string") {
+      const upperRole = headerRole.toUpperCase().trim();
+      if (["STUDENT", "COACH", "SCHOOL", "ORGANISER", "PARENT"].includes(upperRole)) {
+        activeRole = upperRole;
+      }
+    }
+
     // Attach verified user to request with integer id
     req.user = {
       ...user,
+      role: activeRole,
       id: parseInt(user.id, 10),
     };
 
@@ -207,8 +218,18 @@ async function optionalAuth(req, res, next) {
     }
 
     if (user) {
+      const headerRole = req.headers["x-user-role"] || req.headers["x-role"];
+      let activeRole = user.role;
+      if (headerRole && typeof headerRole === "string") {
+        const upperRole = headerRole.toUpperCase().trim();
+        if (["STUDENT", "COACH", "SCHOOL", "ORGANISER", "PARENT"].includes(upperRole)) {
+          activeRole = upperRole;
+        }
+      }
+
       req.user = {
         ...user,
+        role: activeRole,
         id: parseInt(user.id, 10),
       };
     } else {

@@ -1,6 +1,8 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 import { authStore } from '../store/authStore';
+import { roleStore } from '../features/roles/roleStore';
+import { toBackendRole } from '../utils/role.utils';
 
 /**
  * Resolve the backend API base URL based on platform and environment
@@ -83,6 +85,13 @@ apiClient.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    try {
+      const activeRole = roleStore.getRole();
+      if (activeRole) {
+        config.headers['x-user-role'] = toBackendRole(activeRole);
+      }
+    } catch {}
 
     return config;
   },
