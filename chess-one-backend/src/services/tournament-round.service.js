@@ -14,6 +14,31 @@ class TournamentRoundService {
    * Start a tournament (organizer action)
    */
   async startTournament(tournamentId, actingUser) {
+    const tournamentService = require("./tournament.service");
+    const numId = parseInt(tournamentId, 10);
+    if (tournamentService.inMemoryTournaments && tournamentService.inMemoryTournaments.has(numId)) {
+      const tournament = tournamentService.inMemoryTournaments.get(numId);
+      if (tournament.status !== "UPCOMING") {
+        if (tournament.status === "CANCELLED") {
+          throw new AppError("TOURNAMENT_NOT_OPEN", "Cancelled tournament cannot be started", 409);
+        }
+        throw new AppError("TOURNAMENT_ALREADY_STARTED", "Tournament has already started", 409);
+      }
+      const players = (tournament.players || []).filter((p) => !p.withdrawn);
+      if (players.length < 2) {
+        throw new AppError("NOT_ENOUGH_PLAYERS", "At least 2 players are required to start a tournament", 409);
+      }
+      const totalRounds = roundRobinRoundCount(players.length);
+      tournament.status = "ACTIVE";
+      tournament.currentRound = 1;
+      tournament.totalRounds = totalRounds;
+      emitToTournament(numId, "tournament:updated", {
+        tournamentId: numId,
+        reason: "STARTED",
+      });
+      return tournamentService.getTournament(actingUser, numId);
+    }
+
     const tournament = await prisma.tournament.findUnique({
       where: { id: tournamentId },
       include: {
@@ -128,7 +153,6 @@ class TournamentRoundService {
       }
     }
 
-    const tournamentService = require("./tournament.service");
     return tournamentService.getTournament(actingUser, tournamentId);
   }
 

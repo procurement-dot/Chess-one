@@ -3,9 +3,9 @@ import type { BackendRole } from '../types/auth.types';
 
 export const PERMISSIONS = {
   TOURNAMENT_VIEW:     ['STUDENT', 'PARENT', 'COACH', 'SCHOOL', 'ORGANISER'],
-  TOURNAMENT_CREATE:   ['ORGANISER'],
-  TOURNAMENT_MANAGE:   ['ORGANISER'],
-  TOURNAMENT_JOIN:     ['STUDENT'],
+  TOURNAMENT_CREATE:   ['STUDENT', 'COACH', 'SCHOOL', 'ORGANISER'],
+  TOURNAMENT_MANAGE:   ['STUDENT', 'COACH', 'SCHOOL', 'ORGANISER'],
+  TOURNAMENT_JOIN:     ['STUDENT', 'COACH', 'SCHOOL', 'ORGANISER'],
   CLASS_MANAGE:        ['COACH', 'SCHOOL'],
   CHILD_PROGRESS_VIEW: ['PARENT'],
 } as const satisfies Record<string, readonly BackendRole[]>;

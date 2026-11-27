@@ -50,6 +50,15 @@ export async function getTournaments(query?: TournamentListQuery): Promise<{
       total: res.data.total ?? 0,
     };
   } catch (err) {
+    if (isAxiosError(err) && (err.response?.status === 503 || err.response?.status === 502)) {
+      console.warn('[Tournaments] Server temporarily unavailable (503/502), returning empty list');
+      return {
+        tournaments: [],
+        page: 1,
+        limit: 20,
+        total: 0,
+      };
+    }
     throw extractError(err);
   }
 }
