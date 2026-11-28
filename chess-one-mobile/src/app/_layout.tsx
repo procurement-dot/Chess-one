@@ -2,6 +2,8 @@ import React, { useEffect } from 'react';
 import { AppState, AppStateStatus, Platform, useColorScheme } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { useColorScheme } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { useProfile } from '../hooks/useProfile';
@@ -92,13 +94,12 @@ function RootPresenceWatcher() {
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AuthLifecycleManager />
-      <ProfileSynchronizer />
-      <RootPresenceWatcher />
-      <GlobalInvitationWatcher />
-      <Stack screenOptions={{ headerShown: false }} />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <AnimatedSplashOverlay />
+        <ProfileSynchronizer />
+        <Stack screenOptions={{ headerShown: false }} />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

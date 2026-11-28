@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
 import { puzzleService } from '../../services/puzzle.service';
 import { PuzzleItem } from '../../data/learn/puzzlesData';
@@ -6,8 +6,9 @@ import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { useLearnStore, learnStore } from '../../features/learn/learnStore';
-import { LEARN_LEVELS, WEEKLY_QUESTS, BADGES_DATA, CHESS_PUZZLES } from '../../data/learn';
+import { LEARN_LEVELS, WEEKLY_QUESTS, BADGES_DATA, CHESS_PUZZLES, getInfinitePuzzles } from '../../data/learn';
 import { Feather } from '@expo/vector-icons';
+import { TacticsAdventureMap } from '../../components/learn/TacticsAdventureMap';
 import { useRouter } from 'expo-router';
 
 const CHIPS = ['Level journey', 'Tactics & Puzzles', 'Foundation', 'Developing', 'Advanced', 'Learn by game'];
@@ -17,12 +18,22 @@ export default function LearnScreen() {
   const [activeChip, setActiveChip] = useState(CHIPS[0]);
   const { completedLevels, questProgress, collectedRewards, coachPracticed, gameReviewed, solvedPuzzles, totalXp, tacticalRating = 1000 } = useLearnStore();
 
-  const [loadedPuzzles, setLoadedPuzzles] = useState<PuzzleItem[]>(CHESS_PUZZLES);
+  const [loadedPuzzles, setLoadedPuzzles] = useState<PuzzleItem[]>(() =>
+    getInfinitePuzzles(Math.max(CHESS_PUZZLES.length, (solvedPuzzles?.length || 0) + 15, 25))
+  );
+
+  useEffect(() => {
+    const needed = Math.max(CHESS_PUZZLES.length, (solvedPuzzles?.length || 0) + 15, 25);
+    if (loadedPuzzles.length < needed) {
+      setLoadedPuzzles(getInfinitePuzzles(needed));
+    }
+  }, [solvedPuzzles?.length]);
   const [puzzlesPage, setPuzzlesPage] = useState<number>(1);
   const [loadingMorePuzzles, setLoadingMorePuzzles] = useState<boolean>(false);
   const [puzzleSubTab, setPuzzleSubTab] = useState<'to_solve' | 'solved'>('to_solve');
   const [isStatsExpanded, setIsStatsExpanded] = useState<boolean>(false);
   const [selectedTacticsTier, setSelectedTacticsTier] = useState<string>('All');
+  const [tacticsViewMode, setTacticsViewMode] = useState<'map' | 'list'>('map');
 
   const toSolvePuzzles = useMemo(() => {
     return loadedPuzzles.filter((p) => !solvedPuzzles.includes(p.id));
@@ -127,9 +138,6 @@ export default function LearnScreen() {
             <Text style={styles.statsToggleTitle}>📊 My Progress</Text>
             <View style={styles.miniStatBadge}>
               <Text style={styles.miniStatText}>⭐ {totalStars} Stars</Text>
-            </View>
-            <View style={[styles.miniStatBadge, { backgroundColor: '#F0F3EE', borderColor: '#E3E8DE' }]}>
-              <Text style={[styles.miniStatText, { color: COLORS.textHeading }]}>🏆 {completedCount}/{LEARN_LEVELS.length}</Text>
             </View>
           </View>
 
@@ -510,43 +518,57 @@ export default function LearnScreen() {
         {/* ======================================================== */}
         {activeChip === 'Tactics & Puzzles' && (
           <View style={styles.tabContent}>
-            {/* Header with Adaptive Skill Badge */}
-            <View style={styles.worldSelector}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.eyebrow}>TACTICS ARENA · 32,241 PUZZLES</Text>
-                <Text style={styles.worldTitle}>Master Tactical Motifs</Text>
-                <Text style={styles.worldDesc}>
-                  Live from official 32k Lichess database · {adaptiveSkillTier} ({tacticalRating} ELO)
-                </Text>
-              </View>
-              <TouchableOpacity
-                style={styles.randomLaunchBtn}
-                onPress={() => {
-                  const pool = puzzleSubTab === 'to_solve' && toSolvePuzzles.length > 0 ? toSolvePuzzles : loadedPuzzles;
-                  const randomPuz = pool[Math.floor(Math.random() * pool.length)] || CHESS_PUZZLES[0];
-                  router.push(`/learn/puzzle?id=${randomPuz.id}` as any);
-                }}
-              >
-                <Text style={styles.randomLaunchText}>Play 🎲</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Live Adaptive AI Skill Indicator Card */}
-            <View style={styles.adaptiveCard}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  <Text style={{ fontSize: 18 }}>🧠</Text>
-                  <Text style={styles.adaptiveCardTitle}>Adaptive AI Skill Rating</Text>
-                </View>
-                <View style={styles.adaptiveRatingPill}>
-                  <Text style={styles.adaptiveRatingText}>{tacticalRating} ELO</Text>
+            {/* Clean, Compact Header with Symbolic Toggle [ 🗺️ | 📋 ] */}
+            <View style={styles.tacticsHeaderBar}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={styles.tacticsMainTitle}>Tactics Journey</Text>
+                <View style={styles.ratingBadgePill}>
+                  <Text style={styles.ratingBadgePillText}>{tacticalRating} ELO</Text>
                 </View>
               </View>
-              <Text style={styles.adaptiveCardSub}>
-                Adaptive AI Engine: Next puzzles dynamically adapt to your tactical skill rating!
-              </Text>
+
+              {/* Compact Symbolic Icon Toggle */}
+              <View style={styles.symbolicToggleContainer}>
+                <TouchableOpacity
+                  style={[
+                    styles.symbolicToggleBtn,
+                    tacticsViewMode === 'map' && styles.symbolicToggleBtnActive,
+                  ]}
+                  onPress={() => setTacticsViewMode('map')}
+                  activeOpacity={0.8}
+                >
+                  <Feather
+                    name="map"
+                    size={16}
+                    color={tacticsViewMode === 'map' ? COLORS.white : COLORS.primary}
+                  />
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.symbolicToggleBtn,
+                    tacticsViewMode === 'list' && styles.symbolicToggleBtnActive,
+                  ]}
+                  onPress={() => setTacticsViewMode('list')}
+                  activeOpacity={0.8}
+                >
+                  <Feather
+                    name="list"
+                    size={16}
+                    color={tacticsViewMode === 'list' ? COLORS.white : COLORS.primary}
+                  />
+                </TouchableOpacity>
+              </View>
             </View>
 
+            {tacticsViewMode === 'map' ? (
+              <TacticsAdventureMap
+                puzzles={loadedPuzzles}
+                solvedPuzzles={solvedPuzzles}
+                onSelectPuzzle={(id) => router.push(`/learn/puzzle?id=${id}` as any)}
+              />
+            ) : (
+              <>
             {/* 2 Segmented Tabs: To-Solve vs Solved */}
             <View style={styles.segmentContainer}>
               <TouchableOpacity
@@ -586,11 +608,11 @@ export default function LearnScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* Quick Tier Filters for 32,241 Database */}
+            {/* Quick Tier Filters */}
             <View style={{ marginBottom: 6 }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
                 {[
-                  { id: 'All', label: 'All 32.2k' },
+                  { id: 'All', label: '🌟 All Tactics' },
                   { id: 'Foundation', label: '🌱 Foundation' },
                   { id: 'Pre-Intermediate', label: '⚔️ Pre-Inter' },
                   { id: 'Intermediate', label: '🛡️ Intermediate' },
@@ -631,7 +653,7 @@ export default function LearnScreen() {
                       All loaded puzzles completed!
                     </Text>
                     <Text style={{ fontSize: 12, color: COLORS.textBody, textAlign: 'center' }}>
-                      Great job! Tap below to load the next 15 puzzles from the 32k database.
+                      Great job! Switch to Adventure Map or explore new tactical categories above.
                     </Text>
                   </View>
                 ) : (
@@ -666,28 +688,6 @@ export default function LearnScreen() {
                     </TouchableOpacity>
                   ))
                 )}
-
-                {/* Load More Button from 32,241 Database */}
-                <TouchableOpacity
-                  style={styles.loadMoreBtn}
-                  onPress={handleLoadMorePuzzles}
-                  disabled={loadingMorePuzzles}
-                  activeOpacity={0.8}
-                >
-                  {loadingMorePuzzles ? (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <ActivityIndicator size="small" color={COLORS.primary} />
-                      <Text style={styles.loadMoreText}>Fetching from 32,241 database...</Text>
-                    </View>
-                  ) : (
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Feather name="refresh-cw" size={16} color={COLORS.primary} />
-                      <Text style={styles.loadMoreText}>
-                        Load Next 15 Puzzles ({loadedPuzzles.length} / 32,241 Loaded) ⬇️
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
               </View>
             )}
 
@@ -749,6 +749,8 @@ export default function LearnScreen() {
                   ))
                 )}
               </View>
+            )}
+              </>
             )}
           </View>
         )}
@@ -1329,5 +1331,84 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: COLORS.primary,
+  },
+  tacticsHeaderBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    marginBottom: 8,
+  },
+  tacticsMainTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+  },
+  ratingBadgePill: {
+    backgroundColor: '#F0F3EE',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  ratingBadgePillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  symbolicToggleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 3,
+    gap: 3,
+    ...SHADOWS.soft,
+  },
+  symbolicToggleBtn: {
+    width: 36,
+    height: 32,
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  symbolicToggleBtnActive: {
+    backgroundColor: COLORS.primary,
+  },
+  viewModeToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    padding: 4,
+    gap: 6,
+    marginBottom: 12,
+  },
+  viewModeBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  viewModeBtnActive: {
+    backgroundColor: COLORS.primary,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  viewModeBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  viewModeBtnTextActive: {
+    color: COLORS.white,
   },
 });
