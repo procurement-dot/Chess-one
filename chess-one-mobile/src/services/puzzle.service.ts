@@ -126,7 +126,17 @@ export const puzzleService = {
       console.warn('Backend puzzle fetch failed, falling back to local dataset:', err);
     }
 
-    // Fallback to local curated puzzles
+    // Fallback to local curated puzzles with intelligent filtering
+    if (params.tier && (params.tier as string) !== 'ALL') {
+      const filtered = CHESS_PUZZLES.filter((p) =>
+        p.theme.toLowerCase().includes(params.tier!.toLowerCase())
+      );
+      if (filtered.length > 0) return filtered;
+    }
+    if (params.random) {
+      const shuffled = [...CHESS_PUZZLES].sort(() => Math.random() - 0.5);
+      return params.limit ? shuffled.slice(0, params.limit) : shuffled;
+    }
     return CHESS_PUZZLES;
   },
 

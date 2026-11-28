@@ -550,11 +550,39 @@ export const CHESS_PUZZLES: PuzzleItem[] = [
 ];
 
 export function getPuzzleById(id: string): PuzzleItem | undefined {
-  return CHESS_PUZZLES.find((p) => p.id === id);
+  const found = CHESS_PUZZLES.find((p) => p.id === id);
+  if (found) return found;
+
+  // Support dynamic endless IDs (e.g. endless-16, puz-16, lvl-16)
+  if (id && (id.startsWith('endless-') || id.startsWith('puz-') || id.startsWith('lvl-'))) {
+    const num = parseInt(id.replace(/[^0-9]/g, ''), 10);
+    if (!isNaN(num) && num > 0) {
+      return getPuzzleByNumber(num);
+    }
+  }
+  return undefined;
 }
 
 export function getPuzzleByNumber(num: number): PuzzleItem {
-  return CHESS_PUZZLES.find((p) => p.number === num) || CHESS_PUZZLES[0];
+  if (num >= 1 && num <= CHESS_PUZZLES.length) {
+    return CHESS_PUZZLES[num - 1];
+  }
+  const safeNum = Math.max(1, num);
+  const baseIndex = (safeNum - 1) % CHESS_PUZZLES.length;
+  const base = CHESS_PUZZLES[baseIndex];
+  const loop = Math.floor((safeNum - 1) / CHESS_PUZZLES.length);
+  const ratingBoost = loop * 35;
+  const targetRating = Math.min(2650, base.rating + ratingBoost);
+
+  return {
+    ...base,
+    id: `endless-${safeNum}`,
+    number: safeNum,
+    title: `Level ${safeNum}: ${base.title}`,
+    subtitle: `${base.turn === 'w' ? 'White' : 'Black'} to move · Level ${safeNum} Mastery Challenge`,
+    rating: targetRating,
+    xpReward: base.xpReward + loop * 10,
+  };
 }
 
 export function getAllPuzzles(): PuzzleItem[] {
@@ -562,7 +590,17 @@ export function getAllPuzzles(): PuzzleItem[] {
 }
 
 export function getNextPuzzleId(currentId: string): string {
-  const currentIndex = CHESS_PUZZLES.findIndex((p) => p.id === currentId);
-  const nextIndex = (currentIndex + 1) % CHESS_PUZZLES.length;
-  return CHESS_PUZZLES[nextIndex].id;
+  const current = getPuzzleById(currentId);
+  const currentNum = current ? current.number : 1;
+  const nextPuz = getPuzzleByNumber(currentNum + 1);
+  return nextPuz.id;
+}
+
+export function getInfinitePuzzles(minCount: number = 25): PuzzleItem[] {
+  const count = Math.max(minCount, CHESS_PUZZLES.length);
+  const result: PuzzleItem[] = [];
+  for (let i = 1; i <= count; i++) {
+    result.push(getPuzzleByNumber(i));
+  }
+  return result;
 }
