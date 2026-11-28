@@ -1,6 +1,14 @@
 import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+export interface PlacementGameResult {
+  gameNumber: number;
+  won: boolean;
+  accuracy: number;
+  moves: number;
+  blunders: number;
+}
+
 export interface LearnState {
   completedLevels: Record<number, number>; // levelId -> stars (1-3)
   questProgress: Record<string, number>; // questId -> count
@@ -10,19 +18,32 @@ export interface LearnState {
   gameReviewed: boolean;
   solvedPuzzles: string[]; // puzzleIds solved
   totalXp: number;
+  tacticalRating: number; // student's adaptive tactical ELO (default: 1000)
+  // 5-Game AI Placement Assessment
+  isPlacementComplete: boolean;
+  placementGamesCompleted: number; // 0 to 5
+  placementHistory: PlacementGameResult[];
+  placementTier: 'Beginner' | 'Pre-Intermediate' | 'Intermediate' | 'Advance' | null;
+  startingLevelId: number; // e.g. 1, 6, 11, 21
 }
 
 const STORAGE_KEY = '@chessone_learn_state_v3';
 
 const defaultState: LearnState = {
-  completedLevels: { 1: 3, 2: 3, 3: 2 }, // sample starter progress (Level 4 unlocked)
-  questProgress: { q1: 1, q2: 0, q3: 0, q4: 0 },
+  completedLevels: { 1: 0 }, // Uncompleted until placed
+  questProgress: { q1: 0, q2: 0, q3: 0, q4: 0 },
   collectedRewards: [],
   coachPersonality: 'Playful',
   coachPracticed: false,
   gameReviewed: false,
   solvedPuzzles: [],
   totalXp: 180,
+  tacticalRating: 1000,
+  isPlacementComplete: false,
+  placementGamesCompleted: 0,
+  placementHistory: [],
+  placementTier: null,
+  startingLevelId: 1,
 };
 
 class LearnStore {
@@ -49,6 +70,12 @@ class LearnStore {
           completedLevels: { ...defaultState.completedLevels, ...(parsed.completedLevels || {}) },
           questProgress: { ...defaultState.questProgress, ...(parsed.questProgress || {}) },
           solvedPuzzles: Array.isArray(parsed.solvedPuzzles) ? parsed.solvedPuzzles : [],
+          tacticalRating: typeof parsed.tacticalRating === 'number' ? parsed.tacticalRating : 1000,
+          isPlacementComplete: !!parsed.isPlacementComplete,
+          placementGamesCompleted: typeof parsed.placementGamesCompleted === 'number' ? parsed.placementGamesCompleted : 0,
+          placementHistory: Array.isArray(parsed.placementHistory) ? parsed.placementHistory : [],
+          placementTier: parsed.placementTier || null,
+          startingLevelId: typeof parsed.startingLevelId === 'number' ? parsed.startingLevelId : 1,
         };
       }
     } catch (e) {
@@ -130,21 +157,43 @@ class LearnStore {
     this.saveState();
   }
 
-  recordPuzzleSolved(puzzleId: string, xpReward: number = 30) {
+  recordPuzzleSolved(puzzleId: string, xpReward: number = 30, ratingDelta: number = 0) {
     const isNew = !this.state.solvedPuzzles.includes(puzzleId);
     const updatedList = isNew ? [...this.state.solvedPuzzles, puzzleId] : this.state.solvedPuzzles;
     const newXp = isNew ? this.state.totalXp + xpReward : this.state.totalXp;
+    const newRating = Math.max(500, Math.min(2600, this.state.tacticalRating + ratingDelta));
 
     this.state = {
       ...this.state,
       solvedPuzzles: updatedList,
       totalXp: newXp,
+      tacticalRating: newRating,
       questProgress: {
         ...this.state.questProgress,
         q4: 1,
       },
     };
     this.saveState();
+  }
+
+  updateTacticalRating(delta: number) {
+    const newRating = Math.max(500, Math.min(2600, this.state.tacticalRating + delta));
+    this.state = {
+      ...this.state,
+      tacticalRating: newRating,
+    };
+    this.saveState();
+    return newRating;
+  }
+
+  setTacticalRating(rating: number) {
+    const clamped = Math.max(500, Math.min(2600, rating));
+    this.state = {
+      ...this.state,
+      tacticalRating: clamped,
+    };
+    this.saveState();
+    return clamped;
   }
 
   collectReward(questId: string, xpBonus: number = 50) {
@@ -156,6 +205,96 @@ class LearnStore {
       };
       this.saveState();
     }
+  }
+
+  recordPlacementGame(won: boolean, accuracy: number, moves: number = 15, blunders: number = 0) {
+    const nextGameNum = this.state.placementGamesCompleted + 1;
+    const newHistory: PlacementGameResult[] = [
+      ...this.state.placementHistory,
+      { gameNumber: nextGameNum, won, accuracy, moves, blunders },
+    ];
+    const gamesCompleted = Math.min(5, nextGameNum);
+
+    this.state = {
+      ...this.state,
+      placementGamesCompleted: gamesCompleted,
+      placementHistory: newHistory,
+      totalXp: this.state.totalXp + 35,
+    };
+
+    if (gamesCompleted >= 5) {
+      this.evaluatePlacement();
+    } else {
+      this.saveState();
+    }
+  }
+
+  evaluatePlacement() {
+    const history = this.state.placementHistory;
+    const avgAccuracy = history.length > 0
+      ? Math.round(history.reduce((sum, g) => sum + g.accuracy, 0) / history.length)
+      : 70;
+    const wins = history.filter((g) => g.won).length;
+
+    let tier: 'Beginner' | 'Pre-Intermediate' | 'Intermediate' | 'Advance' = 'Beginner';
+    let rating = 750;
+    let startLevel = 1;
+    const autoCompletedLevels: Record<number, number> = {};
+
+    if (avgAccuracy >= 82 || wins >= 4) {
+      tier = 'Advance';
+      rating = 1450;
+      startLevel = 21;
+      for (let i = 1; i <= 20; i++) {
+        autoCompletedLevels[i] = 3;
+      }
+    } else if (avgAccuracy >= 68 || wins >= 3) {
+      tier = 'Intermediate';
+      rating = 1180;
+      startLevel = 11;
+      for (let i = 1; i <= 10; i++) {
+        autoCompletedLevels[i] = 3;
+      }
+    } else if (avgAccuracy >= 52 || wins >= 2) {
+      tier = 'Pre-Intermediate';
+      rating = 950;
+      startLevel = 6;
+      for (let i = 1; i <= 5; i++) {
+        autoCompletedLevels[i] = 3;
+      }
+    } else {
+      tier = 'Beginner';
+      rating = 750;
+      startLevel = 1;
+      autoCompletedLevels[1] = 0;
+    }
+
+    this.state = {
+      ...this.state,
+      isPlacementComplete: true,
+      placementTier: tier,
+      tacticalRating: rating,
+      startingLevelId: startLevel,
+      completedLevels: {
+        ...this.state.completedLevels,
+        ...autoCompletedLevels,
+      },
+      totalXp: this.state.totalXp + 150,
+    };
+    this.saveState();
+  }
+
+  resetPlacement() {
+    this.state = {
+      ...this.state,
+      isPlacementComplete: false,
+      placementGamesCompleted: 0,
+      placementHistory: [],
+      placementTier: null,
+      startingLevelId: 1,
+      completedLevels: { 1: 0 },
+    };
+    this.saveState();
   }
 
   setCoachPersonality(p: 'Playful' | 'Calm') {

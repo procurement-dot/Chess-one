@@ -56,6 +56,7 @@ export function useGame(gameId: number | string) {
   const isAiThinkingRef = useRef<boolean>(false);
   const lastAiFenProcessedRef = useRef<string | null>(null);
   const turnStartedAtRef = useRef<number>(Date.now());
+  const lastClockTickRef = useRef<number>(Date.now());
 
   // Sync chess.js instance whenever FEN updates in the store
   useEffect(() => {
@@ -84,11 +85,50 @@ export function useGame(gameId: number | string) {
 
     async function loadInitialData() {
       try {
-        const [gameData, stateData, movesData] = await Promise.all([
-          gameService.getGame(gameId),
-          gameService.getGameState(gameId),
-          gameService.getMoves(gameId).catch(() => []),
-        ]);
+        let gameData: any = null;
+        let stateData: any = null;
+        let movesData: any = [];
+
+        try {
+          const results = await Promise.allSettled([
+            gameService.getGame(gameId),
+            gameService.getGameState(gameId),
+            gameService.getMoves(gameId),
+          ]);
+          if (results[0].status === 'fulfilled') gameData = results[0].value;
+          if (results[1].status === 'fulfilled') stateData = results[1].value;
+          if (results[2].status === 'fulfilled') movesData = results[2].value;
+        } catch {}
+
+        if (!gameData) {
+          const isBlack = (typeof window !== 'undefined' && window.sessionStorage?.getItem(`chess_game_color_${gameId}`) === 'BLACK');
+          gameData = {
+            id: Number(gameId),
+            gameId: Number(gameId),
+            status: 'ACTIVE',
+            gameType: 'PLAYER_VS_PLAYER',
+            fen: 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            currentTurn: 'WHITE',
+            whiteTimeMs: 300000,
+            blackTimeMs: 300000,
+            timeControl: '5+0',
+            whitePlayerId: isBlack ? null : (user?.id ? Number(user.id) : null),
+            blackPlayerId: isBlack ? (user?.id ? Number(user.id) : null) : null,
+            whitePlayer: isBlack ? null : (user?.name ? { id: Number(user.id), name: user.name } : null),
+            blackPlayer: isBlack ? (user?.name ? { id: Number(user.id), name: user.name } : null) : null,
+          };
+        }
+
+        if (!stateData) {
+          stateData = {
+            gameId: Number(gameId),
+            status: gameData.status || 'ACTIVE',
+            fen: gameData.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1',
+            currentTurn: gameData.currentTurn || 'WHITE',
+            whiteTimeMs: gameData.whiteTimeMs ?? 300000,
+            blackTimeMs: gameData.blackTimeMs ?? 300000,
+          };
+        }
 
         if (!isMounted) return;
 
@@ -217,10 +257,60 @@ export function useGame(gameId: number | string) {
     }
 
     if (game.blackPlayerId && !game.whitePlayerId) return { userColor: 'BLACK', currentUserId: activeId };
+
+    // If someone else is already playing White, any other player joining is Black!
+    if (game.whitePlayer && !isWhite) {
+      return { userColor: 'BLACK', currentUserId: activeId };
+    }
+
     return { userColor: 'WHITE', currentUserId: activeId };
   }, [store.currentGame, user, gameId]);
 
   const boardOrientation: 'w' | 'b' = userColor === 'BLACK' ? 'b' : 'w';
+
+  // Active opponent sync: while waiting for opponent in PVP, periodically refresh game metadata!
+  useEffect(() => {
+    if (!gameId || store.currentGame?.gameType === 'PLAYER_VS_AI') return;
+    const whiteName = store.currentGame?.whitePlayer?.name;
+    const blackName = store.currentGame?.blackPlayer?.name;
+    const isDummy = (n?: string | null) =>
+      !n ||
+      n === 'Nishigndha Karande' ||
+      n === 'Aarav Sharma' ||
+      n.startsWith('Player ') ||
+      n.startsWith('Player #') ||
+      n === 'You (White)' ||
+      n === 'You (Black)' ||
+      n.startsWith('Opponent ');
+
+    const hasBoth = Boolean(
+      whiteName &&
+      blackName &&
+      !isDummy(whiteName) &&
+      !isDummy(blackName) &&
+      whiteName.toLowerCase().trim() !== blackName.toLowerCase().trim()
+    );
+    if (hasBoth) return;
+
+    let isPolling = false;
+    const interval = setInterval(async () => {
+      if (isPolling) return;
+      isPolling = true;
+      try {
+        const fullGame = await gameService.getGame(gameId);
+        if (fullGame && (fullGame.whitePlayer || fullGame.blackPlayer)) {
+          gameStore.updateGamePlayers({
+            whitePlayer: fullGame.whitePlayer,
+            blackPlayer: fullGame.blackPlayer,
+          });
+        }
+      } catch {} finally {
+        isPolling = false;
+      }
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [gameId, store.currentGame?.whitePlayer?.name, store.currentGame?.blackPlayer?.name]);
 
   // Is it currently this player's turn?
   const isMyTurn = useMemo(() => {
@@ -268,18 +358,19 @@ export function useGame(gameId: number | string) {
     [gameId, userColor, currentUserId]
   );
 
-  // Active clock countdown interval
+  // Active high-precision clock countdown interval (smooth 100ms ticks for Bullet/Blitz)
   useEffect(() => {
     if (store.gameStatus !== 'ACTIVE') return;
 
+    lastClockTickRef.current = Date.now();
     const isAiGame = store.currentGame?.gameType === 'PLAYER_VS_AI';
 
     const timer = setInterval(() => {
-      if (isAiGame) {
-        const now = Date.now();
-        const elapsed = now - turnStartedAtRef.current;
-        turnStartedAtRef.current = now;
+      const now = Date.now();
+      const elapsed = Math.max(0, now - lastClockTickRef.current);
+      lastClockTickRef.current = now;
 
+      if (isAiGame) {
         const currentStore = gameStore.getState();
         if (currentStore.currentTurn === 'WHITE' && currentStore.whiteTimeMs !== null) {
           const nextTime = Math.max(0, currentStore.whiteTimeMs - elapsed);
@@ -297,17 +388,20 @@ export function useGame(gameId: number | string) {
           gameStore.updateClocks(currentStore.whiteTimeMs, nextTime);
         }
       } else {
-        gameStore.tickActiveClock(1000);
+        // High-precision smooth countdown for PVP match (no 2x speed jumping)
+        gameStore.tickActiveClock(elapsed);
       }
-    }, 500);
+    }, 100);
 
     return () => clearInterval(timer);
   }, [store.gameStatus, store.currentTurn, handleLocalTimeout]);
 
-  // Polling fallback: PVP only! Never poll during local AI games!
+  // Polling fallback: PVP only! Only poll when WebSocket is disconnected!
   useEffect(() => {
     if (!gameId || store.gameStatus !== 'ACTIVE') return;
     if (store.currentGame?.gameType === 'PLAYER_VS_AI') return;
+    // When WebSocket is actively connected, do not poll to avoid snapping or race conditions
+    if (store.connectionStatus === 'connected') return;
 
     let isPolling = false;
     const interval = setInterval(async () => {
@@ -344,10 +438,10 @@ export function useGame(gameId: number | string) {
       } finally {
         isPolling = false;
       }
-    }, 2000);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, [gameId, store.gameStatus]);
+  }, [gameId, store.gameStatus, store.connectionStatus]);
 
   // Synchronize timeout state with backend for PVP
   useEffect(() => {
@@ -403,7 +497,12 @@ export function useGame(gameId: number | string) {
 
     try {
       const difficulty = (game.aiDifficulty as any) || 'MEDIUM';
-      const bestMove = await localAiService.getBestMove(currentFen, difficulty);
+      const aiRemainingMs = aiColor === 'WHITE' ? currentStore.whiteTimeMs : currentStore.blackTimeMs;
+      const bestMove = await localAiService.getBestMove(currentFen, difficulty, {
+        gameId: game.id,
+        timeControl: game.timeControl,
+        remainingTimeMs: aiRemainingMs,
+      });
       if (!bestMove) return;
 
       // Ensure match is still active and it is still AI's turn
@@ -480,7 +579,7 @@ export function useGame(gameId: number | string) {
     if (store.currentTurn === aiColor) {
       const timer = setTimeout(() => {
         triggerAiMove();
-      }, 250);
+      }, 20);
       return () => clearTimeout(timer);
     }
   }, [store.currentTurn, store.gameStatus, userColor, triggerAiMove]);
@@ -496,7 +595,7 @@ export function useGame(gameId: number | string) {
         return;
       }
 
-      if (isSubmittingMove) {
+      if (isSubmittingMove || isSubmittingMoveRef.current) {
         return;
       }
 
@@ -627,8 +726,7 @@ export function useGame(gameId: number | string) {
         return;
       }
 
-      // Schedule AI turn immediately
-      triggerAiMove();
+      // AI turn is triggered cleanly and exclusively by useEffect on store.currentTurn
       return;
     }
 
@@ -651,11 +749,16 @@ export function useGame(gameId: number | string) {
     setIsSubmittingMove(true);
 
     try {
-      const response = await gameService.makeMove(gameId, {
-        from,
-        to,
-        promotion,
-      });
+      let response: any = null;
+      try {
+        response = await gameSocket.sendMove(gameId, { from, to, promotion });
+      } catch (wsErr) {
+        response = await gameService.makeMove(gameId, {
+          from,
+          to,
+          promotion,
+        });
+      }
 
       if (response) {
         if (response.whiteTimeMs !== undefined && response.blackTimeMs !== undefined) {

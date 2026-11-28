@@ -95,7 +95,10 @@ function processMoveClock(game, movingPlayerColor, moveTime = new Date()) {
     };
   }
 
-  const elapsedMs = Math.max(0, moveTime.getTime() - new Date(game.lastMoveAt).getTime());
+  const rawElapsedMs = Math.max(0, moveTime.getTime() - new Date(game.lastMoveAt).getTime());
+  // Lag compensation: 100ms grace for network latency so bullet players aren't flagged by internet ping
+  const lagCompensationMs = 100;
+  const elapsedMs = Math.max(20, rawElapsedMs - lagCompensationMs);
 
   if (movingPlayerColor === "WHITE") {
     const remaining = whiteTimeMs - elapsedMs;

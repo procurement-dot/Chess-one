@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../constants/chessone-theme';
+import { COLORS, SHADOWS } from '../constants/chessone-theme';
 import { StudentProgressReportModal } from '../components/modals/StudentProgressReportModal';
 import { DEMO_STUDENT_REPORT } from '../mock/schoolDemo';
 
@@ -17,7 +17,10 @@ export default function ProgressScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+          style={styles.backBtn}
+        >
           <Feather name="chevron-left" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Progress</Text>

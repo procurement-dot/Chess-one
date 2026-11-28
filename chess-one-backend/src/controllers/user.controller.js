@@ -1,7 +1,19 @@
 const prisma = require("../config/database");
-const { getOnlineUserIds, isUserOnline } = require("../config/socket");
+const { getOnlineUserIds, isUserOnline, getUserSocketCount } = require("../config/socket");
 const { success } = require("../utils/response");
 const userService = require("../services/user.service");
+const userStore = require("../store/user.store");
+
+function formatFriendlyName(name, email, id) {
+  if (name && !name.startsWith("Player ") && !name.startsWith("Player #") && name !== "Chess Player") {
+    return name;
+  }
+  if (email && email.includes("@") && !email.includes("local")) {
+    const userPart = email.split("@")[0].replace(/[._-]/g, " ");
+    return userPart.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+  return name || `Player ${id}`;
+}
 
 class UserController {
   async getMe(req, res, next) {
@@ -22,52 +34,104 @@ class UserController {
     }
   }
 
+  async getPresence(req, res, next) {
+    try {
+      const userId = parseInt(req.user?.id, 10);
+      return success(res, {
+        me: {
+          id: userId,
+          isOnline: isUserOnline(userId),
+          socketCount: getUserSocketCount(userId),
+        },
+        onlineUserIds: getOnlineUserIds(),
+      });
+    } catch (err) {
+      next(err);
+    }
+  }
+
   async getUsers(req, res, next) {
     try {
       const currentUserId = req.user?.id ? parseInt(req.user.id, 10) : null;
-      const onlineIds = getOnlineUserIds();
-      const onlineSet = new Set(onlineIds.map((id) => parseInt(id, 10)));
+      const allKnownUsers = new Map();
 
-      // Fetch registered users (exclude current logged in user)
-      const users = await prisma.user.findMany({
-        where: currentUserId ? { id: { not: currentUserId } } : {},
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          avatarUrl: true,
-          createdAt: true,
-        },
-        orderBy: { updatedAt: "desc" },
-      });
-
-      const formatted = users.map((u) => {
-        const isOnline = onlineSet.has(u.id);
-        return {
-          id: u.id,
-          name: u.name,
-          email: u.email,
-          avatarUrl: u.avatarUrl,
-          isOnline,
-          createdAt: u.createdAt,
-        };
-      });
-
-      // Sort: online users first, then alphabetically
-      formatted.sort((a, b) => {
-        if (a.isOnline === b.isOnline) {
-          return a.name.localeCompare(b.name);
+      // 1. Add all active users currently tracked in memory (e.g. connected via socket)
+      const storeUsers = userStore.getAllUsers();
+      for (const u of storeUsers) {
+        if (u && u.id) {
+          const numId = parseInt(u.id, 10);
+          allKnownUsers.set(numId, {
+            id: numId,
+            name: formatFriendlyName(u.name, u.email, numId),
+            email: u.email || null,
+            avatarUrl: u.avatarUrl || null,
+            role: u.role || "STUDENT",
+            rating: u.rating || 1200,
+          });
         }
-        return a.isOnline ? -1 : 1;
+      }
+
+      // 2. Fetch users from persistent database
+      try {
+        const dbUsers = await prisma.user.findMany({
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatarUrl: true,
+            role: true,
+            rating: true,
+          },
+          orderBy: { name: "asc" },
+        });
+
+        for (const u of dbUsers) {
+          allKnownUsers.set(u.id, {
+            id: u.id,
+            name: formatFriendlyName(u.name, u.email, u.id),
+            email: u.email || null,
+            avatarUrl: u.avatarUrl || null,
+            role: u.role || "STUDENT",
+            rating: u.rating || 1200,
+          });
+        }
+      } catch (dbErr) {
+        console.warn("[UserController] Database query failed or paused. Falling back to active users:", dbErr.message);
+        if (allKnownUsers.size === 0) {
+          return res.status(503).json({
+            success: false,
+            error: {
+              code: "DATABASE_UNAVAILABLE",
+              message: "Database connection unavailable. If using Supabase, please ensure your project is restored and active in the Supabase Dashboard.",
+            },
+          });
+        }
+      }
+
+      const formatted = Array.from(allKnownUsers.values()).map((u) => ({
+        id: u.id,
+        name: u.name,
+        avatarUrl: u.avatarUrl || null,
+        role: u.role || "STUDENT",
+        rating: u.rating || 1200,
+        isOnline: isUserOnline(u.id),
+        isMe: currentUserId === u.id,
+      }));
+
+      // Sort: online users first, then by name ascending
+      formatted.sort((a, b) => {
+        if (a.isOnline !== b.isOnline) return a.isOnline ? -1 : 1;
+        return (a.name || "").localeCompare(b.name || "");
       });
 
-      // Only return users who are genuinely online right now (no static offline accounts)
-      const onlineOnly = formatted.filter((u) => u.isOnline);
+      const onlineCount = formatted.filter((u) => u.isOnline).length;
+      const isOnlineOnlyQuery = req.path === "/online" || req.query.online === "true";
+      const resultUsers = isOnlineOnlyQuery ? formatted.filter((u) => u.isOnline) : formatted;
 
       return success(res, {
-        users: onlineOnly,
-        total: onlineOnly.length,
-        onlineCount: onlineOnly.length,
+        users: resultUsers,
+        total: resultUsers.length,
+        onlineCount,
       });
     } catch (err) {
       next(err);

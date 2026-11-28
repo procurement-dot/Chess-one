@@ -19,6 +19,7 @@ export const SIZES = {
   radiusCard: 18,
   radiusButton: 12,
   radiusChip: 10,
+  radiusInput: 12,
   fontHeading: 28,
   fontEyebrow: 12,
   fontBody: 15,

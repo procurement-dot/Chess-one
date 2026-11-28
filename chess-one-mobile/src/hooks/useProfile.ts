@@ -24,6 +24,10 @@ export function useProfile() {
       const data = await userService.getMyProfile();
       setProfile(data);
       authStore.updateUser({
+        id: String(data.id),
+        name: data.name,
+        email: data.email,
+        photo: data.avatarUrl || undefined,
         role: data.role,
         rating: data.rating,
         gamesPlayed: data.gamesPlayed,

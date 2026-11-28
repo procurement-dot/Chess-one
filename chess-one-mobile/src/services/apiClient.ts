@@ -1,34 +1,51 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
 import { Platform } from 'react-native';
 import { authStore } from '../store/authStore';
-
-let onUnauthorizedCallback: (() => void) | null = null;
-let isLoggingOut = false;
-
-/**
- * Register a global unauthorized callback (e.g. from _layout.tsx)
- * Used to avoid circular imports between apiClient, authStore, and router.
- */
-export function setOnUnauthorized(cb: () => void) {
-  onUnauthorizedCallback = cb;
-}
+import { roleStore } from '../features/roles/roleStore';
+import { toBackendRole } from '../utils/role.utils';
 
 /**
  * Resolve the backend API base URL based on platform and environment
  */
 export function getApiBaseUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_URL;
-  if (envUrl) {
+
+  // On web, detect whether running on a deployed domain (e.g. Netlify) vs local machine
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const hostname = window.location.hostname;
+    const isLocal =
+      hostname === 'localhost' ||
+      hostname === '127.0.0.1' ||
+      hostname.startsWith('192.168.') ||
+      hostname.startsWith('10.');
+
+    if (!isLocal) {
+      // Production web deployment (e.g. chess-one.netlify.app)
+      if (envUrl && envUrl.trim() && !envUrl.includes('localhost')) {
+        return envUrl.trim();
+      }
+      return 'https://chess-one.onrender.com';
+    }
+  }
+
+  // Local development / Native app
+  if (envUrl && envUrl.trim()) {
     if (Platform.OS === 'android' && envUrl.includes('localhost')) {
       return envUrl.replace('localhost', '10.0.2.2');
     }
-    return envUrl;
+    return envUrl.trim();
   }
 
-  // Fallback defaults for local development
+  if (typeof window !== 'undefined' && window.location?.hostname) {
+    const hostname = window.location.hostname;
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//${hostname}:4000`;
+  }
+
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:4000';
   }
+
   return 'http://localhost:4000';
 }
 
@@ -68,12 +85,36 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    try {
+      const activeRole = roleStore.getRole();
+      if (activeRole) {
+        config.headers['x-user-role'] = toBackendRole(activeRole);
+      }
+    } catch {}
+
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Response interceptor for 401 Unauthorized handling and error extraction
+export interface ForbiddenError extends Error {
+  code: 'FORBIDDEN';
+  status: 403;
+  response?: unknown;
+  userFriendlyMessage?: string;
+  errorCode?: string;
+}
+
+export function isForbiddenError(err: unknown): err is ForbiddenError {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code: unknown }).code === 'FORBIDDEN'
+  );
+}
+
+// Response interceptor for consistent error extraction
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<{ success?: boolean; error?: { code?: string; message?: string; details?: any } }>) => {
@@ -83,30 +124,37 @@ apiClient.interceptors.response.use(
       error.message ||
       'An unexpected network error occurred. Please check your connection.';
 
-    (error as any).userFriendlyMessage = errorMessage;
-    (error as any).errorCode = errorData?.code;
+    if (error.response?.status === 403 && errorData?.code === 'FORBIDDEN') {
+      const serverMessage = errorData.message || 'You do not have permission to do this';
+      const forbiddenErr = new Error(serverMessage) as ForbiddenError;
+      forbiddenErr.code = 'FORBIDDEN';
+      forbiddenErr.status = 403;
+      forbiddenErr.response = error.response;
+      forbiddenErr.userFriendlyMessage = serverMessage;
+      forbiddenErr.errorCode = 'FORBIDDEN';
+      return Promise.reject(forbiddenErr);
+    }
 
-    const status = error.response?.status;
-    const url = error.config?.url || '';
+    // Augment error with server message for cleaner UI display
+    const augmentedError = error as AxiosError & { userFriendlyMessage?: string; errorCode?: string };
+    augmentedError.userFriendlyMessage = errorMessage;
+    augmentedError.errorCode = errorData?.code;
 
-    // Do NOT auto-logout on 401 from /api/auth/google or /api/auth/dev-login
-    const isAuthLoginRoute = url.includes('/api/auth/google') || url.includes('/api/auth/dev-login');
+    if (error.response?.status === 401) {
+      console.warn('[apiClient] 401 Unauthorized response for:', error.config?.url);
+      const isTokenExpired =
+        errorData?.code === 'TOKEN_EXPIRED' ||
+        errorMessage?.includes('Token has expired');
 
-    if (status === 401 && !isAuthLoginRoute) {
-      const code = errorData?.code;
-      if (!code || code === 'UNAUTHORIZED' || code === 'TOKEN_EXPIRED') {
-        if (!isLoggingOut) {
-          isLoggingOut = true;
-          try {
-            if (onUnauthorizedCallback) {
-              onUnauthorizedCallback();
-            } else {
-              authStore.clearAuth();
-            }
-          } finally {
-            setTimeout(() => {
-              isLoggingOut = false;
-            }, 3000);
+      if (isTokenExpired && authStore.getState().isAuthenticated) {
+        console.warn('[apiClient] Stored token has expired. Resetting session.');
+        authStore.clearAuth();
+        if (typeof window !== 'undefined') {
+          if (window.sessionStorage) {
+            window.sessionStorage.setItem('auth_notice', 'Session expired, please sign in again');
+          }
+          if (window.location && !window.location.pathname.includes('/login')) {
+            window.location.href = '/login';
           }
         }
       }

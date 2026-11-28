@@ -1,4 +1,4 @@
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
+import { COLORS } from '../../constants/chessone-theme';
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
@@ -6,6 +6,8 @@ interface GameActionsProps {
   onOfferDraw: () => void;
   onResign: () => void;
   onFlipBoard?: () => void;
+  onAbort?: () => void;
+  isTournament?: boolean;
   disabled?: boolean;
 }
 
@@ -13,6 +15,8 @@ export const GameActions: React.FC<GameActionsProps> = ({
   onOfferDraw,
   onResign,
   onFlipBoard,
+  onAbort,
+  isTournament = false,
   disabled = false,
 }) => {
   return (
@@ -26,6 +30,18 @@ export const GameActions: React.FC<GameActionsProps> = ({
         >
           <Text style={styles.buttonIcon}>🔄</Text>
           <Text style={styles.flipButtonText}>Flip</Text>
+        </TouchableOpacity>
+      ) : null}
+
+      {!isTournament && onAbort ? (
+        <TouchableOpacity
+          style={[styles.actionButton, styles.abortButton, disabled && styles.disabledButton]}
+          activeOpacity={0.7}
+          onPress={onAbort}
+          disabled={disabled}
+        >
+          <Text style={styles.buttonIcon}>⏹️</Text>
+          <Text style={styles.abortButtonText}>Abort</Text>
         </TouchableOpacity>
       ) : null}
 
@@ -82,6 +98,15 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#334155',
+  },
+  abortButton: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  abortButtonText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#B45309',
   },
   drawButton: {
     backgroundColor: COLORS.textHeading,

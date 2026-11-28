@@ -3,14 +3,19 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "build": "prisma generate",
     "start": "node src/server.js",
     "dev": "nodemon src/server.js",
     "seed": "node src/seed.js",
     "test:game": "node src/test-live-match.js",
     "test:auth": "node src/test-auth-and-games.js",
     "test:rating": "node src/test-rating.js",
-    "test:phase0": "node tests/phase0.test.js",
-    "test:class": "node tests/class.test.js",
+    "seed:rbac": "node src/scripts/seed-rbac-users.js",
+    "test:rbac": "node src/test-rbac.js",
+    "test:tournaments": "node src/test-tournaments.js",
+    "test:pairing": "node src/test-pairing.js",
+    "test:tournament-start": "node src/test-tournament-start.js",
+    "test:stockfish": "node src/test-stockfish.js",
     "test": "node src/test-live-match.js && node src/test-auth-and-games.js"
   },
   "keywords": [],
@@ -27,12 +32,13 @@
     "google-auth-library": "^10.9.1",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.23.1",
+    "prisma": "^7.10.0",
     "socket.io": "^4.8.4",
+    "stockfish": "^19.0.1",
     "zod": "^4.6.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.14",
-    "prisma": "^7.10.0",
     "socket.io-client": "^4.8.4",
     "ts-node-dev": "^2.0.0",
     "typescript": "^7.0.2"

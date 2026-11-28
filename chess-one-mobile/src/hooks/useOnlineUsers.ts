@@ -2,27 +2,30 @@ import { useState, useEffect, useCallback } from 'react';
 import { gameService } from '../services/game.service';
 import { OnlineUser } from '../types/game.types';
 import { gameSocket } from '../socket/game.socket';
-import { useAuthStore } from '../store/authStore';
+
+export type OnlineUsersStatus = 'idle' | 'loading' | 'success' | 'error';
 
 export function useOnlineUsers(enabled: boolean = true) {
-  const { chessOneToken } = useAuthStore();
-  const isAuthorized = enabled && Boolean(chessOneToken);
+  const isAuthorized = enabled;
 
   const [users, setUsers] = useState<OnlineUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState<OnlineUsersStatus>('idle');
 
   const fetchUsers = useCallback(async () => {
     if (!isAuthorized) return;
     try {
       setIsLoading(true);
       setError(null);
+      setStatus('loading');
       const data = await gameService.getUsers();
       setUsers(data);
+      setStatus('success');
     } catch (err: any) {
-      if (err.response?.status !== 401) {
-        setError(err.userFriendlyMessage || err.message || 'Failed to load players');
-      }
+      const msg = err.userFriendlyMessage || err.message || 'Failed to load players';
+      setError(msg);
+      setStatus('error');
     } finally {
       setIsLoading(false);
     }
@@ -31,32 +34,75 @@ export function useOnlineUsers(enabled: boolean = true) {
   useEffect(() => {
     if (!isAuthorized) {
       setUsers([]);
+      setStatus('idle');
       return;
     }
 
     fetchUsers();
 
-    // Listen to real-time online socket updates
-    const unsubOnline = gameSocket.onOnlineUsersUpdate((onlineIds: number[]) => {
-      const onlineSet = new Set(onlineIds.map((id) => Number(id)));
-      setUsers((prev) =>
-        prev
-          .map((u) => ({
-            ...u,
-            isOnline: onlineSet.has(u.id),
-          }))
-          .sort((a, b) => {
-            if (a.isOnline === b.isOnline) return a.name.localeCompare(b.name);
-            return a.isOnline ? -1 : 1;
-          })
-      );
+    // Listen to real-time online socket updates and merge newly active users immediately
+    const unsubOnline = gameSocket.onOnlineUsersUpdate(
+      (onlineUserIds: number[], onlineUsers?: OnlineUser[]) => {
+        const onlineSet = new Set(onlineUserIds.map((id) => Number(id)));
+        setUsers((prev) => {
+          const map = new Map<number, OnlineUser>();
+
+          for (const u of prev) {
+            map.set(Number(u.id), {
+              ...u,
+              isOnline: onlineSet.has(Number(u.id)),
+            });
+          }
+
+          if (onlineUsers && Array.isArray(onlineUsers)) {
+            for (const ou of onlineUsers) {
+              const numId = Number(ou.id);
+              if (map.has(numId)) {
+                const existing = map.get(numId)!;
+                const bestName =
+                  ou.name && !ou.name.startsWith('Player')
+                    ? ou.name
+                    : existing.name && !existing.name.startsWith('Player')
+                    ? existing.name
+                    : ou.name || existing.name;
+
+                map.set(numId, { ...existing, ...ou, name: bestName, isOnline: true });
+              } else {
+                map.set(numId, { ...ou, isOnline: true });
+              }
+            }
+          }
+
+          return Array.from(map.values());
+        });
+      }
+    );
+
+    // Automatically refetch users when the socket reconnects
+    const unsubReconnect = gameSocket.onReconnected(() => {
+      fetchUsers();
     });
 
-    // Periodic refresh every 10s
-    const timer = setInterval(fetchUsers, 10000);
+    // Refetch when page becomes visible on mobile web (switching back from lock/browser tab)
+    let handleVisibility: (() => void) | null = null;
+    if (typeof document !== 'undefined') {
+      handleVisibility = () => {
+        if (document.visibilityState === 'visible') {
+          fetchUsers();
+        }
+      };
+      document.addEventListener('visibilitychange', handleVisibility);
+    }
+
+    // Periodic refresh every 20s to capture newly registered users
+    const timer = setInterval(fetchUsers, 20000);
 
     return () => {
       unsubOnline();
+      unsubReconnect();
+      if (handleVisibility && typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibility);
+      }
       clearInterval(timer);
     };
   }, [isAuthorized, fetchUsers]);
@@ -68,6 +114,7 @@ export function useOnlineUsers(enabled: boolean = true) {
     onlineCount,
     isLoading,
     error,
+    status,
     refresh: fetchUsers,
   };
 }

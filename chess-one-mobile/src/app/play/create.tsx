@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import {
   View,
@@ -21,6 +21,7 @@ import { CustomWheelPicker } from '../../components/ui/CustomWheelPicker';
 import { InviteFriendModal } from '../../components/game/InviteFriendModal';
 import { OutgoingChallengeModal } from '../../components/game/OutgoingChallengeModal';
 import { MatchStartVsModal } from '../../components/game/MatchStartVsModal';
+import { ConnectionStatusPill } from '../../components/ui/ConnectionStatusPill';
 import { useOnlineUsers } from '../../hooks/useOnlineUsers';
 import { authStore, useAuthStore } from '../../store/authStore';
 import { gameStore } from '../../store/gameStore';
@@ -37,7 +38,7 @@ const TIME_CONTROLS = [
 export default function CreateMatchScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ mode?: string }>();
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, user } = useAuthStore();
 
   const initialMode: GameType =
     params.mode === 'ai' ? 'PLAYER_VS_AI' : 'PLAYER_VS_PLAYER';
@@ -48,13 +49,28 @@ export default function CreateMatchScreen() {
   const [aiDifficulty, setAiDifficulty] = useState<AIDifficulty>('MEDIUM');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Online users hook (returns only genuinely online players)
+  // Online users hook (returns dynamic active players)
   const {
-    users: onlineUsers,
+    users: allUsers,
     onlineCount,
     isLoading: isLoadingUsers,
     refresh: refreshOnlineUsers,
-  } = useOnlineUsers(isAuthenticated);
+  } = useOnlineUsers(true);
+
+  const currentUserId = user?.id ? parseInt(String(user.id), 10) : null;
+  const otherUsers = useMemo(
+    () =>
+      allUsers.filter((u: OnlineUser) => {
+        if (currentUserId && Number(u.id) === currentUserId) return false;
+        if ((u as any).isMe) return false;
+        return true;
+      }),
+    [allUsers, currentUserId]
+  );
+  const onlineOtherUsers = useMemo(
+    () => otherUsers.filter((u: OnlineUser) => Boolean(u.isOnline)),
+    [otherUsers]
+  );
 
   // Invite modal state
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
@@ -150,6 +166,17 @@ export default function CreateMatchScreen() {
 
   // Handle 1-Click invite from the InviteFriendModal
   const handleInviteOnlineFriend = async (target: OnlineUser) => {
+    if (!isAuthenticated) {
+      Alert.alert(
+        'Sign In Required',
+        'Please sign in to send game invitations to players.',
+        [
+          { text: 'Go to Login', onPress: () => router.push('/login' as any) },
+          { text: 'Cancel', style: 'cancel' },
+        ]
+      );
+      return;
+    }
     setInvitingUserId(target.id);
     setInviteModalVisible(false);
     setOutgoingTarget(target);
@@ -332,10 +359,7 @@ export default function CreateMatchScreen() {
               style={styles.inviteFriendCard}
               activeOpacity={0.8}
               onPress={() => {
-                router.push({
-                  pathname: '/community',
-                  params: { timeControl },
-                } as any);
+                setInviteModalVisible(true);
               }}
             >
               <View style={styles.inviteFriendIconBox}>
@@ -344,8 +368,8 @@ export default function CreateMatchScreen() {
               <View style={styles.inviteFriendTextBox}>
                 <Text style={styles.inviteFriendTitle}>Invite Online Friend</Text>
                 <Text style={styles.inviteFriendSub}>
-                  {onlineCount > 0
-                    ? `🟢 ${onlineCount} friend${onlineCount > 1 ? 's' : ''} currently online`
+                  {onlineOtherUsers.length > 0
+                    ? `🟢 ${onlineOtherUsers.length} friend${onlineOtherUsers.length > 1 ? 's' : ''} currently online`
                     : 'Check online players & challenge directly'}
                 </Text>
               </View>
@@ -380,7 +404,8 @@ export default function CreateMatchScreen() {
       {/* Invite Online Friend Modal */}
       <InviteFriendModal
         visible={inviteModalVisible}
-        onlineUsers={onlineUsers}
+        onlineUsers={onlineOtherUsers}
+        allUsers={otherUsers}
         isLoading={isLoadingUsers}
         timeControl={timeControl}
         invitingUserId={invitingUserId}

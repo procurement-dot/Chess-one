@@ -54,7 +54,7 @@ function setStoredString(key: string, val: string | null) {
   } catch {}
 }
 
-export function extractUserFromToken(token: string | null): { id: string; email?: string } | null {
+export function extractUserFromToken(token: string | null): { id: string; email?: string; name?: string } | null {
   if (!token) return null;
   try {
     const parts = token.split('.');
@@ -68,6 +68,7 @@ export function extractUserFromToken(token: string | null): { id: string; email?
         return {
           id: String(id),
           email: payload.email,
+          name: payload.name,
         };
       }
     }
@@ -85,9 +86,16 @@ function getStoredUser(): GoogleUser | null {
     if (user) {
       if (tokenUser?.id) user.id = tokenUser.id;
       if (!user.email && tokenUser?.email) user.email = tokenUser.email;
-      // If cached user has no role, treat as "PLAYER"
-      if (!user.role) {
-        user.role = 'PLAYER';
+      if (!user.name || user.name?.startsWith('Player #') || user.name?.startsWith('Player ') || user.name === 'Chess Player') {
+        if (tokenUser?.name && !tokenUser.name.startsWith('Player')) {
+          user.name = tokenUser.name;
+        } else if (user.email && user.email.includes('@') && !user.email.includes('local')) {
+          const prefix = user.email.split('@')[0].replace(/[._-]/g, ' ');
+          user.name = prefix.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        } else if (tokenUser?.email && tokenUser.email.includes('@') && !tokenUser.email.includes('local')) {
+          const prefix = tokenUser.email.split('@')[0].replace(/[._-]/g, ' ');
+          user.name = prefix.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+        }
       }
       return user;
     }
@@ -95,8 +103,7 @@ function getStoredUser(): GoogleUser | null {
       return {
         id: tokenUser.id,
         email: tokenUser.email || '',
-        name: tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
-        role: 'PLAYER',
+        name: tokenUser.name || tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
       };
     }
     return user;
@@ -222,7 +229,13 @@ class AuthStore {
     idToken: string | null;
     chessOneToken?: string | null;
   }) {
-    const token = chessOneToken || idToken || this.state.chessOneToken;
+    // Only valid backend JWT should populate chessOneToken. Never use Google ID token.
+    const token =
+      chessOneToken ||
+      (this.state.chessOneToken && this.state.chessOneToken !== idToken
+        ? this.state.chessOneToken
+        : null);
+
     let finalUser = user || this.state.user;
     const tokenUser = extractUserFromToken(token);
     if (tokenUser && finalUser) {
@@ -230,18 +243,26 @@ class AuthStore {
         ...finalUser,
         id: tokenUser.id,
         email: finalUser.email || tokenUser.email,
-        role: finalUser.role || 'PLAYER',
-      };
-    } else if (finalUser && !finalUser.role) {
-      finalUser = {
-        ...finalUser,
-        role: 'PLAYER',
       };
     }
 
-    if (token) setStoredString(STORAGE_TOKEN_KEY, token);
-    if (finalUser) setStoredString(STORAGE_USER_KEY, JSON.stringify(finalUser));
-    if (idToken) setStoredString(STORAGE_GOOGLE_KEY, idToken);
+    if (token) {
+      setStoredString(STORAGE_TOKEN_KEY, token);
+      AsyncStorage.setItem(STORAGE_TOKEN_KEY, token).catch(() => {});
+    } else {
+      setStoredString(STORAGE_TOKEN_KEY, null);
+      AsyncStorage.removeItem(STORAGE_TOKEN_KEY).catch(() => {});
+    }
+
+    if (finalUser) {
+      setStoredString(STORAGE_USER_KEY, JSON.stringify(finalUser));
+      AsyncStorage.setItem(STORAGE_USER_KEY, JSON.stringify(finalUser)).catch(() => {});
+      AsyncStorage.setItem('@chessone_user', JSON.stringify(finalUser)).catch(() => {});
+    }
+    if (idToken) {
+      setStoredString(STORAGE_GOOGLE_KEY, idToken);
+      AsyncStorage.setItem(STORAGE_GOOGLE_KEY, idToken).catch(() => {});
+    }
 
     this.state = {
       isAuthenticated: Boolean(token),
@@ -283,18 +304,31 @@ class AuthStore {
     const tokenUser = extractUserFromToken(chessOneToken);
     let updatedUser = this.state.user;
     if (tokenUser && updatedUser) {
+      const bestName =
+        updatedUser.name && !updatedUser.name.startsWith('Player')
+          ? updatedUser.name
+          : tokenUser.name && !tokenUser.name.startsWith('Player')
+          ? tokenUser.name
+          : updatedUser.name;
+
       updatedUser = {
         ...updatedUser,
         id: tokenUser.id,
+        name: bestName,
         email: updatedUser.email || tokenUser.email,
         role: updatedUser.role || 'PLAYER',
       };
     } else if (tokenUser && !updatedUser) {
+      let resolvedName = tokenUser.name && !tokenUser.name.startsWith('Player') ? tokenUser.name : null;
+      if (!resolvedName && tokenUser.email && tokenUser.email.includes('@') && !tokenUser.email.includes('local')) {
+        const prefix = tokenUser.email.split('@')[0].replace(/[._-]/g, ' ');
+        resolvedName = prefix.split(' ').map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+      }
+
       updatedUser = {
         id: tokenUser.id,
         email: tokenUser.email || '',
-        name: tokenUser.email?.split('@')[0] || `Player ${tokenUser.id}`,
-        role: 'PLAYER',
+        name: resolvedName || `Player ${tokenUser.id}`,
       };
     }
     if (updatedUser) {
@@ -344,50 +378,8 @@ class AuthStore {
     this.notify();
   }
 
-  /**
-   * Fast 1-click Demo Login for UI/UX testing
-   */
-  loginAsDemoUser(role: 'COACH' | 'PLAYER' | 'ADMIN' = 'COACH') {
-    const demoUser: GoogleUser = {
-      id: role === 'COACH' ? '140' : role === 'ADMIN' ? '86' : '1',
-      name: role === 'COACH' ? 'Coach One' : role === 'ADMIN' ? 'Admin User' : 'Player One',
-      email:
-        role === 'COACH'
-          ? 'coach1@chessone.local'
-          : role === 'ADMIN'
-          ? 'admin@chessone.local'
-          : 'player1@chessone.local',
-      role,
-      onboardingDone: true,
-      rating: 1200,
-      gamesPlayed: 10,
-    };
-
-    let b64Payload = '';
-    try {
-      const json = JSON.stringify({
-        userId: Number(demoUser.id),
-        email: demoUser.email,
-        role: demoUser.role,
-      });
-      if (typeof window !== 'undefined' && window.btoa) {
-        b64Payload = window.btoa(json);
-      } else if (typeof (globalThis as any).btoa === 'function') {
-        b64Payload = (globalThis as any).btoa(json);
-      } else {
-        b64Payload = 'eyJ1c2VySWQiOjEsInJvbGUiOiJDT0FDSCJ9';
-      }
-    } catch {
-      b64Payload = 'eyJ1c2VySWQiOjEsInJvbGUiOiJDT0FDSCJ9';
-    }
-
-    const mockToken = `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.${b64Payload}.demoSignature`;
-
-    this.setGoogleAuth({
-      user: demoUser,
-      idToken: mockToken,
-      chessOneToken: mockToken,
-    });
+  logout() {
+    this.clearAuth();
   }
 }
 

@@ -6,6 +6,7 @@ import { learnStore, useLearnStore } from '../../features/learn/learnStore';
 import { getLevelById, getNextLevelId, LEARN_LEVELS } from '../../data/learn';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Feather } from '@expo/vector-icons';
+import { LessonVideoPlayer } from '../../components/learn/LessonVideoPlayer';
 
 export default function LevelScreen() {
   const router = useRouter();
@@ -49,7 +50,7 @@ export default function LevelScreen() {
 
   return (
     <View style={styles.container}>
-      <AppHeader title={`Level ${level.id}`} showBack />
+      <AppHeader title={`Level ${level.id}`} showBack showLogo />
 
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.headerBox}>
@@ -59,6 +60,11 @@ export default function LevelScreen() {
             <Text style={styles.title}>{level.title}</Text>
           </View>
         </View>
+
+        {/* Lesson Video (When available for the level) */}
+        {level.video ? (
+          <LessonVideoPlayer video={level.video} />
+        ) : null}
 
         {/* Lesson Rule Card */}
         <View style={styles.whiteCard}>

@@ -9,8 +9,27 @@ export const ALLOWED_ROLES: UserRole[] = ['Student', 'Coach', 'School', 'Organiz
 
 const ROLE_STORAGE_KEY = 'chess_one_role';
 
+function getInitialRole(): UserRole {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    try {
+      const saved = window.localStorage.getItem(ROLE_STORAGE_KEY);
+      if (saved && (ALLOWED_ROLES.includes(saved as UserRole) || saved === 'Organiser')) {
+        return saved === 'Organiser' ? 'Organizer' : (saved as UserRole);
+      }
+      const savedUser = window.localStorage.getItem('chess_one_user');
+      if (savedUser) {
+        const parsed = JSON.parse(savedUser);
+        if (parsed?.role) {
+          return toAppRole(parsed.role);
+        }
+      }
+    } catch {}
+  }
+  return 'Student';
+}
+
 class RoleStore {
-  private role: UserRole = 'Student';
+  private role: UserRole = getInitialRole();
   private listeners: Set<() => void> = new Set();
   private isLoaded: boolean = false;
 
@@ -28,11 +47,16 @@ class RoleStore {
       if (savedRole && ALLOWED_ROLES.includes(savedRole as UserRole)) {
         this.role = savedRole as UserRole;
       } else {
-        this.role = 'Student';
+        // If nothing was saved in AsyncStorage, keep current (which might have come from localStorage/chess_one_user)
+        if (!this.role) {
+          this.role = 'Student';
+        }
       }
     } catch (e) {
       console.warn('Failed to load role:', e);
-      this.role = 'Student';
+      if (!this.role) {
+        this.role = 'Student';
+      }
     } finally {
       this.isLoaded = true;
       this.notify();
@@ -57,6 +81,13 @@ class RoleStore {
       this.role = normalised;
     }
     this.notify();
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.setItem(ROLE_STORAGE_KEY, this.role);
+      } catch {}
+    }
+
     try {
       await AsyncStorage.setItem(ROLE_STORAGE_KEY, this.role);
     } catch (e) {

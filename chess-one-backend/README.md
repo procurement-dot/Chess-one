@@ -32,6 +32,7 @@ Authoritative, real-time Live Chess Match backend for **ChessOne**, powering mob
    - Socket.IO broadcasts moves, clock updates, start events, resignations, and connection drops in real time.
 3. **Database Durability**: All states, FEN positions, PGN logs, and clock records are stored in PostgreSQL via Prisma. A disconnected client recovers full state via `GET /api/games/:gameId/state`.
 4. **Integer IDs**: All primary and foreign keys use standard auto-incrementing integers (`Int`).
+5. **Deployment & Free Plan Resiliency**: On Render free plan, instances spin down after 15 minutes of inactivity (wiping in-memory socket presence). Clients configure `reconnectionAttempts: Infinity`, `tryAllTransports: true`, and automatic `presence:ping` heartbeats, enabling zero-refresh automatic recovery as soon as the instance spins back up.
 
 ---
 

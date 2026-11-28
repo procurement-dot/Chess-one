@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
+import { AppState, AppStateStatus, Platform, useColorScheme } from 'react-native';
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { useProfile } from '../hooks/useProfile';
-import { setOnUnauthorized } from '../services/apiClient';
-import { authStore } from '../store/authStore';
+import { authStore, useAuthStore } from '../store/authStore';
+import { gameSocket } from '../socket/game.socket';
+import { GlobalInvitationWatcher } from '../components/game/GlobalInvitationWatcher';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -15,18 +16,75 @@ function ProfileSynchronizer() {
   return null;
 }
 
-function AuthLifecycleManager() {
+function RootPresenceWatcher() {
   const router = useRouter();
+  const { chessOneToken, isAuthenticated } = useAuthStore();
 
+  // Keep socket auth in sync with app auth state
   useEffect(() => {
-    setOnUnauthorized(() => {
-      authStore.clearAuth();
-      router.replace('/');
+    if (isAuthenticated && chessOneToken) {
+      gameSocket.updateAuth(chessOneToken);
+    } else {
+      gameSocket.disconnect();
+    }
+  }, [isAuthenticated, chessOneToken]);
+
+  // Handle auth notifications from socket (never log user out of app on socket errors)
+  useEffect(() => {
+    const unsubAuthErr = gameSocket.onAuthError((err: any) => {
+      console.warn('[RootPresenceWatcher] Socket auth error (retrying with current auth):', err);
+      const token = authStore.getState().chessOneToken;
+      if (token) {
+        gameSocket.updateAuth(token);
+      }
     });
 
-    // On app start: if chess_one_token exists, call GET /api/auth/me
-    authStore.syncCurrentUser();
-  }, [router]);
+    return () => {
+      unsubAuthErr();
+    };
+  }, []);
+
+  // Comprehensive mobile web & native presence lifecycle
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      const handleWebActive = () => {
+        if (typeof document !== 'undefined' && document.visibilityState === 'hidden') return;
+        if (authStore.getState().isAuthenticated) {
+          gameSocket.ensureConnected();
+        }
+      };
+
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible' && authStore.getState().isAuthenticated) {
+          gameSocket.ensureConnected();
+        }
+      };
+
+      window.addEventListener('pageshow', handleWebActive);
+      window.addEventListener('online', handleWebActive);
+      window.addEventListener('focus', handleWebActive);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+
+      return () => {
+        window.removeEventListener('pageshow', handleWebActive);
+        window.removeEventListener('online', handleWebActive);
+        window.removeEventListener('focus', handleWebActive);
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      };
+    } else {
+      // Native platforms
+      const handleAppStateChange = (nextAppState: AppStateStatus) => {
+        if (nextAppState === 'active' && authStore.getState().isAuthenticated) {
+          gameSocket.ensureConnected();
+        }
+      };
+
+      const sub = AppState.addEventListener('change', handleAppStateChange);
+      return () => {
+        sub.remove();
+      };
+    }
+  }, []);
 
   return null;
 }
@@ -38,15 +96,9 @@ export default function RootLayout() {
       <AnimatedSplashOverlay />
       <AuthLifecycleManager />
       <ProfileSynchronizer />
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="classes/index" options={{ headerShown: false }} />
-        <Stack.Screen name="classes/create" options={{ headerShown: false }} />
-        <Stack.Screen name="classes/join" options={{ headerShown: false }} />
-        <Stack.Screen name="classes/[classId]/index" options={{ headerShown: false }} />
-        <Stack.Screen name="classes/[classId]/members" options={{ headerShown: false }} />
-        <Stack.Screen name="classes/[classId]/edit" options={{ headerShown: false }} />
-      </Stack>
+      <RootPresenceWatcher />
+      <GlobalInvitationWatcher />
+      <Stack screenOptions={{ headerShown: false }} />
     </ThemeProvider>
   );
 }

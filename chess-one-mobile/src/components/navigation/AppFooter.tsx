@@ -43,7 +43,7 @@ export const AppFooter: React.FC<AppFooterProps> = ({ activeTab = 'home' }) => {
       highlightIds: ['play', 'create', 'join'],
       label: 'Play',
       icon: 'play-circle',
-      route: '/play',
+      route: '/play/create',
       badgeCount: pendingCount,
     },
     {

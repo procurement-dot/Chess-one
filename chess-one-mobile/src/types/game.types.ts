@@ -100,6 +100,12 @@ export interface Game {
   finishedAt?: string | null;
   invitations?: GameInvitation[];
   moves?: GameMove[];
+  tournament?: {
+    id: number;
+    name: string;
+    roundNumber: number;
+    boardNumber: number;
+  } | null;
 }
 
 export interface GameState {
@@ -118,6 +124,12 @@ export interface GameState {
   blackRatingChange?: number | null;
   drawOfferFrom?: PlayerColor | null;
   moveCount?: number;
+  tournament?: {
+    id: number;
+    name: string;
+    roundNumber: number;
+    boardNumber: number;
+  } | null;
 }
 
 export interface CreateGameRequest {

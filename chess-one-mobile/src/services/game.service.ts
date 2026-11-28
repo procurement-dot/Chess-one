@@ -120,6 +120,34 @@ class GameService {
   }
 
   /**
+   * Request Stockfish engine move from backend
+   * POST /api/games/:gameId/ai-move
+   */
+  async getAiMove(
+    gameId: number | string,
+    payload: {
+      fen: string;
+      difficulty: string;
+      timeControl?: string;
+      remainingTimeMs?: number | null;
+    }
+  ): Promise<{ from: string; to: string; promotion?: string; san: string }> {
+    const res = await apiClient.post<any>(`/api/games/${gameId}/ai-move`, payload, {
+      timeout: 5000,
+    });
+    const data = res.data;
+    if (data?.data) {
+      return data.data;
+    }
+    return {
+      from: data.from,
+      to: data.to,
+      promotion: data.promotion,
+      san: data.san,
+    };
+  }
+
+  /**
    * Get all completed moves for a game
    * GET /api/games/:gameId/moves
    */
@@ -214,9 +242,13 @@ class GameService {
    * Request Grandmaster AI Review for a match
    * POST /api/games/:gameId/ai-review
    */
-  async getAiReview(gameId: number | string): Promise<AiReviewResponse> {
+  async getAiReview(
+    gameId: number | string,
+    body?: { moves?: any[]; fen?: string }
+  ): Promise<AiReviewResponse> {
     const res = await apiClient.post<{ success: boolean; review: AiReviewResponse }>(
-      `/api/games/${gameId}/ai-review`
+      `/api/games/${gameId}/ai-review`,
+      body || {}
     );
     return res.data.review;
   }
@@ -228,6 +260,22 @@ class GameService {
   async getUsers(): Promise<OnlineUser[]> {
     const res = await apiClient.get<{ success: boolean; users: OnlineUser[] }>('/api/users');
     return res.data.users || [];
+  }
+
+  /**
+   * Fetch current socket and presence status for self and all online users
+   * GET /api/users/presence
+   */
+  async getPresence(): Promise<{
+    me: { id: number; isOnline: boolean; socketCount: number };
+    onlineUserIds: number[];
+  }> {
+    const res = await apiClient.get<{
+      success: boolean;
+      me: { id: number; isOnline: boolean; socketCount: number };
+      onlineUserIds: number[];
+    }>('/api/users/presence');
+    return res.data;
   }
 
   /**

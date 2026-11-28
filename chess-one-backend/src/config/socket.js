@@ -1,5 +1,12 @@
+const userStore = require("../store/user.store");
+
 let io = null;
-const onlineUsers = new Map(); // userId -> active socket count
+
+// Authoritative user presence: Map<userId: number, Set<socketId: string>>
+const userSockets = new Map();
+// Disconnect grace period timeouts: Map<userId: number, NodeJS.Timeout>
+const disconnectTimeouts = new Map();
+const GRACE_PERIOD_MS = 25000;
 
 /**
  * Set the global Socket.IO instance
@@ -16,42 +23,143 @@ function getIO() {
 }
 
 /**
- * Track a user socket connection
+ * Register a user socket connection
+ * Cancels any active disconnect grace timeout.
+ * Broadcasts users:online-update if this user was not already online.
  */
-function trackUserConnected(userId) {
+function registerUserSocket(userId, socketId) {
   const numericId = parseInt(userId, 10);
-  if (isNaN(numericId)) return;
-  const current = onlineUsers.get(numericId) || 0;
-  onlineUsers.set(numericId, current + 1);
+  if (isNaN(numericId) || !socketId) return;
+
+  // Cancel any pending disconnect grace timeout
+  if (disconnectTimeouts.has(numericId)) {
+    clearTimeout(disconnectTimeouts.get(numericId));
+    disconnectTimeouts.delete(numericId);
+  }
+
+  const wasOnline = isUserOnline(numericId);
+
+  if (!userSockets.has(numericId)) {
+    userSockets.set(numericId, new Set());
+  }
+  userSockets.get(numericId).add(socketId);
+
+  if (!wasOnline) {
+    broadcastOnlineUsers();
+  }
 }
 
 /**
- * Track a user socket disconnection
+ * Unregister a user socket disconnection
+ * If all sockets for this user are gone, starts a 25s grace timeout before marking offline.
  */
-function trackUserDisconnected(userId) {
+function unregisterUserSocket(userId, socketId) {
   const numericId = parseInt(userId, 10);
   if (isNaN(numericId)) return;
-  const current = onlineUsers.get(numericId) || 0;
-  if (current <= 1) {
-    onlineUsers.delete(numericId);
-  } else {
-    onlineUsers.set(numericId, current - 1);
+
+  const sockets = userSockets.get(numericId);
+  if (sockets && socketId) {
+    sockets.delete(socketId);
   }
+
+  // If no remaining active sockets, start grace period
+  if (!sockets || sockets.size === 0) {
+    if (disconnectTimeouts.has(numericId)) {
+      clearTimeout(disconnectTimeouts.get(numericId));
+    }
+
+    const timeout = setTimeout(() => {
+      disconnectTimeouts.delete(numericId);
+      const currentSockets = userSockets.get(numericId);
+      if (!currentSockets || currentSockets.size === 0) {
+        userSockets.delete(numericId);
+        broadcastOnlineUsers();
+      }
+    }, GRACE_PERIOD_MS);
+
+    disconnectTimeouts.set(numericId, timeout);
+  }
+}
+
+/**
+ * Backwards compatible wrappers
+ */
+function trackUserConnected(userId, socketId = "legacy") {
+  registerUserSocket(userId, socketId);
+}
+
+function trackUserDisconnected(userId, socketId = "legacy") {
+  unregisterUserSocket(userId, socketId);
+}
+
+/**
+ * Check if a specific user is currently online (has active sockets or in grace period)
+ */
+function isUserOnline(userId) {
+  const numericId = parseInt(userId, 10);
+  if (isNaN(numericId)) return false;
+  const sockets = userSockets.get(numericId);
+  if (sockets && sockets.size > 0) return true;
+  return disconnectTimeouts.has(numericId);
+}
+
+/**
+ * Get active socket count for a specific user
+ */
+function getUserSocketCount(userId) {
+  const numericId = parseInt(userId, 10);
+  if (isNaN(numericId)) return 0;
+  return userSockets.get(numericId)?.size || 0;
 }
 
 /**
  * Get list of currently online user IDs
  */
 function getOnlineUserIds() {
-  return Array.from(onlineUsers.keys());
+  const online = new Set();
+  for (const [uid, sockets] of userSockets.entries()) {
+    if (sockets && sockets.size > 0) {
+      online.add(uid);
+    }
+  }
+  for (const uid of disconnectTimeouts.keys()) {
+    online.add(uid);
+  }
+  return Array.from(online);
+}
+
+function formatFriendlyName(name, email, id) {
+  if (name && !name.startsWith("Player ") && !name.startsWith("Player #") && name !== "Chess Player") {
+    return name;
+  }
+  if (email && email.includes("@") && !email.includes("local")) {
+    const userPart = email.split("@")[0].replace(/[._-]/g, " ");
+    return userPart.split(" ").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+  return name || `Player ${id}`;
 }
 
 /**
- * Check if a specific user is currently online
+ * Get detailed profiles of all currently online users
  */
-function isUserOnline(userId) {
-  const numericId = parseInt(userId, 10);
-  return onlineUsers.has(numericId);
+function getOnlineUsersDetailed() {
+  const onlineIds = getOnlineUserIds();
+  const detailed = [];
+  for (const id of onlineIds) {
+    const user = userStore.getUser(id);
+    if (user) {
+      detailed.push({
+        id: user.id,
+        name: formatFriendlyName(user.name, user.email, user.id),
+        email: user.email || null,
+        avatarUrl: user.avatarUrl || null,
+        role: user.role || "STUDENT",
+        rating: user.rating || 1200,
+        isOnline: true,
+      });
+    }
+  }
+  return detailed;
 }
 
 /**
@@ -59,7 +167,12 @@ function isUserOnline(userId) {
  */
 function broadcastOnlineUsers() {
   if (!io) return;
-  io.emit("users:online-update", { onlineUserIds: getOnlineUserIds() });
+  const onlineIds = getOnlineUserIds();
+  const onlineUsers = getOnlineUsersDetailed();
+  io.emit("users:online-update", {
+    onlineUserIds: onlineIds,
+    onlineUsers,
+  });
 }
 
 /**
@@ -80,19 +193,55 @@ function emitToGame(gameId, event, payload) {
  * @param {object} payload
  */
 function emitToUser(userId, event, payload) {
-  if (!io) return;
+  if (!io) {
+    console.warn(`[Socket] emitToUser failed: io not set (event=${event}, userId=${userId})`);
+    return;
+  }
+  const numericId = parseInt(userId, 10);
+  console.log(`[Socket] emitToUser event=${event} userId=${userId} (numeric=${numericId})`);
+
+  // Emit to user room (both string and numeric format)
   io.to(`user:${userId}`).emit(event, payload);
+  if (!isNaN(numericId) && String(numericId) !== String(userId)) {
+    io.to(`user:${numericId}`).emit(event, payload);
+  }
+
+  // Also emit directly to every active socket registered for this user
+  if (!isNaN(numericId)) {
+    const sockets = userSockets.get(numericId);
+    if (sockets && sockets.size > 0) {
+      for (const socketId of sockets) {
+        console.log(`[Socket] emitToUser direct to socketId=${socketId} for userId=${numericId}`);
+        io.to(socketId).emit(event, payload);
+      }
+    }
+  }
+}
+
+/**
+ * Broadcast an event to a tournament room
+ * @param {string|number} tournamentId
+ * @param {string} event
+ * @param {object} payload
+ */
+function emitToTournament(tournamentId, event, payload) {
+  if (!io) return;
+  io.to(`tournament:${tournamentId}`).emit(event, payload);
 }
 
 module.exports = {
   setIO,
   getIO,
+  registerUserSocket,
+  unregisterUserSocket,
   trackUserConnected,
   trackUserDisconnected,
   getOnlineUserIds,
+  getOnlineUsersDetailed,
   isUserOnline,
+  getUserSocketCount,
   broadcastOnlineUsers,
   emitToGame,
   emitToUser,
+  emitToTournament,
 };
-

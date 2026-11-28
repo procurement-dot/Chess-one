@@ -20,7 +20,10 @@ export default function NewsScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => (router.canGoBack() ? router.back() : router.replace('/' as any))}
+          style={styles.backBtn}
+        >
           <Feather name="chevron-left" size={24} color={COLORS.primary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Explore</Text>
@@ -28,7 +31,7 @@ export default function NewsScreen() {
       </View>
       
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>There's a world beyond the board.</Text>
+        <Text style={styles.title}>{"There's a world beyond the board."}</Text>
         
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipsScroll}>
           {chips.map(chip => (

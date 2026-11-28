@@ -1,5 +1,5 @@
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
-import React from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -9,12 +9,18 @@ import {
   ScrollView,
   ActivityIndicator,
   Pressable,
+  TextInput,
+  Platform,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { OnlineUser } from '../../types/game.types';
+import { useAuthStore } from '../../store/authStore';
+import { ConnectionStatusPill } from '../ui/ConnectionStatusPill';
 
 interface InviteFriendModalProps {
   visible: boolean;
   onlineUsers: OnlineUser[];
+  allUsers?: OnlineUser[];
   isLoading: boolean;
   timeControl: string;
   invitingUserId: number | null;
@@ -23,9 +29,21 @@ interface InviteFriendModalProps {
   onClose: () => void;
 }
 
+function formatPlayerDisplayName(name?: string, email?: string, id?: number | string): string {
+  if (name && !name.startsWith('Player ') && !name.startsWith('Player #') && name !== 'Chess Player') {
+    return name;
+  }
+  if (email && email.includes('@') && !email.includes('local')) {
+    const userPart = email.split('@')[0].replace(/[._-]/g, ' ');
+    return userPart.split(' ').map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  }
+  return name || `Player ${id || ''}`;
+}
+
 export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
   visible,
   onlineUsers,
+  allUsers = [],
   isLoading,
   timeControl,
   invitingUserId,
@@ -33,6 +51,32 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
   onRefresh,
   onClose,
 }) => {
+  const router = useRouter();
+  const { isAuthenticated } = useAuthStore();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Automatically refresh players whenever modal opens
+  useEffect(() => {
+    if (visible) {
+      onRefresh();
+    }
+  }, [visible, onRefresh]);
+
+  // Filtered online candidates
+  const currentList = useMemo(() => {
+    let list = onlineUsers;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(
+        (u) =>
+          (u.name && u.name.toLowerCase().includes(q)) ||
+          (u.email && u.email.toLowerCase().includes(q)) ||
+          String(u.id).includes(q)
+      );
+    }
+    return list;
+  }, [onlineUsers, searchQuery]);
+
   if (!visible) return null;
 
   return (
@@ -52,7 +96,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                 <Text style={styles.title}>Invite Online Friend</Text>
               </View>
               <Text style={styles.subtitle}>
-                Mode: {timeControl} • Only active online players are shown
+                Mode: {timeControl} • Challenge active school players
               </Text>
             </View>
 
@@ -65,22 +109,70 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          {/* Body */}
+          {/* Guest Sign-In Notice if not authenticated */}
+          {!isAuthenticated && (
+            <View style={styles.guestNotice}>
+              <Text style={styles.guestNoticeText}>
+                ⚠️ You are not signed in. Please sign in to send match invites.
+              </Text>
+              <TouchableOpacity
+                style={styles.guestSignInBtn}
+                activeOpacity={0.8}
+                onPress={() => {
+                  onClose();
+                  router.push('/login' as any);
+                }}
+              >
+                <Text style={styles.guestSignInBtnText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Connection Status Indicator */}
+          <ConnectionStatusPill onRetry={onRefresh} style={{ marginBottom: 6 }} />
+
+          {/* Online Tab */}
+          <View style={styles.tabBar}>
+            <View style={[styles.tabBtn, styles.tabBtnActive, { flex: 1 }]}>
+              <View style={styles.tabDot} />
+              <Text style={[styles.tabBtnText, styles.tabBtnTextActive]}>
+                Online Now ({onlineUsers.length})
+              </Text>
+            </View>
+          </View>
+
+          {/* Search Box */}
+          <View style={styles.searchContainer}>
+            <Text style={styles.searchIcon}>🔍</Text>
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search by student name or ID..."
+              placeholderTextColor="#94A3B8"
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Text style={styles.clearSearchIcon}>✕</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+
+          {/* Body List */}
           <View style={styles.body}>
-            {isLoading && onlineUsers.length === 0 ? (
+            {isLoading && currentList.length === 0 ? (
               <View style={styles.centerBox}>
-                <ActivityIndicator size="large" color="#4F46E5" />
-                <Text style={styles.loadingText}>Checking online players...</Text>
+                <ActivityIndicator size="large" color="#1E4B3A" />
+                <Text style={styles.loadingText}>Checking active players...</Text>
               </View>
-            ) : onlineUsers.length === 0 ? (
+            ) : currentList.length === 0 ? (
               <View style={styles.emptyBox}>
                 <Text style={styles.emptyIcon}>♟️</Text>
-                <Text style={styles.emptyTitle}>No players currently online</Text>
-                <Text style={styles.emptySubtitle}>
-                  None of your friends are currently active in the app.
+                <Text style={styles.emptyTitle}>
+                  No other players online right now
                 </Text>
-                <Text style={styles.emptyHint}>
-                  💡 Tip: You can close this and tap &quot;Create Room&quot; to generate a 6-digit game code to share with your friend!
+                <Text style={styles.emptySubtitle}>
+                  None of your school classmates are currently active.
                 </Text>
 
                 <TouchableOpacity
@@ -88,7 +180,7 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                   activeOpacity={0.8}
                   onPress={onRefresh}
                 >
-                  <Text style={styles.refreshBtnText}>🔄 Check Again</Text>
+                  <Text style={styles.refreshBtnText}>🔄 Refresh Players</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -96,49 +188,56 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
                 style={styles.scrollList}
                 showsVerticalScrollIndicator={false}
               >
-                <View style={styles.onlineBadgeRow}>
-                  <View style={styles.statusDot} />
-                  <Text style={styles.onlineCountText}>
-                    {onlineUsers.length} Player{onlineUsers.length > 1 ? 's' : ''} Online Now
-                  </Text>
-                </View>
-
-                {onlineUsers.map((item) => {
+                {currentList.map((item) => {
                   const isInviting = invitingUserId === item.id;
-                  const initials = (item.name || item.email || 'P')[0].toUpperCase();
+                  const displayName = formatPlayerDisplayName(item.name, item.email, item.id);
+                  const initials = displayName[0].toUpperCase();
 
                   return (
                     <View key={`online-user-${item.id}`} style={styles.userCard}>
                       {/* Avatar */}
                       <View style={styles.avatarWrap}>
-                        <View style={styles.avatar}>
+                        <View style={[styles.avatar, item.isOnline ? styles.avatarOnline : styles.avatarOffline]}>
                           <Text style={styles.avatarInitial}>{initials}</Text>
                         </View>
-                        <View style={styles.avatarDot} />
+                        <View
+                          style={[
+                            styles.avatarDot,
+                            item.isOnline ? styles.dotOnline : styles.dotOffline,
+                          ]}
+                        />
                       </View>
 
                       {/* Info */}
                       <View style={styles.infoCol}>
                         <View style={styles.nameRow}>
                           <Text style={styles.nameText} numberOfLines={1}>
-                            {item.name || item.email}
+                            {displayName}
                           </Text>
                           <View style={styles.idChip}>
                             <Text style={styles.idChipText}>#{item.id}</Text>
                           </View>
                         </View>
-                        <Text style={styles.onlineStatusText}>🟢 Ready to Play</Text>
+                        <Text style={[styles.onlineStatusText, !item.isOnline && styles.offlineStatusText]}>
+                          {item.isOnline ? '🟢 Online & Ready' : '⚪ Offline'}
+                        </Text>
                       </View>
 
                       {/* Invite Button */}
                       <TouchableOpacity
-                        style={[styles.inviteBtn, isInviting && styles.btnLoading]}
+                        style={[
+                          styles.inviteBtn,
+                          !item.isOnline && styles.inviteBtnOffline,
+                          isInviting && styles.btnLoading,
+                        ]}
                         activeOpacity={0.8}
-                        onPress={() => onInvite(item)}
-                        disabled={isInviting}
+                        onPress={() => item.isOnline && onInvite(item)}
+                        disabled={isInviting || !item.isOnline}
                       >
                         {isInviting ? (
-                          <ActivityIndicator size="small" color="COLORS.textHeading" />
+                          <ActivityIndicator size="small" color="#FFFFFF" />
+                        ) : !item.isOnline ? (
+                          <Text style={styles.inviteBtnTextOffline}>Offline</Text>
                         ) : (
                           <Text style={styles.inviteBtnText}>⚔️ Invite</Text>
                         )}
@@ -158,27 +257,27 @@ export const InviteFriendModal: React.FC<InviteFriendModalProps> = ({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: COLORS.white,
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    maxHeight: '75%',
+    maxHeight: '85%',
     borderWidth: 1,
-    borderColor: COLORS.border,
-    paddingBottom: 32,
+    borderColor: '#E2E8F0',
+    paddingBottom: 24,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 18,
     paddingBottom: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#21262D',
+    borderBottomColor: '#F1F5F9',
   },
   titleRow: {
     flexDirection: 'row',
@@ -191,141 +290,231 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '800',
-    color: COLORS.textHeading,
+    color: '#0F172A',
   },
   subtitle: {
     fontSize: 12,
-    color: COLORS.textBody,
+    color: '#64748B',
     marginTop: 2,
   },
   closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: COLORS.white,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
   },
   closeBtnText: {
-    color: COLORS.textBody,
-    fontSize: 15,
+    color: '#475569',
+    fontSize: 14,
     fontWeight: '700',
   },
+  guestNotice: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#FCD34D',
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  guestNoticeText: {
+    fontSize: 12,
+    color: '#92400E',
+    flex: 1,
+    fontWeight: '600',
+  },
+  guestSignInBtn: {
+    backgroundColor: '#1E4B3A',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginLeft: 8,
+  },
+  guestSignInBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 12,
+    padding: 3,
+  },
+  tabBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    borderRadius: 10,
+    gap: 6,
+  },
+  tabBtnActive: {
+    backgroundColor: '#1E4B3A',
+  },
+  tabDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 4,
+    backgroundColor: '#34D399',
+  },
+  tabBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  tabBtnTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    marginHorizontal: 16,
+    marginTop: 10,
+    paddingHorizontal: 12,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 4,
+  },
+  searchIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 13,
+    color: '#0F172A',
+  },
+  clearSearchIcon: {
+    fontSize: 14,
+    color: '#94A3B8',
+    paddingHorizontal: 4,
+  },
   body: {
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 16,
+    paddingTop: 12,
   },
   centerBox: {
-    paddingVertical: 40,
+    paddingVertical: 36,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 12,
   },
   loadingText: {
-    color: COLORS.textBody,
+    color: '#64748B',
     fontSize: 14,
   },
   emptyBox: {
-    paddingVertical: 28,
+    paddingVertical: 24,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyIcon: {
-    fontSize: 44,
+    fontSize: 40,
     marginBottom: 8,
   },
   emptyTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
-    color: COLORS.textHeading,
-    marginBottom: 6,
+    color: '#0F172A',
+    marginBottom: 4,
   },
   emptySubtitle: {
-    fontSize: 13,
-    color: COLORS.textBody,
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  emptyHint: {
     fontSize: 12,
-    color: COLORS.textBody,
+    color: '#64748B',
     textAlign: 'center',
-    lineHeight: 18,
+    marginBottom: 14,
+    paddingHorizontal: 20,
+  },
+  switchTabBtn: {
+    backgroundColor: '#1E4B3A',
     paddingHorizontal: 16,
-    marginBottom: 18,
+    paddingVertical: 9,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  switchTabBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
   refreshBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: COLORS.white,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    backgroundColor: '#F8FAFC',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: '#E2E8F0',
   },
   refreshBtnText: {
-    color: COLORS.textHeading,
-    fontSize: 13,
+    color: '#1E4B3A',
+    fontSize: 12,
     fontWeight: '700',
   },
   scrollList: {
-    maxHeight: 320,
-  },
-  onlineBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 12,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.white,
-  },
-  onlineCountText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#34D399',
+    maxHeight: 340,
   },
   userCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: '#F8FAFC',
     padding: 12,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 10,
+    borderColor: '#E2E8F0',
+    marginBottom: 8,
     gap: 12,
   },
   avatarWrap: {
     position: 'relative',
-    width: 42,
-    height: 42,
+    width: 40,
+    height: 40,
   },
   avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: COLORS.primary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  avatarOnline: {
+    backgroundColor: '#DCFCE7',
+  },
+  avatarOffline: {
+    backgroundColor: '#F1F5F9',
   },
   avatarInitial: {
     fontSize: 16,
     fontWeight: '800',
-    color: COLORS.textHeading,
+    color: '#1E4B3A',
   },
   avatarDot: {
     position: 'absolute',
-    bottom: -1,
-    right: -1,
-    width: 12,
-    height: 12,
+    bottom: 0,
+    right: 0,
+    width: 11,
+    height: 11,
     borderRadius: 6,
-    backgroundColor: COLORS.white,
     borderWidth: 2,
-    borderColor: COLORS.background,
+    borderColor: '#FFFFFF',
+  },
+  dotOnline: {
+    backgroundColor: '#22C55E',
+  },
+  dotOffline: {
+    backgroundColor: '#94A3B8',
   },
   infoCol: {
     flex: 1,
@@ -339,11 +528,11 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: 14,
     fontWeight: '700',
-    color: COLORS.textHeading,
-    maxWidth: 140,
+    color: '#0F172A',
+    maxWidth: 160,
   },
   idChip: {
-    backgroundColor: COLORS.border,
+    backgroundColor: '#E2E8F0',
     paddingHorizontal: 5,
     paddingVertical: 1,
     borderRadius: 4,
@@ -351,30 +540,43 @@ const styles = StyleSheet.create({
   idChipText: {
     fontSize: 10,
     fontWeight: '700',
-    color: COLORS.textBody,
+    color: '#64748B',
   },
   onlineStatusText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#34D399',
+    color: '#16A34A',
+  },
+  offlineStatusText: {
+    color: '#94A3B8',
   },
   inviteBtn: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#1E4B3A',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 10,
-    shadowColor: '#4F46E5',
+    shadowColor: '#1E4B3A',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  inviteBtnOffline: {
+    backgroundColor: '#E2E8F0',
+    shadowOpacity: 0,
+    elevation: 0,
   },
   btnLoading: {
     opacity: 0.7,
   },
   inviteBtnText: {
-    color: COLORS.textHeading,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '700',
+  },
+  inviteBtnTextOffline: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
   },
 });

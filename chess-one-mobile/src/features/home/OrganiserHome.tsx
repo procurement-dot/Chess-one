@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useRouter } from 'expo-router';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
 import { DEMO_ORGANIZER_DATA } from '../../mock/schoolDemo';
 import { Feather } from '@expo/vector-icons';
+import { CreateTournamentModal } from '../../components/tournament/CreateTournamentModal';
 
 export const OrganiserHome = () => {
+  const router = useRouter();
   const [checklist, setChecklist] = useState(DEMO_ORGANIZER_DATA.checklist);
   const [activeTab, setActiveTab] = useState<'Overview' | 'Checklist' | 'Rounds'>('Overview');
+  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   const toggleCheck = (id: number) => {
     setChecklist(prev => prev.map(c => c.id === id ? { ...c, done: !c.done } : c));
@@ -22,7 +26,11 @@ export const OrganiserHome = () => {
           <Text style={styles.heading}>Bring your school to the board.</Text>
           <Text style={styles.subheading}>Plan, run and wrap up an online or offline tournament.</Text>
         </View>
-        <TouchableOpacity style={styles.createBtn} activeOpacity={0.8}>
+        <TouchableOpacity
+          style={styles.createBtn}
+          activeOpacity={0.8}
+          onPress={() => setCreateModalVisible(true)}
+        >
           <Text style={styles.createBtnText}>Create tournament</Text>
         </TouchableOpacity>
       </View>
@@ -110,6 +118,16 @@ export const OrganiserHome = () => {
           ))}
         </View>
       )}
+
+      {/* Create Tournament Modal */}
+      <CreateTournamentModal
+        visible={createModalVisible}
+        onClose={() => setCreateModalVisible(false)}
+        onSuccess={(tournamentId) => {
+          setCreateModalVisible(false);
+          router.push(`/tournaments/${tournamentId}` as any);
+        }}
+      />
     </View>
   );
 };

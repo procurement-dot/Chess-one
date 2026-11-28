@@ -8,6 +8,14 @@ import {
   PlayerColor,
 } from '../types/game.types';
 
+export type ConnectionStatus =
+  | 'connecting'
+  | 'connected'
+  | 'authenticated'
+  | 'auth_error'
+  | 'offline'
+  | 'disconnected';
+
 export interface LiveGameState {
   currentGame: Game | null;
   gameState: GameState | null;
@@ -20,7 +28,7 @@ export interface LiveGameState {
   result: GameResult | null;
   winnerId: number | null;
   drawOfferFrom: PlayerColor | null;
-  connectionStatus: 'connected' | 'connecting' | 'disconnected';
+  connectionStatus: ConnectionStatus;
   lastMove: { from: string; to: string } | null;
   isLoading: boolean;
   error: string | null;
@@ -40,7 +48,7 @@ const initialState: LiveGameState = {
   result: null,
   winnerId: null,
   drawOfferFrom: null,
-  connectionStatus: 'disconnected',
+  connectionStatus: 'offline',
   lastMove: null,
   isLoading: false,
   error: null,
@@ -131,6 +139,19 @@ class GameStore {
     this.notify();
   }
 
+  updateGamePlayers(players: { whitePlayer?: any; blackPlayer?: any }) {
+    const prevGame = this.state.currentGame || ({} as any);
+    this.state = {
+      ...this.state,
+      currentGame: {
+        ...prevGame,
+        ...(players.whitePlayer ? { whitePlayer: players.whitePlayer } : {}),
+        ...(players.blackPlayer ? { blackPlayer: players.blackPlayer } : {}),
+      },
+    };
+    this.notify();
+  }
+
   setMoves(moves: GameMove[]) {
     const last = moves.length > 0 ? moves[moves.length - 1] : null;
     this.state = {
@@ -166,13 +187,17 @@ class GameStore {
     const existingMoves = [...this.state.moves];
     const lastMove = existingMoves.length > 0 ? existingMoves[existingMoves.length - 1] : null;
 
-    // Check if this move is already in the move list
-    const isExactDuplicate = existingMoves.some(
+    // Check if this move is already in the move list or matching the last optimistic move
+    const isExactDuplicate = Boolean(
+      lastMove &&
+      lastMove.from === from &&
+      lastMove.to === to &&
+      (lastMove.san === san || !san || lastMove.color === moveColor)
+    ) || existingMoves.some(
       (m) =>
-        m.san === san &&
         m.from === from &&
         m.to === to &&
-        m.fenAfter === fen
+        (m.san === san || m.fenAfter === fen)
     );
 
     let updatedMoves: GameMove[];
@@ -351,7 +376,7 @@ class GameStore {
     this.notify();
   }
 
-  setConnectionStatus(status: 'connected' | 'connecting' | 'disconnected') {
+  setConnectionStatus(status: ConnectionStatus) {
     this.state = { ...this.state, connectionStatus: status };
     this.notify();
   }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { COLORS } from '../../constants/chessone-theme';
 import Svg, { Path, G, Circle } from 'react-native-svg';
@@ -10,7 +10,7 @@ interface ChessPieceProps {
   size: number;
 }
 
-export const ChessPiece: React.FC<ChessPieceProps> = ({ type, color, size }) => {
+const ChessPieceComponent: React.FC<ChessPieceProps> = ({ type, color, size }) => {
   const isWhite = color === 'w';
   const fillColor = isWhite ? '#FFFFFF' : '#2B2B2B';
   const strokeColor = isWhite ? '#202020' : '#111111';
@@ -110,6 +110,11 @@ export const ChessPiece: React.FC<ChessPieceProps> = ({ type, color, size }) => 
     </View>
   );
 };
+
+// Memoize so piece SVGs never re-render during timer ticks or unrelated state updates
+export const ChessPiece = memo(ChessPieceComponent, (prev, next) => {
+  return prev.type === next.type && prev.color === next.color && prev.size === next.size;
+});
 
 const styles = StyleSheet.create({
   container: {

@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
+import { puzzleService } from '../../services/puzzle.service';
+import { PuzzleItem } from '../../data/learn/puzzlesData';
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
 import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
@@ -13,12 +15,84 @@ const CHIPS = ['Level journey', 'Tactics & Puzzles', 'Foundation', 'Developing',
 export default function LearnScreen() {
   const router = useRouter();
   const [activeChip, setActiveChip] = useState(CHIPS[0]);
-  const { completedLevels, questProgress, collectedRewards, coachPracticed, gameReviewed, solvedPuzzles, totalXp } = useLearnStore();
+  const { completedLevels, questProgress, collectedRewards, coachPracticed, gameReviewed, solvedPuzzles, totalXp, tacticalRating = 1000 } = useLearnStore();
 
-  // Compute total stars earned
+  const [loadedPuzzles, setLoadedPuzzles] = useState<PuzzleItem[]>(CHESS_PUZZLES);
+  const [puzzlesPage, setPuzzlesPage] = useState<number>(1);
+  const [loadingMorePuzzles, setLoadingMorePuzzles] = useState<boolean>(false);
+  const [puzzleSubTab, setPuzzleSubTab] = useState<'to_solve' | 'solved'>('to_solve');
+  const [isStatsExpanded, setIsStatsExpanded] = useState<boolean>(false);
+  const [selectedTacticsTier, setSelectedTacticsTier] = useState<string>('All');
+
+  const toSolvePuzzles = useMemo(() => {
+    return loadedPuzzles.filter((p) => !solvedPuzzles.includes(p.id));
+  }, [loadedPuzzles, solvedPuzzles]);
+
+  const solvedPuzzlesList = useMemo(() => {
+    return loadedPuzzles.filter((p) => solvedPuzzles.includes(p.id));
+  }, [loadedPuzzles, solvedPuzzles]);
+
+  const adaptiveSkillTier = useMemo(() => {
+    if (tacticalRating < 800) return '🌱 Foundation';
+    if (tacticalRating < 1100) return '⚔️ Pre-Intermediate';
+    if (tacticalRating < 1400) return '🛡️ Intermediate';
+    if (tacticalRating < 1700) return '⚡ Pre-Advance';
+    return '👑 Advance';
+  }, [tacticalRating]);
+
+  const handleTacticsTierSelect = async (tier: string) => {
+    setSelectedTacticsTier(tier);
+    try {
+      setLoadingMorePuzzles(true);
+      const params = tier === 'All' ? { limit: 15, page: 1 } : { tier: tier as any, limit: 15, page: 1 };
+      const newPuzzles = await puzzleService.getPuzzles(params);
+      if (newPuzzles && newPuzzles.length > 0) {
+        setLoadedPuzzles(newPuzzles.map((p, idx) => ({ ...p, number: idx + 1 })));
+        setPuzzlesPage(1);
+      }
+    } catch (e) {
+      console.warn('Failed to filter puzzles:', e);
+    } finally {
+      setLoadingMorePuzzles(false);
+    }
+  };
+
+  const handleLoadMorePuzzles = async () => {
+    try {
+      setLoadingMorePuzzles(true);
+      const nextPage = puzzlesPage + 1;
+      const params = selectedTacticsTier === 'All'
+        ? { limit: 15, page: nextPage }
+        : { tier: selectedTacticsTier as any, limit: 15, page: nextPage };
+      const newPuzzles = await puzzleService.getPuzzles(params);
+      if (newPuzzles && newPuzzles.length > 0) {
+        setLoadedPuzzles((prev) => {
+          const existingIds = new Set(prev.map((p) => p.id));
+          const filtered = newPuzzles.filter((p) => !existingIds.has(p.id));
+          return [
+            ...prev,
+            ...filtered.map((p, idx) => ({ ...p, number: prev.length + idx + 1 })),
+          ];
+        });
+        setPuzzlesPage(nextPage);
+      }
+    } catch (e) {
+      console.warn('Failed to load more puzzles from Supabase:', e);
+    } finally {
+      setLoadingMorePuzzles(false);
+    }
+  };
+
+  // Compute total stars earned (from levels + solved tactics)
   const totalStars = useMemo(() => {
-    return Object.values(completedLevels).reduce((sum, s) => sum + (s || 0), 0);
-  }, [completedLevels]);
+    const levelStars = Object.values(completedLevels).reduce((sum, s) => sum + (s || 0), 0);
+    const puzzleStars = solvedPuzzles.reduce((sum, id) => {
+      const puz = loadedPuzzles.find((p) => p.id === id);
+      const rating = puz ? puz.rating : 1000;
+      return sum + (rating >= 1500 ? 3 : rating >= 1000 ? 2 : 1);
+    }, 0);
+    return levelStars + puzzleStars;
+  }, [completedLevels, solvedPuzzles, loadedPuzzles]);
 
   const completedCount = useMemo(() => {
     return Object.keys(completedLevels).length;
@@ -42,24 +116,91 @@ export default function LearnScreen() {
     <View style={styles.container}>
       <AppHeader title="Learn" subtitle="Master the board" />
 
-      {/* Top Stars & XP Summary Banner */}
-      <View style={styles.statsBar}>
-        <View style={styles.statBadge}>
-          <Text style={styles.statIcon}>⭐</Text>
-          <Text style={styles.statText}>{totalStars} Stars</Text>
-        </View>
-        <View style={[styles.statBadge, { backgroundColor: '#E4EEDB', borderColor: '#CBD5E1' }]}>
-          <Text style={styles.statIcon}>⚡</Text>
-          <Text style={[styles.statText, { color: COLORS.primary }]}>{totalXp} XP</Text>
-        </View>
-        <View style={[styles.statBadge, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
-          <Text style={styles.statIcon}>🧩</Text>
-          <Text style={[styles.statText, { color: '#92400E' }]}>{solvedPuzzles.length}/{CHESS_PUZZLES.length} Puzzles</Text>
-        </View>
-        <View style={[styles.statBadge, { backgroundColor: '#F0F3EE', borderColor: '#E3E8DE' }]}>
-          <Text style={styles.statIcon}>🏆</Text>
-          <Text style={[styles.statText, { color: COLORS.textHeading }]}>{completedCount}/{LEARN_LEVELS.length} Done</Text>
-        </View>
+      {/* Collapsible Progress Banner */}
+      <View style={styles.collapsibleStatsContainer}>
+        <TouchableOpacity
+          style={styles.statsToggleHeader}
+          onPress={() => setIsStatsExpanded((prev) => !prev)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.statsToggleLeft}>
+            <Text style={styles.statsToggleTitle}>📊 My Progress</Text>
+            <View style={styles.miniStatBadge}>
+              <Text style={styles.miniStatText}>⭐ {totalStars} Stars</Text>
+            </View>
+            <View style={[styles.miniStatBadge, { backgroundColor: '#F0F3EE', borderColor: '#E3E8DE' }]}>
+              <Text style={[styles.miniStatText, { color: COLORS.textHeading }]}>🏆 {completedCount}/{LEARN_LEVELS.length}</Text>
+            </View>
+          </View>
+
+          <View style={styles.statsToggleRight}>
+            <Text style={styles.statsToggleAction}>
+              {isStatsExpanded ? 'Hide' : 'Details'}
+            </Text>
+            <Feather
+              name={isStatsExpanded ? 'chevron-up' : 'chevron-down'}
+              size={14}
+              color={COLORS.primary}
+            />
+          </View>
+        </TouchableOpacity>
+
+        {isStatsExpanded && (
+          <View style={styles.statsExpandedContent}>
+            {/* 4 Metrics Grid */}
+            <View style={styles.statsGrid}>
+              <View style={styles.statGridCard}>
+                <Text style={styles.statCardIcon}>⭐</Text>
+                <View>
+                  <Text style={styles.statCardVal}>{totalStars}</Text>
+                  <Text style={styles.statCardLabel}>Total Stars</Text>
+                </View>
+              </View>
+
+              <View style={styles.statGridCard}>
+                <Text style={styles.statCardIcon}>⚡</Text>
+                <View>
+                  <Text style={styles.statCardVal}>{totalXp}</Text>
+                  <Text style={styles.statCardLabel}>Total XP</Text>
+                </View>
+              </View>
+
+              <View style={styles.statGridCard}>
+                <Text style={styles.statCardIcon}>🧩</Text>
+                <View>
+                  <Text style={styles.statCardVal}>{solvedPuzzles.length} / 32,241</Text>
+                  <Text style={styles.statCardLabel}>Tactics Solved</Text>
+                </View>
+              </View>
+
+              <View style={styles.statGridCard}>
+                <Text style={styles.statCardIcon}>🏆</Text>
+                <View>
+                  <Text style={styles.statCardVal}>{completedCount} / {LEARN_LEVELS.length}</Text>
+                  <Text style={styles.statCardLabel}>Levels Done</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Course Completion Progress Bar */}
+            <View style={styles.progressContainer}>
+              <View style={styles.progressHeaderRow}>
+                <Text style={styles.progressLabel}>Curriculum Completion</Text>
+                <Text style={styles.progressPct}>
+                  {Math.round((completedCount / LEARN_LEVELS.length) * 100)}%
+                </Text>
+              </View>
+              <View style={styles.progressBarTrack}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    { width: `${Math.min(100, Math.round((completedCount / LEARN_LEVELS.length) * 100))}%` },
+                  ]}
+                />
+              </View>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Chips Navigation */}
@@ -365,71 +506,253 @@ export default function LearnScreen() {
         )}
 
         {/* ======================================================== */}
-        {/* TAB 2: TACTICS & PUZZLES (ALL 10 PUZZLES LIST)          */}
+        {/* TAB 2: TACTICS & PUZZLES (ADAPTIVE AI & 2 SEGMENT TABS)  */}
         {/* ======================================================== */}
         {activeChip === 'Tactics & Puzzles' && (
           <View style={styles.tabContent}>
+            {/* Header with Adaptive Skill Badge */}
             <View style={styles.worldSelector}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.eyebrow}>TACTICS ARENA · 10 PUZZLES</Text>
+                <Text style={styles.eyebrow}>TACTICS ARENA · 32,241 PUZZLES</Text>
                 <Text style={styles.worldTitle}>Master Tactical Motifs</Text>
-                <Text style={styles.worldDesc}>Checkmates, knight forks, pins, and skewers.</Text>
+                <Text style={styles.worldDesc}>
+                  Live from official 32k Lichess database · {adaptiveSkillTier} ({tacticalRating} ELO)
+                </Text>
               </View>
               <TouchableOpacity
                 style={styles.randomLaunchBtn}
-                onPress={() => router.push('/learn/puzzle' as any)}
+                onPress={() => {
+                  const pool = puzzleSubTab === 'to_solve' && toSolvePuzzles.length > 0 ? toSolvePuzzles : loadedPuzzles;
+                  const randomPuz = pool[Math.floor(Math.random() * pool.length)] || CHESS_PUZZLES[0];
+                  router.push(`/learn/puzzle?id=${randomPuz.id}` as any);
+                }}
               >
                 <Text style={styles.randomLaunchText}>Play 🎲</Text>
               </TouchableOpacity>
             </View>
 
-            <View style={{ gap: 10 }}>
-              {CHESS_PUZZLES.map((puz) => {
-                const isSolved = solvedPuzzles.includes(puz.id);
+            {/* Live Adaptive AI Skill Indicator Card */}
+            <View style={styles.adaptiveCard}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={{ fontSize: 18 }}>🧠</Text>
+                  <Text style={styles.adaptiveCardTitle}>Adaptive AI Skill Rating</Text>
+                </View>
+                <View style={styles.adaptiveRatingPill}>
+                  <Text style={styles.adaptiveRatingText}>{tacticalRating} ELO</Text>
+                </View>
+              </View>
+              <Text style={styles.adaptiveCardSub}>
+                Adaptive AI Engine: Next puzzles dynamically adapt to your tactical skill rating!
+              </Text>
+            </View>
 
-                return (
-                  <TouchableOpacity
-                    key={puz.id}
-                    style={[
-                      styles.whiteCard,
-                      styles.puzzleListItem,
-                      isSolved && { borderColor: COLORS.progressFill, backgroundColor: '#F0FFF4' },
-                    ]}
-                    onPress={() => router.push(`/learn/puzzle?id=${puz.id}` as any)}
-                  >
-                    <View style={styles.puzzleNumberBox}>
-                      <Text style={styles.puzzleNumberText}>#{puz.number}</Text>
-                    </View>
+            {/* 2 Segmented Tabs: To-Solve vs Solved */}
+            <View style={styles.segmentContainer}>
+              <TouchableOpacity
+                style={[
+                  styles.segmentBtn,
+                  puzzleSubTab === 'to_solve' && styles.segmentBtnActive,
+                ]}
+                onPress={() => setPuzzleSubTab('to_solve')}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    puzzleSubTab === 'to_solve' && styles.segmentTextActive,
+                  ]}
+                >
+                  🎯 To Solve ({toSolvePuzzles.length})
+                </Text>
+              </TouchableOpacity>
 
-                    <View style={{ flex: 1 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                        <Text style={styles.puzzleThemePill}>{puz.theme}</Text>
-                        <Text style={styles.puzzleRatingPill}>{puz.rating} ELO</Text>
+              <TouchableOpacity
+                style={[
+                  styles.segmentBtn,
+                  puzzleSubTab === 'solved' && styles.segmentBtnActive,
+                ]}
+                onPress={() => setPuzzleSubTab('solved')}
+                activeOpacity={0.8}
+              >
+                <Text
+                  style={[
+                    styles.segmentText,
+                    puzzleSubTab === 'solved' && styles.segmentTextActive,
+                  ]}
+                >
+                  ✅ Solved ({solvedPuzzles.length})
+                </Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Quick Tier Filters for 32,241 Database */}
+            <View style={{ marginBottom: 6 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                {[
+                  { id: 'All', label: 'All 32.2k' },
+                  { id: 'Foundation', label: '🌱 Foundation' },
+                  { id: 'Pre-Intermediate', label: '⚔️ Pre-Inter' },
+                  { id: 'Intermediate', label: '🛡️ Intermediate' },
+                  { id: 'Advance', label: '👑 Advance' },
+                ].map((tier) => {
+                  const isSel = selectedTacticsTier === tier.id;
+                  return (
+                    <TouchableOpacity
+                      key={tier.id}
+                      style={[
+                        styles.tierFilterPill,
+                        isSel && styles.tierFilterPillActive,
+                      ]}
+                      onPress={() => handleTacticsTierSelect(tier.id)}
+                      disabled={loadingMorePuzzles}
+                    >
+                      <Text
+                        style={[
+                          styles.tierFilterText,
+                          isSel && styles.tierFilterTextActive,
+                        ]}
+                      >
+                        {tier.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {/* TAB 1: TO-SOLVE PUZZLES */}
+            {puzzleSubTab === 'to_solve' && (
+              <View style={{ gap: 10 }}>
+                {toSolvePuzzles.length === 0 ? (
+                  <View style={[styles.whiteCard, { alignItems: 'center', padding: 24, gap: 8 }]}>
+                    <Text style={{ fontSize: 32 }}>🏆</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: COLORS.textHeading }}>
+                      All loaded puzzles completed!
+                    </Text>
+                    <Text style={{ fontSize: 12, color: COLORS.textBody, textAlign: 'center' }}>
+                      Great job! Tap below to load the next 15 puzzles from the 32k database.
+                    </Text>
+                  </View>
+                ) : (
+                  toSolvePuzzles.map((puz) => (
+                    <TouchableOpacity
+                      key={puz.id}
+                      style={[styles.whiteCard, styles.puzzleListItem]}
+                      onPress={() => router.push(`/learn/puzzle?id=${puz.id}` as any)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={styles.puzzleNumberBox}>
+                        <Text style={styles.puzzleNumberText}>#{puz.number}</Text>
                       </View>
-                      <Text style={styles.puzzleListTitle}>{puz.title}</Text>
-                      <Text style={styles.puzzleListSub} numberOfLines={1}>{puz.subtitle}</Text>
-                    </View>
 
-                    <View style={{ alignItems: 'flex-end', gap: 4 }}>
-                      <Text style={styles.puzzleXpText}>+{puz.xpReward} XP</Text>
-                      {isSolved ? (
-                        <View style={styles.solvedBadge}>
-                          <Text style={styles.solvedBadgeText}>Solved ✓</Text>
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={styles.puzzleThemePill}>{puz.theme}</Text>
+                          <Text style={styles.puzzleRatingPill}>{puz.rating} ELO</Text>
                         </View>
-                      ) : (
+                        <Text style={styles.puzzleListTitle}>{puz.title}</Text>
+                        <Text style={styles.puzzleListSub} numberOfLines={1}>
+                          {puz.subtitle}
+                        </Text>
+                      </View>
+
+                      <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                        <Text style={styles.puzzleStarText}>⭐ +{puz.rating >= 1500 ? 3 : puz.rating >= 1000 ? 2 : 1} Star{puz.rating >= 1000 ? 's' : ''}</Text>
                         <View style={styles.playBadge}>
                           <Text style={styles.playBadgeText}>Play ›</Text>
                         </View>
-                      )}
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                )}
+
+                {/* Load More Button from 32,241 Database */}
+                <TouchableOpacity
+                  style={styles.loadMoreBtn}
+                  onPress={handleLoadMorePuzzles}
+                  disabled={loadingMorePuzzles}
+                  activeOpacity={0.8}
+                >
+                  {loadingMorePuzzles ? (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <ActivityIndicator size="small" color={COLORS.primary} />
+                      <Text style={styles.loadMoreText}>Fetching from 32,241 database...</Text>
                     </View>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+                  ) : (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <Feather name="refresh-cw" size={16} color={COLORS.primary} />
+                      <Text style={styles.loadMoreText}>
+                        Load Next 15 Puzzles ({loadedPuzzles.length} / 32,241 Loaded) ⬇️
+                      </Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* TAB 2: SOLVED PUZZLES HISTORY */}
+            {puzzleSubTab === 'solved' && (
+              <View style={{ gap: 10 }}>
+                {solvedPuzzlesList.length === 0 ? (
+                  <View style={[styles.whiteCard, { alignItems: 'center', padding: 24, gap: 10 }]}>
+                    <Text style={{ fontSize: 36 }}>🎯</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: COLORS.textHeading }}>
+                      No puzzles solved yet
+                    </Text>
+                    <Text style={{ fontSize: 12, color: COLORS.textBody, textAlign: 'center', lineHeight: 18 }}>
+                      Solve tactics from the 'To Solve' tab. All your completed puzzles and solutions will be stored here!
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.playBadge, { paddingHorizontal: 16, paddingVertical: 8, marginTop: 4 }]}
+                      onPress={() => setPuzzleSubTab('to_solve')}
+                    >
+                      <Text style={[styles.playBadgeText, { fontSize: 13 }]}>Play First Puzzle 🚀</Text>
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  solvedPuzzlesList.map((puz) => (
+                    <TouchableOpacity
+                      key={puz.id}
+                      style={[
+                        styles.whiteCard,
+                        styles.puzzleListItem,
+                        { borderColor: COLORS.progressFill, backgroundColor: '#F0FFF4', borderWidth: 1.5 },
+                      ]}
+                      onPress={() => router.push(`/learn/puzzle?id=${puz.id}` as any)}
+                      activeOpacity={0.8}
+                    >
+                      <View style={[styles.puzzleNumberBox, { backgroundColor: '#DCFCE7' }]}>
+                        <Feather name="check" size={16} color="#059669" />
+                      </View>
+
+                      <View style={{ flex: 1 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Text style={[styles.puzzleThemePill, { backgroundColor: '#DCFCE7', color: '#15803D' }]}>
+                            {puz.theme}
+                          </Text>
+                          <Text style={styles.puzzleRatingPill}>{puz.rating} ELO</Text>
+                        </View>
+                        <Text style={styles.puzzleListTitle}>{puz.title}</Text>
+                        <Text style={styles.puzzleListSub} numberOfLines={1}>
+                          {puz.subtitle}
+                        </Text>
+                      </View>
+
+                      <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                        <Text style={[styles.puzzleStarText, { color: '#059669' }]}>⭐ +{puz.rating >= 1500 ? 3 : puz.rating >= 1000 ? 2 : 1} Star{puz.rating >= 1000 ? 's' : ''}</Text>
+                        <View style={styles.solvedBadge}>
+                          <Text style={styles.solvedBadgeText}>Review 👁️</Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+            )}
           </View>
         )}
 
-        {/* ======================================================== */}
         {/* TAB 3: LEARN BY GAME                                     */}
         {/* ======================================================== */}
         {activeChip === 'Learn by game' && (
@@ -490,6 +813,124 @@ export default function LearnScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
+  collapsibleStatsContainer: {
+    backgroundColor: COLORS.white,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  statsToggleHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+  },
+  statsToggleLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statsToggleTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+  },
+  miniStatBadge: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  miniStatText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+  },
+  statsToggleRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#E4EEDB',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 12,
+  },
+  statsToggleAction: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  statsExpandedContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingTop: 2,
+    gap: 10,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statGridCard: {
+    flex: 1,
+    minWidth: '46%',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 10,
+    padding: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  statCardIcon: {
+    fontSize: 18,
+  },
+  statCardVal: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.textHeading,
+  },
+  statCardLabel: {
+    fontSize: 10,
+    color: COLORS.textBody,
+  },
+  progressContainer: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 4,
+  },
+  progressHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  progressLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: COLORS.textBody,
+  },
+  progressPct: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
+  progressBarTrack: {
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: COLORS.primary,
+    borderRadius: 3,
+  },
   statsBar: {
     flexDirection: 'row',
     justifyContent: 'center',
@@ -780,6 +1221,7 @@ const styles = StyleSheet.create({
   puzzleListTitle: { fontSize: 14, fontWeight: '700', color: COLORS.textHeading, marginTop: 2 },
   puzzleListSub: { fontSize: 11, color: COLORS.textBody },
   puzzleXpText: { fontSize: 11, fontWeight: '800', color: COLORS.primary },
+  puzzleStarText: { fontSize: 11, fontWeight: '800', color: '#D97706' },
   solvedBadge: {
     backgroundColor: '#E4EEDB',
     paddingHorizontal: 8,
@@ -794,4 +1236,98 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   playBadgeText: { fontSize: 10, fontWeight: '800', color: COLORS.white },
+  adaptiveCard: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 14,
+    padding: 12,
+    borderWidth: 1.5,
+    borderColor: '#BFDBFE',
+    gap: 4,
+    marginBottom: 4,
+  },
+  adaptiveCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#1E40AF',
+  },
+  adaptiveRatingPill: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  adaptiveRatingText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#1E40AF',
+  },
+  adaptiveCardSub: {
+    fontSize: 11,
+    color: '#3B82F6',
+    lineHeight: 15,
+  },
+  tierFilterPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 12,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  tierFilterPillActive: {
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
+  },
+  tierFilterText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  tierFilterTextActive: {
+    color: COLORS.white,
+    fontWeight: '800',
+  },
+  segmentContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#E2E8F0',
+    borderRadius: 12,
+    padding: 3,
+    gap: 4,
+    marginBottom: 6,
+  },
+  segmentBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 10,
+  },
+  segmentBtnActive: {
+    backgroundColor: COLORS.white,
+    ...SHADOWS.soft,
+  },
+  segmentText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: COLORS.textBody,
+  },
+  segmentTextActive: {
+    color: COLORS.primary,
+    fontWeight: '800',
+  },
+  loadMoreBtn: {
+    backgroundColor: '#E4EEDB',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 6,
+  },
+  loadMoreText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: COLORS.primary,
+  },
 });

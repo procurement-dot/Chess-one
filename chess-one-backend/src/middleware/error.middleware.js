@@ -63,13 +63,26 @@ function errorHandler(err, req, res, next) {
     });
   }
 
-  // Prisma record not found
-  if (err.code === "P2025") {
-    return res.status(404).json({
+  const isMissingDatabaseTenant =
+    err.message?.includes("tenant/user") ||
+    err.meta?.driverAdapterError?.message?.includes("tenant/user");
+
+  // Database connection / pooler / paused errors
+  if (
+    err.name === "PrismaClientInitializationError" ||
+    err.code === "ECONNREFUSED" ||
+    err.code === "XX000" ||
+    isMissingDatabaseTenant ||
+    err.message?.includes("Can't reach database server")
+  ) {
+    console.error("Database Connection Failure:", err.message);
+    return res.status(503).json({
       success: false,
       error: {
-        code: "RESOURCE_NOT_FOUND",
-        message: err.meta?.cause || "Record not found",
+        code: "DATABASE_UNAVAILABLE",
+        message: isMissingDatabaseTenant
+          ? "Supabase rejected the configured database tenant/user. Verify DATABASE_URL matches this project's connection string and that the project is active."
+          : "Database connection unavailable. If using Supabase, please ensure your project is restored and active in the Supabase Dashboard.",
       },
     });
   }

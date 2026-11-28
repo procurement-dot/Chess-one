@@ -74,15 +74,19 @@ export default function OnboardingScreen() {
     try {
       setSaving(true);
       setErrorMsg(null);
-      const updated = await updateMyProfile({ role: 'STUDENT' });
+      if (authStore.getState().isAuthenticated) {
+        const updated = await updateMyProfile({ role: 'STUDENT' });
+        authStore.updateUser({
+          onboardingDone: true,
+          role: updated.role,
+          rating: updated.rating,
+          gamesPlayed: updated.gamesPlayed,
+        });
+        roleStore.syncFromServer(updated.role);
+      } else {
+        authStore.updateUser({ onboardingDone: true });
+      }
       await AsyncStorage.setItem('@chessone_onboardingDone', 'true');
-      authStore.updateUser({
-        onboardingDone: true,
-        role: updated.role,
-        rating: updated.rating,
-        gamesPlayed: updated.gamesPlayed,
-      });
-      roleStore.syncFromServer(updated.role);
       router.replace('/');
     } catch {
       await AsyncStorage.setItem('@chessone_onboardingDone', 'true');

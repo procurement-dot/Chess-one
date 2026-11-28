@@ -24,9 +24,11 @@ import { ResignConfirmModal } from '../../components/game/ResignConfirmModal';
 import { GameOverModal } from '../../components/game/GameOverModal';
 import { GameAbortModal } from '../../components/game/GameAbortModal';
 import { AiReviewModal } from '../../components/game/AiReviewModal';
+import { TournamentGameBanner } from '../../components/game/TournamentGameBanner';
 import { authStore, useAuthStore } from '../../store/authStore';
 import { gameSocket } from '../../socket/game.socket';
 import { PieceSymbol } from 'chess.js';
+import { GamePlayer } from '../../types/game.types';
 
 export default function LiveGameScreen() {
   const router = useRouter();
@@ -144,10 +146,14 @@ export default function LiveGameScreen() {
   }, [status, result]);
 
   const handleBackPress = () => {
+    const returnDestination = game?.tournament
+      ? (`/tournaments/${game.tournament.id}` as any)
+      : ('/play' as any);
+
     if (status === 'ACTIVE') {
       if (typeof window !== 'undefined' && window.confirm) {
         if (window.confirm('Leave Live Game?\n\nThis match is still active. If you leave, your clock will keep running.')) {
-          router.replace('/play' as any);
+          router.replace(returnDestination);
         }
         return;
       }
@@ -156,11 +162,11 @@ export default function LiveGameScreen() {
         'This match is still active. If you leave, your clock will keep running.',
         [
           { text: 'Stay', style: 'cancel' },
-          { text: 'Leave Game', style: 'destructive', onPress: () => router.replace('/play' as any) },
+          { text: 'Leave Game', style: 'destructive', onPress: () => router.replace(returnDestination) },
         ]
       );
     } else {
-      router.replace('/play' as any);
+      router.replace(returnDestination);
     }
   };
 
@@ -220,6 +226,7 @@ export default function LiveGameScreen() {
 
   // Determine which player is top vs bottom based on user's color orientation
   const isUserWhite = userColor === 'WHITE';
+  const isTournament = Boolean(game?.tournament);
   const effectiveOrientation: 'w' | 'b' = invertedOrientation
     ? boardOrientation === 'w'
       ? 'b'
@@ -227,7 +234,46 @@ export default function LiveGameScreen() {
     : boardOrientation;
 
   // Top player is opponent, bottom player is user
-  const topPlayer = isUserWhite ? game?.blackPlayer : game?.whitePlayer;
+  const currentAuthUser = authStore.getState().user || user;
+
+  const rawWhiteName = game?.whitePlayer?.name;
+  const rawBlackName = game?.blackPlayer?.name;
+
+  const resolvedWhiteName =
+    rawWhiteName ||
+    (isUserWhite && currentAuthUser?.name ? currentAuthUser.name : null) ||
+    'White Player';
+
+  const resolvedBlackName =
+    rawBlackName ||
+    (!isUserWhite && currentAuthUser?.name ? currentAuthUser.name : null) ||
+    (game?.gameType === 'PLAYER_VS_AI'
+      ? `AI (${game?.aiDifficulty ? game.aiDifficulty.charAt(0).toUpperCase() + game.aiDifficulty.slice(1).toLowerCase() : 'Medium'})`
+      : 'Black Player');
+
+  const bottomPlayerName = isUserWhite ? resolvedWhiteName : resolvedBlackName;
+  let topPlayerName = isUserWhite ? resolvedBlackName : resolvedWhiteName;
+
+  const topPlayerRaw = isUserWhite ? game?.blackPlayer : game?.whitePlayer;
+  const bottomPlayerRaw = isUserWhite ? game?.whitePlayer : game?.blackPlayer;
+
+  const bottomPlayer: GamePlayer = {
+    ...bottomPlayerRaw,
+    id: bottomPlayerRaw?.id || (currentAuthUser as any)?.id || (isUserWhite ? 1 : 2),
+    name: bottomPlayerName,
+    email: bottomPlayerRaw?.email || (currentAuthUser as any)?.email || '',
+    avatarUrl: (currentAuthUser as any)?.avatarUrl || (currentAuthUser as any)?.photo || bottomPlayerRaw?.avatarUrl || null,
+    rating: currentAuthUser?.rating || bottomPlayerRaw?.rating || 1200,
+  };
+
+  const topPlayer: GamePlayer = {
+    ...topPlayerRaw,
+    id: topPlayerRaw?.id || (isUserWhite ? 2 : 1),
+    name: topPlayerName,
+    email: topPlayerRaw?.email || '',
+    avatarUrl: topPlayerRaw?.avatarUrl || null,
+    rating: topPlayerRaw?.rating || 1200,
+  };
   const topPlayerColor = isUserWhite ? 'BLACK' : 'WHITE';
   const topPlayerTime = isUserWhite ? blackTimeMs : whiteTimeMs;
   const topPlayerIsTurn = currentTurn === topPlayerColor;
@@ -238,7 +284,6 @@ export default function LiveGameScreen() {
     ? 'Opponent (Black)'
     : 'Opponent (White)';
 
-  const bottomPlayer = isUserWhite ? game?.whitePlayer : game?.blackPlayer;
   const bottomPlayerColor = isUserWhite ? 'WHITE' : 'BLACK';
   const bottomPlayerTime = isUserWhite ? whiteTimeMs : blackTimeMs;
   const bottomPlayerIsTurn = currentTurn === bottomPlayerColor;
@@ -319,6 +364,14 @@ export default function LiveGameScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
+        {/* Tournament Banner (if game belongs to a tournament) */}
+        {game?.tournament && (
+          <TournamentGameBanner
+            tournament={game.tournament}
+            onPress={() => router.replace(`/tournaments/${game.tournament!.id}` as any)}
+          />
+        )}
+
         {/* Opponent Card (Top) */}
         <View style={styles.playerSection}>
           <PlayerInfo
@@ -373,15 +426,6 @@ export default function LiveGameScreen() {
           </View>
         )}
 
-        {/* Reconnecting Status Banner */}
-        {connectionStatus !== 'connected' && status === 'ACTIVE' && (
-          <View style={styles.reconnectingBanner}>
-            <ActivityIndicator size="small" color="#D97706" style={{ marginRight: 8 }} />
-            <Text style={styles.reconnectingText}>
-              Connection issues detected. Reconnecting to match...
-            </Text>
-          </View>
-        )}
 
         {/* Draw Feedback Banner */}
         {drawFeedbackText && (
@@ -452,6 +496,7 @@ export default function LiveGameScreen() {
               onOfferDraw={handleOfferDraw}
               onResign={() => setResignModalVisible(true)}
               onFlipBoard={() => setInvertedOrientation((prev) => !prev)}
+              isTournament={isTournament}
               disabled={status !== 'ACTIVE'}
             />
           )}
@@ -511,6 +556,15 @@ export default function LiveGameScreen() {
             : user?.rating ?? null)
         }
         isPvP={game?.gameType === 'PLAYER_VS_PLAYER'}
+        isTournament={isTournament}
+        onBackToTournament={
+          game?.tournament
+            ? () => {
+                setGameOverModalVisible(false);
+                router.replace(`/tournaments/${game.tournament!.id}` as any);
+              }
+            : undefined
+        }
         onAiReview={() => {
           setGameOverModalVisible(false);
           setAiReviewModalVisible(true);

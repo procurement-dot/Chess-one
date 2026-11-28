@@ -1,111 +1,303 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
+import { useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { AppHeader } from '../../components/navigation/AppHeader';
 import { AppFooter } from '../../components/navigation/AppFooter';
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
+import { COLORS, SIZES, SHADOWS } from '../../constants/chessone-theme';
+import { useTournaments, TournamentFilter } from '../../hooks/useTournaments';
+import { useCan } from '../../hooks/useCan';
 import { useRoleStore } from '../../features/roles/roleStore';
-import { SAMPLE_TOURNAMENTS } from '../../data/tournamentsData';
-import { Feather } from '@expo/vector-icons';
+import { TournamentCard } from '../../components/tournament/TournamentCard';
+import type { TournamentListItem } from '../../types/tournament.types';
 
-const CHIPS = ['Active', 'Upcoming', 'My Tournaments'];
+const CHIPS: { label: string; filter: TournamentFilter }[] = [
+  { label: 'Upcoming', filter: 'UPCOMING' },
+  { label: 'Active', filter: 'ACTIVE' },
+  { label: 'My tournaments', filter: 'MINE' },
+];
 
 export default function TournamentsScreen() {
-  const role = useRoleStore();
-  const [activeChip, setActiveChip] = useState('Upcoming');
+  const router = useRouter();
+  const [activeChip, setActiveChip] = useState<TournamentFilter>('UPCOMING');
+  const activeRole = useRoleStore();
+  const canCreateTournament = useCan('TOURNAMENT_CREATE') && activeRole === 'Organizer';
 
-  const filteredTournaments = SAMPLE_TOURNAMENTS.filter(t => {
-    if (activeChip === 'My Tournaments') return false; // Sample logic
-    return t.status === activeChip;
-  });
+  const { tournaments, loading, refreshing, error, refresh } = useTournaments(activeChip);
+
+  const getEmptyMessage = () => {
+    switch (activeChip) {
+      case 'UPCOMING':
+        return 'No upcoming tournaments yet.';
+      case 'ACTIVE':
+        return 'No active tournaments right now.';
+      case 'MINE':
+        return "You haven't joined or created any tournaments yet.";
+    }
+  };
+
+  const renderEmptyComponent = () => {
+    if (loading) return null;
+
+    if (error) {
+      return (
+        <View style={styles.emptyContainer}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={refresh}>
+            <Text style={styles.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>🏆</Text>
+        <Text style={styles.emptyText}>{getEmptyMessage()}</Text>
+        {canCreateTournament && (
+          <TouchableOpacity
+            style={styles.emptyCreateBtn}
+            onPress={() => router.push('/tournaments/create' as any)}
+          >
+            <Feather name="plus" size={16} color={COLORS.white} style={{ marginRight: 6 }} />
+            <Text style={styles.emptyCreateBtnText}>Create tournament</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
+  const renderItem = ({ item }: { item: TournamentListItem }) => (
+    <View style={styles.cardItemWrapper}>
+      <TournamentCard tournament={item} />
+    </View>
+  );
 
   return (
     <View style={styles.container}>
-      <AppHeader title="Tournaments" subtitle="Compete and shine" />
-      
-      <View style={styles.chipScrollWrapper}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipScroll}>
-          {CHIPS.map(chip => (
-            <TouchableOpacity 
-              key={chip} 
-              style={[styles.chip, activeChip === chip && styles.activeChip]}
-              onPress={() => setActiveChip(chip)}
+      <AppHeader
+        title="Tournaments"
+        subtitle="Compete and shine"
+        extraRightAction={
+          canCreateTournament ? (
+            <TouchableOpacity
+              style={styles.headerCreateBtn}
+              activeOpacity={0.8}
+              onPress={() => router.push('/tournaments/create' as any)}
             >
-              <Text style={[styles.chipText, activeChip === chip && styles.activeChipText]}>{chip}</Text>
+              <Feather name="plus" size={14} color={COLORS.white} style={{ marginRight: 4 }} />
+              <Text style={styles.headerCreateBtnText}>Create</Text>
             </TouchableOpacity>
-          ))}
+          ) : null
+        }
+      />
+
+      {/* Filter Chips */}
+      <View style={styles.chipScrollWrapper}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipScroll}
+        >
+          {CHIPS.map((chip) => {
+            const isActive = activeChip === chip.filter;
+            return (
+              <TouchableOpacity
+                key={chip.filter}
+                style={[styles.chip, isActive && styles.activeChip]}
+                onPress={() => setActiveChip(chip.filter)}
+              >
+                <Text style={[styles.chipText, isActive && styles.activeChipText]}>
+                  {chip.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={styles.content}>
-        {filteredTournaments.length === 0 ? (
-          <Text style={styles.emptyText}>No tournaments found.</Text>
-        ) : (
-          filteredTournaments.map(t => (
-            <View key={t.id} style={styles.tournamentCard}>
-              <View style={styles.cardHeader}>
-                <Text style={styles.tournamentName}>{t.name}</Text>
-                <View style={styles.badge}><Text style={styles.badgeText}>{t.status}</Text></View>
-              </View>
-              
-              <View style={styles.detailsGrid}>
-                <View style={styles.detailItem}>
-                  <Feather name="calendar" size={14} color={COLORS.textBody} />
-                  <Text style={styles.detailText}>{t.date} · {t.time}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Feather name="users" size={14} color={COLORS.textBody} />
-                  <Text style={styles.detailText}>{t.categories}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Feather name="list" size={14} color={COLORS.textBody} />
-                  <Text style={styles.detailText}>{t.format}</Text>
-                </View>
-                <View style={styles.detailItem}>
-                  <Feather name="tag" size={14} color={COLORS.textBody} />
-                  <Text style={styles.detailText}>Entry: {t.entryFee}</Text>
-                </View>
-              </View>
-              
-              <TouchableOpacity style={styles.viewBtn}>
-                <Text style={styles.viewBtnText}>View Details</Text>
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
-      </ScrollView>
-      
-      {(role === 'Organiser' || role === 'School') && (
-        <TouchableOpacity style={styles.fab}>
-          <Feather name="plus" size={24} color={COLORS.white} />
-          <Text style={styles.fabText}>Organise</Text>
+      {/* Main Content Area */}
+      {loading && !refreshing ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={COLORS.primary} size="large" />
+          <Text style={styles.loadingText}>Loading tournaments...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={tournaments}
+          keyExtractor={(item) => String(item.id)}
+          renderItem={renderItem}
+          contentContainerStyle={styles.contentList}
+          ListEmptyComponent={renderEmptyComponent}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={refresh}
+              colors={[COLORS.primary]}
+              tintColor={COLORS.primary}
+            />
+          }
+        />
+      )}
+
+      {/* Floating Action Button for Organisers */}
+      {canCreateTournament && (
+        <TouchableOpacity
+          style={styles.fab}
+          activeOpacity={0.85}
+          onPress={() => router.push('/tournaments/create' as any)}
+        >
+          <Feather name="plus" size={20} color={COLORS.white} />
+          <Text style={styles.fabText}>Create</Text>
         </TouchableOpacity>
       )}
-      
+
       <AppFooter activeTab="tournaments" />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  chipScrollWrapper: { backgroundColor: COLORS.white, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  chipScroll: { paddingHorizontal: 16, gap: 10 },
-  chip: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: SIZES.radiusChip, backgroundColor: COLORS.background },
-  activeChip: { backgroundColor: COLORS.primary },
-  chipText: { fontSize: 14, fontWeight: '600', color: COLORS.textBody },
-  activeChipText: { color: COLORS.white },
-  content: { padding: 16, paddingBottom: 80, maxWidth: 700, alignSelf: 'center', width: '100%', gap: 16 },
-  emptyText: { textAlign: 'center', color: COLORS.textBody, marginTop: 40 },
-  tournamentCard: { backgroundColor: COLORS.white, borderRadius: SIZES.radiusCard, padding: 16, ...SHADOWS.soft, gap: 12 },
-  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  tournamentName: { fontSize: 18, fontWeight: '700', color: COLORS.textHeading, flex: 1, marginRight: 8 },
-  badge: { backgroundColor: COLORS.hero, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  badgeText: { fontSize: 10, fontWeight: '700', color: COLORS.primary, textTransform: 'uppercase' },
-  detailsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  detailItem: { width: '45%', flexDirection: 'row', alignItems: 'center', gap: 6 },
-  detailText: { fontSize: 13, color: COLORS.textBody, fontWeight: '500' },
-  viewBtn: { backgroundColor: COLORS.primary, paddingVertical: 12, borderRadius: SIZES.radiusButton, alignItems: 'center', marginTop: 4 },
-  viewBtnText: { color: COLORS.white, fontWeight: '700', fontSize: 14 },
-  fab: { position: 'absolute', bottom: 80, right: 16, backgroundColor: COLORS.accentPeach, flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, borderRadius: 24, gap: 8, ...SHADOWS.soft },
-  fabText: { color: COLORS.white, fontWeight: '700', fontSize: 15 },
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+  },
+  headerCreateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: SIZES.radiusChip,
+    marginRight: 6,
+  },
+  headerCreateBtnText: {
+    color: COLORS.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  chipScrollWrapper: {
+    backgroundColor: COLORS.white,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  chipScroll: {
+    paddingHorizontal: 16,
+    gap: 10,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: SIZES.radiusChip,
+    backgroundColor: COLORS.background,
+  },
+  activeChip: {
+    backgroundColor: COLORS.primary,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.textBody,
+  },
+  activeChipText: {
+    color: COLORS.white,
+  },
+  contentList: {
+    padding: 16,
+    paddingBottom: 100,
+    maxWidth: 700,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  cardItemWrapper: {
+    marginBottom: 14,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: COLORS.textBody,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyIcon: {
+    fontSize: 40,
+    marginBottom: 4,
+  },
+  emptyText: {
+    fontSize: 15,
+    color: COLORS.textBody,
+    textAlign: 'center',
+  },
+  emptyCreateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.primary,
+    paddingVertical: 10,
+    paddingHorizontal: 18,
+    borderRadius: SIZES.radiusButton,
+    marginTop: 8,
+  },
+  emptyCreateBtnText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  errorIcon: {
+    fontSize: 32,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#DC2626',
+    textAlign: 'center',
+  },
+  retryBtn: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 18,
+    borderRadius: SIZES.radiusButton,
+    marginTop: 4,
+  },
+  retryBtnText: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 84,
+    right: 16,
+    backgroundColor: COLORS.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 24,
+    gap: 6,
+    ...SHADOWS.soft,
+  },
+  fabText: {
+    color: COLORS.white,
+    fontWeight: '700',
+    fontSize: 15,
+  },
 });

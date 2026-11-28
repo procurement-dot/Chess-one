@@ -4,8 +4,8 @@ const gameRoutes = require("./routes/game.routes");
 const invitationRoutes = require("./routes/invitation.routes");
 const authRoutes = require("./routes/auth.routes");
 const userRoutes = require("./routes/user.routes");
-const classRoutes = require("./routes/class.routes");
-const adminRoutes = require("./routes/admin.routes");
+const tournamentRoutes = require("./routes/tournament.routes");
+const puzzleRoutes = require("./routes/puzzle.routes");
 const { errorHandler } = require("./middleware/error.middleware");
 
 const app = express();
@@ -27,8 +27,15 @@ app.use("/api/auth", authRoutes);
 app.use("/api/games", gameRoutes);
 app.use("/api/invitations", invitationRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/classes", classRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/api/tournaments", tournamentRoutes);
+app.use("/api/puzzles", puzzleRoutes);
+app.use("/puzzles", puzzleRoutes);
+
+// Dev-only routes
+if (process.env.NODE_ENV !== "production") {
+  const rbacTestRoutes = require("./routes/rbac-test.routes");
+  app.use("/api/rbac-test", rbacTestRoutes);
+}
 
 // 404 handler for unknown routes
 app.use((req, res) => {

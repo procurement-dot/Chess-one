@@ -1,4 +1,4 @@
-import { COLORS, SIZES, FONTS, SHADOWS } from '../../constants/chessone-theme';
+import { COLORS } from '../../constants/chessone-theme';
 import React from 'react';
 import {
   Modal,
@@ -22,6 +22,8 @@ interface GameOverModalProps {
   newRating?: number | null;
   opponentRatingChange?: number | null;
   isPvP?: boolean;
+  isTournament?: boolean;
+  onBackToTournament?: () => void;
   onViewResults: () => void;
   onPlayAgain: () => void;
   onGoHome: () => void;
@@ -40,6 +42,8 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
   newRating,
   opponentRatingChange,
   isPvP = false,
+  isTournament = false,
+  onBackToTournament,
   onViewResults,
   onPlayAgain,
   onGoHome,
@@ -203,6 +207,16 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
 
           {/* Action Buttons */}
           <View style={styles.buttonGroup}>
+            {isTournament && onBackToTournament ? (
+              <TouchableOpacity
+                style={styles.tournamentBtn}
+                activeOpacity={0.8}
+                onPress={onBackToTournament}
+              >
+                <Text style={styles.tournamentBtnText}>🏆 Back to Tournament</Text>
+              </TouchableOpacity>
+            ) : null}
+
             <TouchableOpacity
               style={styles.aiReviewBtn}
               activeOpacity={0.8}
@@ -222,13 +236,15 @@ export const GameOverModal: React.FC<GameOverModalProps> = ({
               <Text style={styles.primaryBtnText}>📊 View Full Results</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity
-              style={styles.secondaryBtn}
-              activeOpacity={0.8}
-              onPress={onPlayAgain}
-            >
-              <Text style={styles.secondaryBtnText}>🔄 Play Again</Text>
-            </TouchableOpacity>
+            {!isTournament && (
+              <TouchableOpacity
+                style={styles.secondaryBtn}
+                activeOpacity={0.8}
+                onPress={onPlayAgain}
+              >
+                <Text style={styles.secondaryBtnText}>🔄 Play Again</Text>
+              </TouchableOpacity>
+            )}
 
             <TouchableOpacity
               style={styles.ghostBtn}
@@ -378,6 +394,23 @@ const styles = StyleSheet.create({
   },
   aiReviewBtnText: {
     color: COLORS.textHeading,
+    fontSize: 15,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  tournamentBtn: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tournamentBtnText: {
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: '800',
     letterSpacing: 0.3,
